@@ -1,0 +1,47 @@
+Author list:
+Tao Lu
+Landry Matthews
+Miles Vesper
+
+
+Update history:
+I was able to send transaction to the Contract and add fund through the addFund () payable function.
+The frontend able to intereact with backend and check the password. All other features are implemented as instructed.
+
+How to test:
+
+1. click withdraw, js will first check whether your address is valid, if not, account[1] will poped as example.
+
+2. input password, if input not right, the correct pwd will poped.
+
+3. when final withdraw, contract balance will be checked.If no balance is deposited, system will add 1 ether from account[0]
+
+4. Then all the deposit will be send to receiver.
+
+
+cmd:
+$ testrpc
+$ ./node_modules/.bin/truffle migrate
+$ ./node_modeles/.bin/webpack
+$ php -S 0.0.0.:8000 -t ./build/app/
+
+>> browser:localhost:8000
+
+Install:
+$ npm init
+$ npm install truffle --save-dev
+$ npm install webpack@2.2.0
+
+$ mkdir -p app/js
+$ touch app/js/app.js
+
+create index.html
+
+install dependency:
+$ npm install web3 truffle-contract bluebird jquery --save
+$ npm install file-loader --save-dev
+
+edit ./app/js/app.js
+
+
+Tao

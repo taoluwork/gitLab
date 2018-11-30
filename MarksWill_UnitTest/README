@@ -1,0 +1,13 @@
+Author list:
+Tao Lu
+Landry Matthews
+Miles Vesper
+
+
+>>$ truffle compile --reset
+>>$ truffle migrate
+>>$ truffle test
+
+edit the test file in test folder.!
+
+Tao
