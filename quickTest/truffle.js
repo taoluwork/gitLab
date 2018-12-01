@@ -11,6 +11,7 @@
  *     gasPrice: 10000000000,
  *   },
  */
+let Web3 = require('web3');
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
@@ -19,7 +20,19 @@ module.exports = {
 		development: {
 		host: "127.0.0.1",
 		port: 8545,
-		network_id: "*"
+		network_id: "*",
+		websocket : true
+		},
+		
+		wsnet:{
+			provider: function(){
+				let ws = new Web3.providers.WebsocketProvider("ws://localhost:8546");
+				console.log(ws);
+				return ws;
+			},
+			
+			network_id: '*',
+			websocket: true
 		}
 	}
 };

@@ -246,4 +246,7 @@ contract TaskContract {
     function getProviderID(address inAddr) public view returns(uint64){
         return providerID[inAddr];
     }
+    function testTask() public {
+        emit TaskAssigned(msg.sender, 1);
+    }
 }

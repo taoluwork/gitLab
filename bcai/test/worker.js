@@ -21,7 +21,7 @@ contract('workerClientTest', function(accounts) {
         return bcai.then(instance1=>{
             //console.log(instance1)
             return instance1.startProviding(11,23,100,{from: accounts[1]}).then(result1=>{
-                console.log('sender: ', accounts[1]);
+                //console.log('sender: ', accounts[1]);
                 //console.log(result1.receipt);
                 instance1.getProviderID.call(accounts[1]).then(result=>{
                     console.log(result);
@@ -38,17 +38,34 @@ contract('workerClientTest', function(accounts) {
 
     it("Test 3: Waiting for being assigned", function(){
         return bcai.then(instance1=>{
-        /*    var event = instance1.TaskAssigned();
+        /*  var event = instance1.TaskAssigned();
             event.watch((error, result)=>{
             if(!error)
                 alert("wait for a while");
                 console.log(result);
             });
             deprecated*/
-            instance1.getPastEvents("TaskAssigned", (error, result)=>{
-                console.log(error, result);
+            
+
+            var event = instance1.TaskAssigned();
+            
+            event.on("data",function(result){
+                console.log(result.event);
+            });
+
+            instance1.testTask({from: accounts[3]});
+
+            /*
+            instance1.TaskAssigned(function(data){
+                console.log(data);
             })
+
+            instance1.allEvents().on("data",function(result){
+                console.log(result);
+            });*/
+
         
+            
 
         //    return instance1.assignTask().then(result=>{
         //        console.log("emitted");
