@@ -10,19 +10,30 @@ contract("BCAI", function(accounts) {
 
         return BCAI.deployed().then(function(instance) {
             bcaiContract = instance;
+            return bcaiContract.startProviding(100,100,100,{from: accounts[2]});
 
-
-            instance.TaskAssigned({}).watch((error, result) => {
+            bcaiContract.events.TaskAssigned({
+                fromBlock: 0,
+                toBlock: 'latest'
+            }, function(error, result){
                 if (error) {
                     console.log(error);
                 }
-                eventData = result.args;
+                console.log("TaskAssigned!", result.returnValue);
             });
-            return instance.startProviding(100,100,100);
+        
         }).then(function() {
             //Begins after startProviding tx has been mined
-            return bcaiContract.getCount.call();
+            return bcaiContract.getProvider.call(0,{from: accounts[1]});
         }).then(function(result) {
+            assert.equal(result, accounts[2], "provider start fail!");
+        })
+    })
+
+    
+})
+            /*   
+            
             //Begins after getCount tx has been mined and we have the data
             var [reqCount, provCount, numProv] = result;
             
@@ -32,7 +43,7 @@ contract("BCAI", function(accounts) {
             assert.equal(numProv, 1, "Requests made should be 1");
             bcaiContract.stopProviding();
         }).then(function() {
-            return bcaiContract.getCount.call();
+            return bcaiContract.getCount().call();
         }).then(function(result) {
             var [reqCount, provCount, numProv] = result;
             assert.equal(numProv, 0, "Requests made should be 00000");
@@ -56,3 +67,4 @@ contract("BCAI", function(accounts) {
         });
     });
 });
+*/

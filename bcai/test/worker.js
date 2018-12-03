@@ -1,77 +1,45 @@
-var BCAI = artifacts.require("TaskContract");
+//create web3 instance
+var Web3 = require('web3');
+var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
 
+//get contract instance
+//NOTE: this is not quite supported by Node.js
+//import TaskContract from '../build/contracts/TaskContract.json';
+//use this:
+var TaskContract = require('../build/contracts/TaskContract.json');
 
-contract('workerClientTest', function(accounts) {
-    const bcai = BCAI.deployed();
-    //console.log(accounts);
-    it("Test 1: Deployment", function(){
-        //console.log(bcai);
-        return bcai.then(instance=>{
-            assert(instance != null);
-        });
-    });
+var abi = TaskContract.abi;
+var addr = TaskContract.networks[512].address;
+//note: networkID can be given to ganache by
+//ganache-cli -i or --networkId 512
+const contract = new web3.eth.Contract(abi, addr);
+web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
+    var myAccount = accounts[8];
 
+    //create a local table
+    var maxTime = 100000;
+    var maxTarget = 100;
+    var minPrice = 50;
 
-    //remember transaction and call are totally defferent.
-    //call is read-only and tx can write
-    //see details: https://truffleframework.com/docs/truffle/getting-started/interacting-with-your-contracts
+    //call startProviding
+    contract.methods.startProviding(
+        maxTime, 
+        maxTarget, 
+        minPrice)
+        .send({from: myAccount, gas: 800000})
+    .then(function(ret){
+        console.log("start providing: ", ret.blockNumber);
+    })
 
-    it("Test 2: StartProviding", function(){
-        //console.log(accounts);
-        return bcai.then(instance1=>{
-            //console.log(instance1)
-            return instance1.startProviding(11,23,100,{from: accounts[1]}).then(result1=>{
-                //console.log('sender: ', accounts[1]);
-                //console.log(result1.receipt);
-                instance1.getProviderID.call(accounts[1]).then(result=>{
-                    console.log(result);
-                    instance1.getProvider.call(result).then(fresult=>{
-                        console.log(fresult);
-                    })
-                });
-                //console.log(instance1.balance);
-                
-                //assert.isFalse(result1);   
-            });
-        });
-    });
+    console.log("start listening...");
 
-    it("Test 3: Waiting for being assigned", function(){
-        return bcai.then(instance1=>{
-        /*  var event = instance1.TaskAssigned();
-            event.watch((error, result)=>{
-            if(!error)
-                alert("wait for a while");
-                console.log(result);
-            });
-            deprecated*/
-            
+    //wait until to be assigned.
+    contract.events.TaskAssigned({
+        fromBlock: 0,
+        toBlock: 'latest'
+    }, function(err, ret){
+        console.log(err, ret.returnValue);
+    })
+})
 
-            var event = instance1.TaskAssigned();
-            
-            event.on("data",function(result){
-                console.log(result.event);
-            });
-
-            instance1.testTask({from: accounts[3]});
-
-            /*
-            instance1.TaskAssigned(function(data){
-                console.log(data);
-            })
-
-            instance1.allEvents().on("data",function(result){
-                console.log(result);
-            });*/
-
-        
-            
-
-        //    return instance1.assignTask().then(result=>{
-        //        console.log("emitted");
-        //    });
-
-        });
-         
-    });
-});
+//console.log(contract.address);
