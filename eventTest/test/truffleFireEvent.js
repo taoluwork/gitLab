@@ -1,10 +1,10 @@
 //This si a quick event watching test
-var test = artifacts.require("quickTest");
+var test = artifacts.require("eventTest");
 //console.log(test);		//this is contract
 
 
 
-contract("quickTest", function(accounts){
+contract("eventTest", function(accounts){
 	it("call the function", function(){
 		return test.deployed().then(function(instanc){
 			//console.log(instanc);
