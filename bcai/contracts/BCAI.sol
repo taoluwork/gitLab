@@ -21,7 +21,7 @@ contract TaskContract {
 
     struct Request {
         address payable addr;       //new feature from sol v5.0
-        address payable provider;
+        address payable provider;   //addr of worker
         uint128 reqID;
         uint64  dataID;
         uint64  time;
@@ -31,7 +31,7 @@ contract TaskContract {
         uint64  numValidationsNeeded;
         bool[]  validations;
         bool    isValid;
-        bool    complete;
+        bool    isCompleted;
     }
 
     struct Provider {
@@ -124,14 +124,22 @@ contract TaskContract {
     // Assumes price is including the cost for verification
     function requestTask(uint64 dataID, uint16 target, uint64 time) payable public returns (bool) {
         bool[] memory emptyArray;
-        Request memory req = Request(
-            msg.sender,             //requester's address
-            address(0),             //empty addr
-            requestCount,           //
-            dataID, 
-            time, 
-            target, 
-            msg.value, 0, 0, emptyArray, false, false);
+        Request memory req = Request(           //create a temp memory var
+            msg.sender,             //addr
+            address(0),             //provider
+            requestCount,           //reqID
+            dataID,                 //dataID
+            time,                   //time    
+            target,                 //target   0-100
+            msg.value,              //price 
+            0,                      //resultID
+            1,                      //numValidationsNeeded
+            emptyArray,             //sig list
+            false,                  //isValid
+            false                   //isCompleted
+            );
+
+        //copy the mem var into storage
         requestList[requestCount] = req;        //requestCount used as index here, from 0 to +++
         requestCount++;
         return assignTask(req);
@@ -139,26 +147,35 @@ contract TaskContract {
 
     // Assigning task to one of the available providers. Only called from requestTask (private)
     //function assignTask(uint128 taskID, uint64 dataID, uint16 target, uint64 time, uint256 price) private returns (bool) {
+
+
     function assignTask(Request memory req) private returns (bool) {
         for (uint64 i = 0; i<numProviders + spaces.length; i++) {
             // Check if they are active provider
             if (providerList[i].addr == address(0)) {
                 continue;
+                
             }
             // Check if request conditions meet the providers requirements
-            if (req.accuracy <= providerList[i].maxTarget && req.time <= providerList[i].maxTime && req.price >= providerList[i].minPrice && providerList[i].available) {
-                balanceList[msg.sender] += msg.value; // records how much the requester sent
+            else if (req.accuracy <= providerList[i].maxTarget && 
+                    req.time <= providerList[i].maxTime && 
+                    req.price >= providerList[i].minPrice && 
+                    providerList[i].available) {
+
+                balanceList[req.addr] += req.price; // records how much the requester sent
                 req.provider = providerList[i].addr;
-                requestList[requestCount] = req; // save to mapping of requests
+                //requestList[requestCount] = req; // save to mapping of requests //done in RequestTask function
+                //requestCount++;
+
                 providerList[i].available = false;
-                requestCount++;
+                
                 //EVENT
-                emit TaskAssigned(providerList[i].addr, req.reqID); // Let provider listen for this event to see he was selected
+                emit TaskAssigned(req.provider, req.reqID); // Let provider listen for this event to see he was selected
                 return true;
             }
         }
         // No provider was found matching the criteria -- request failed
-        req.addr.transfer(req.price); // Returns the ether to the sender 
+        req.addr.transfer(req.price); // Returns the ether to the sender
         return false;
     }
 
@@ -171,7 +188,7 @@ contract TaskContract {
     function completeTask(uint128 reqID, uint64 resultID) public returns (bool) {
         // Confirm msg.sender is actually the provider of the task he claims
         if (msg.sender == requestList[reqID].provider) {
-            requestList[reqID].complete = true;
+            requestList[reqID].isCompleted = true;
             requestList[reqID].resultID = resultID;
             providerList[providerID[msg.sender]].available = true;
             return validateTask(reqID);
