@@ -15,23 +15,23 @@ const myContract = new web3.eth.Contract(
   //{from: "0x0F658F24CFdf2C3F89c58cad153ce3A1023C270A", gas: 8000000, gasPrice: 123}
 )
 //subscription
-/*web3.eth.subscribe('logs', {
+web3.eth.subscribe('logs', {
   address: '0x5f108e4dbc3f4b622f7294c32f7389c0b3eeeb3e'
 }, function (error, blockHeader) {
     if (error) console.log(error)
     console.log(blockHeader)
-  })
-*/
+})
+
 
 //once triggered only 'once'
-/*yContract.once('Test_1', {
+yContract.once('Test_1', {
   //filter: {myIndexedParam: [20,23], myOtherIndexedParam: '0x1234'},
   fromBlock: 0,
   toBlock: 'latest'
 }, function (err, eventmsg) {
   // alternatively we can log it here
   console.log(err, eventmsg)
-})*/
+})
 
 //subscribe some user defined events
 myContract.events.Test_1({
@@ -44,13 +44,13 @@ myContract.events.Test_1({
     })
 
 //getting the events in the past
-/*
+
 myContract.getPastEvents('allEvents',{
     fromBlock:0,
     toBlock: 'latest'
   }).then(function(eve){
     console.log(eve);
-})*/
+})
 
   
 //var abi = MyContract.abi;

@@ -4,29 +4,34 @@ pragma experimental ABIEncoderV2;   //return self-defined type
 contract TaskContract {
 
     uint128 public requestCount;                    //total number of requests sent to contract
-    uint128 public provideCount;                    //total number of requests that contract found provider for
-    uint64 public numProviders;                     //number of active providers in the mapping below
-    mapping (uint64 => Provider) public providerList;  //list of known providers. must apply. maps providerID to struct
-    mapping (address => uint64) public providerID;  //NOTE: possible not needed
-    mapping (address => uint256) public balanceList;   //for keeping track of how much money requesters have sent
-    mapping (uint128 => Request) public requestList;   //NOTE: possibly not needed? could change name to tasks.
-    uint64[] public spaces;                         // Open spaces where providers left. should be filled when new provider comes
+    uint128 public providingCount;                  //total number of requests that contract found provider for
+    uint64 public providerCount;                    //number of active providers in the mapping below
+    mapping (uint64 => Provider) public providerList;   //list of known providers. must apply. maps providerID to struct
+    mapping (address => uint64) public providerID;      //look up providerID using address     NOTE: possible not needed
+    //NOTE: addr is the only identifier for provider object.
+    //However, providerID could possibly be same between different address.
+    //e.g. Tom has Two account with addr_1, addr_2, but he could be assigned an unique providerID.
 
-    // Deploying code -- run once
-    constructor() public {
+    mapping (uint128 => Request) public requestList;    //mapping requestCount to Request object, requestCount is the unique number used as identifier
+    mapping (address => uint64) public requestID;       //look up requestID using address (user's)  NOTE: single user could have multiply requestID
+
+    uint64[] public spaces;                             //Open spaces where providers left. should be filled when new provider comes
+    mapping (address => uint256) public balanceList;    //for keeping track of how much money requesters have sent
+    
+    constructor() public {      //sol 5.0 syntax
         requestCount = 0;
-        provideCount = 0;
-        numProviders = 0;
+        providingCount = 0;
+        providerCount = 0;
     }
 
     struct Request {
-        address payable addr;       //new feature from sol v5.0
+        address payable addr;       //payable is new feature from sol v5.0
         address payable provider;   //addr of worker
-        uint128 reqID;
-        uint64  dataID;
-        uint64  time;
-        uint16  accuracy;
-        uint256 price;
+        uint128 reqID;              //requestID is the only identifier for each Request
+        uint64  dataID;             //dataID used to fetch the off-chain data
+        uint64  time;               //time
+        uint16  accuracy;           //target 0-100
+        uint256 price;              
         uint64  resultID;
         uint64  numValidationsNeeded;
         bool[]  validations;
@@ -45,9 +50,7 @@ contract TaskContract {
     }
 
     event TaskAssigned(address provider, uint128 reqID);        // next step: call completeTask
-    
     event ValidationRequested(address validator, uint128 reqID); // next step: validator calls submitValidation
-    
     event TaskCompleted(address requestor, uint128 reqID);      // done
 
 
@@ -58,23 +61,32 @@ contract TaskContract {
     function startProviding(uint64 maxTime, uint16 maxTarget, uint64 minPrice) public {
         // If new provider
         if (providerList[providerID[msg.sender]].addr != msg.sender) { // address is not on the chain
-            Provider memory prov = Provider(msg.sender, 0, 0, maxTime, maxTarget, minPrice, true);
+            Provider memory prov = Provider(
+		    msg.sender,    //addr 
+		    0,             //prividedCount
+		    0,             //requestedCount
+		    maxTime,       //maxTime
+		    maxTarget,     //maxTarget
+		    minPrice,      //minPrice
+		    true);         //available
+
             // If there are vacant providerIDs
             if (spaces.length > 0) {
                 providerID[msg.sender] = pop(); // Pops the most recently vacated from spaces
             }
             // Else put them at the end of the list
             else {
-                providerID[msg.sender] = numProviders;
+                providerID[msg.sender] = providerCount;
             }
             // These update either way
             providerList[providerID[msg.sender]] = prov;
-            numProviders++;
+            providerCount++;
         }
         else { // Updating old provider -- address is on the chain
             providerList[providerID[msg.sender]].maxTime = maxTime;
             providerList[providerID[msg.sender]].maxTarget = maxTarget;
             providerList[providerID[msg.sender]].minPrice = minPrice;
+	    providerList[providerID[msg.sender]].available = true;
         }
     }
 
@@ -85,11 +97,11 @@ contract TaskContract {
             providerList[providerID[msg.sender]].available = false;
             providerList[providerID[msg.sender]].addr = address(0);
             // checking that theyre not the last provider to register 
-            if (providerID[msg.sender] != numProviders-1) {
+            if (providerID[msg.sender] != providerCount-1) {
                 // Label ID as vacant
                 spaces.push(providerID[msg.sender]);
             }
-            numProviders--;
+            providerCount--;
         }
     }
 
@@ -143,6 +155,7 @@ contract TaskContract {
         requestList[requestCount] = req;        //requestCount used as index here, from 0 to +++
         requestCount++;
         return assignTask(req);
+	//return true;
     }
 
     // Assigning task to one of the available providers. Only called from requestTask (private)
@@ -150,7 +163,7 @@ contract TaskContract {
 
 
     function assignTask(Request memory req) private returns (bool) {
-        for (uint64 i = 0; i<numProviders + spaces.length; i++) {
+        for (uint64 i = 0; i<providerCount + spaces.length; i++) {
             // Check if they are active provider
             if (providerList[i].addr == address(0)) {
                 continue;
@@ -161,14 +174,19 @@ contract TaskContract {
                     req.time <= providerList[i].maxTime && 
                     req.price >= providerList[i].minPrice && 
                     providerList[i].available) {
-
-                balanceList[req.addr] += req.price; // records how much the requester sent
+                
+                // records how much money the requester sent                
+                balanceList[req.addr] += req.price; 
+                
+                //update request
                 req.provider = providerList[i].addr;
-                //requestList[requestCount] = req; // save to mapping of requests //done in RequestTask function
-                //requestCount++;
+                requestList[req.reqID] = req; // save to mapping of requests 
+                //requestCount++;       //done in RequestTask function
+                //NOTE: assign existing task should not increase the # of requestCount
 
                 providerList[i].available = false;
                 
+
                 //EVENT
                 emit TaskAssigned(req.provider, req.reqID); // Let provider listen for this event to see he was selected
                 return true;
@@ -202,10 +220,10 @@ contract TaskContract {
     // Returns false if there wasnt enough free providers to send out the required number of validation requests
     function validateTask(uint128 reqID) private returns (bool) {
         uint64 numValidators = 3; // need validation from 1/10 of nodes -- could change
-        //uint numValidators = numProviders / 10; 
+        //uint numValidators = providerCount / 10; 
         uint validatorsFound = 0;
         requestList[reqID].numValidationsNeeded = numValidators;
-        for (uint64 i=0; i<numProviders + spaces.length && validatorsFound<numValidators; i++) {
+        for (uint64 i=0; i<providerCount + spaces.length && validatorsFound<numValidators; i++) {
             if (providerList[i].addr == address(0)) {
                 continue;
             }
@@ -276,13 +294,41 @@ contract TaskContract {
     function testTask() public {
         emit TaskAssigned(msg.sender, 1);
     }
+
     function getProvider(uint64 proID) public view returns(Provider memory){
         return providerList[proID];
     }
-    function getProvideCount() public view returns (uint128){
-        return provideCount;
+    function getRequest(uint64 reqID) public view returns (Request memory){
+	    return requestList[reqID];
+    }
+    function getProviderCount() public view returns (uint128){
+        return providerCount;
     }
     function getRequestCount() public view returns (uint128){
         return requestCount;
+    }
+   
+    
+    function listRequests() public view returns(Request[3] memory){
+	    Request[3] memory allRequest;
+	    for (uint64 i = 0; i < 3; i++){
+		    allRequest[i] = getRequest(i);
+	    }
+	    return allRequest;
+    }
+    function listProviders() public view returns(Provider[3] memory){
+        Provider[3] memory allProvider;
+        //Provider memory localPro;
+        //allProvider[0] = getProvider(0);
+        //allProvider[1] = getProvider(1);
+        //allProvider[2] = getProvider(2);
+        //allProvider[0] = getProvider(0);
+        //allProvider[1] = getProvider(1);
+        //NOTE: for loop is not functional here
+        //Must be a bug, return invalid VM opcode error
+        for (uint64 i = 0; i < 3;i++){
+            allProvider[i] = getProvider(i);
+        }
+        return allProvider;
     }
 }

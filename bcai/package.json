@@ -649,11 +649,7 @@
       "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-3.0.4.tgz",
       "version": "3.0.4"
     },
-    "minimist": {
-      "integrity": "sha1-o1AIsg9BOD7sH7kU9M1d95omQoQ=",
-      "resolved": "http://registry.npmjs.org/minimist/-/minimist-1.2.0.tgz",
-      "version": "1.2.0"
-    },
+    "minimist": "^1.2.0",
     "mkdirp": {
       "dependencies": {
         "minimist": {
