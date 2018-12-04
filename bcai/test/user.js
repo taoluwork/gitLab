@@ -19,7 +19,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     //create a local request
     var dataID = 11;
     var target = 90;        //this must be less than workders target limt
-    var time = 90000;       //this must less than worker's time limit
+    var time = 9000000;       //this must less than worker's time limit
     var money = 8000000;      //this must be greater than worker's price
 
     //call request task
