@@ -131,7 +131,7 @@ contract TaskContract {
     // Returns: 0: successfully assigned
     //          1: searched all providers but find no match
     //          2: no available provider right now
-    /*function findRequest(Provider memory prov) private returns (byte){
+    function findRequest(Provider memory prov) private returns (byte){
         if(requestPool.length != 0){
             for (uint128 i = 0; i< requestPool.length; i++){
                 //fetch  request object, may save gas
@@ -159,7 +159,7 @@ contract TaskContract {
             //after for loop and no match
             return '1';
         } else return '2';
-    }*/
+    }
 
 
 
