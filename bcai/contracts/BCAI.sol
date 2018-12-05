@@ -1,27 +1,38 @@
+//version 0.9
+//Author: Taurus, Landry
+//Copyright: tlu4@lsu.edu
+
 pragma solidity ^0.5.0;
 pragma experimental ABIEncoderV2;   //return self-defined type
 
 contract TaskContract {
 
     uint128 public requestCount;                    //total number of requests sent to contract
+    uint128 public pendingCount;                    //totla # of requests pending (after submission before assigned)
     uint128 public providingCount;                  //total number of requests that contract found provider for
-    uint64 public providerCount;                    //number of active providers in the mapping below
-    mapping (uint64 => Provider) public providerList;   //list of known providers. must apply. maps providerID to struct
+    uint64  public providerCount;                    //number of active providers in the mapping below
+    mapping (address => Provider) public providerList;   //list of known providers. must apply. maps providerID to struct
     mapping (address => uint64) public providerID;      //look up providerID using address     NOTE: possible not needed
     //NOTE: addr is the only identifier for provider object.
     //However, providerID could possibly be same between different address.
     //e.g. Tom has Two account with addr_1, addr_2, but he could be assigned an unique providerID.
 
     mapping (uint128 => Request) public requestList;    //mapping requestCount to Request object, requestCount is the unique number used as identifier
-    mapping (address => uint64) public requestID;       //look up requestID using address (user's)  NOTE: single user could have multiply requestID
+    mapping (address => uint128[]) public requestID;      //look up requestID using user address , NOTE: single user could have multiply requestID
+    //for the request, requestID(uint128) is the only identifier.
+    //address is not because multiple request could come from same address
 
-    uint64[] public spaces;                             //Open spaces where providers left. should be filled when new provider comes
+    address[] public providerPool;                   //record the available providers;
+    uint128[] public requestPool;                    //record the pending request;
+    //uint64[] public spaces;                             //Open spaces where providers left. should be filled when new provider comes
     mapping (address => uint256) public balanceList;    //for keeping track of how much money requesters have sent
     
+
     constructor() public {      //sol 5.0 syntax
-        requestCount = 0;
-        providingCount = 0;
+        requestCount = 0;        
         providerCount = 0;
+        providingCount = 0;
+        pendingCount = 0;
     }
 
     struct Request {
@@ -30,28 +41,28 @@ contract TaskContract {
         uint128 reqID;              //requestID is the only identifier for each Request
         uint64  dataID;             //dataID used to fetch the off-chain data
         uint64  time;               //time
-        uint16  accuracy;           //target 0-100
-        uint256 price;              
-        uint64  resultID;
-        uint64  numValidationsNeeded;
-        bool[]  validations;
-        bool    isValid;
-        bool    isCompleted;
+        uint16  accuracy;           //target 0-100.00
+        uint256 price;              //the max amount he can pay
+        uint64  resultID;           //dataID to fetch the result
+        uint64  numValidationsNeeded;   //user defined the validation
+        bool[]  validations;        //multisignature from validations
+        bool    isValid;            //the final flag
+        bytes   status;             //'pending', 'providing', validating, complete
     }
 
     struct Provider {
-        address payable addr;
-        uint64  providedCount;
-        uint64  requestedCount;
-        uint64  maxTime;
-        uint16  maxTarget;
-        uint256 minPrice;
-        bool    available; // Used to determine if provider is already doing something
+        address payable addr;       //providers address
+        uint64  providedCount;      //reputaion-like reference for each provider, future use
+        uint64  requestedCount;     //
+        uint64  maxTime;            //max time
+        uint16  maxTarget;          //max target he need
+        uint256 minPrice;           //lowest price can accept
+        bool    available;          // Used to determine if provider is already doing something
     }
 
-    event TaskAssigned(address provider, uint128 reqID);        // next step: call completeTask
-    event ValidationRequested(address validator, uint128 reqID); // next step: validator calls submitValidation
-    event TaskCompleted(address requestor, uint128 reqID);      // done
+    event TaskAssigned(address provider, uint128 reqID);            // next step: call completeTask
+    event ValidationRequested(address validator, uint128 reqID);    // next step: validator calls submitValidation
+    event TaskCompleted(address requestor, uint128 reqID);          // done
 
 
 
@@ -60,48 +71,45 @@ contract TaskContract {
     // NOTE: does nothing if already a provider - also used to update
     function startProviding(uint64 maxTime, uint16 maxTarget, uint64 minPrice) public {
         // If new provider
-        if (providerList[providerID[msg.sender]].addr != msg.sender) { // address is not on the chain
+        if (providerList[msg.sender].addr == address(0)) { // address is not on the chain
+            //create temp object
             Provider memory prov = Provider(
-		    msg.sender,    //addr 
-		    0,             //prividedCount
-		    0,             //requestedCount
-		    maxTime,       //maxTime
-		    maxTarget,     //maxTarget
-		    minPrice,      //minPrice
-		    true);         //available
-
-            // If there are vacant providerIDs
-            if (spaces.length > 0) {
-                providerID[msg.sender] = pop(); // Pops the most recently vacated from spaces
-            }
-            // Else put them at the end of the list
-            else {
-                providerID[msg.sender] = providerCount;
-            }
-            // These update either way
-            providerList[providerID[msg.sender]] = prov;
-            providerCount++;
+                msg.sender,    //addr 
+                0,             //prividedCount
+                0,             //requestedCount
+                maxTime,       //maxTime
+                maxTarget,     //maxTarget
+                minPrice,      //minPrice
+                true);         //available
+            //update providerList
+            providerList[msg.sender] = prov;
+            //update providerID list
+            providerID[msg.sender] = providerCount;
+            //update Pool
+            providerPool.push(msg.sender);
+            //update count
+            providerCount++;      
         }
         else { // Updating old provider -- address is on the chain
-            providerList[providerID[msg.sender]].maxTime = maxTime;
-            providerList[providerID[msg.sender]].maxTarget = maxTarget;
-            providerList[providerID[msg.sender]].minPrice = minPrice;
-	    providerList[providerID[msg.sender]].available = true;
+            providerList[msg.sender].maxTime = maxTime;
+            providerList[msg.sender].maxTarget = maxTarget;
+            providerList[msg.sender].minPrice = minPrice;
+	        providerList[msg.sender].available = true;
         }
     }
 
     // Treats msg.sender as provider and makes them unavailable for requests
     function stopProviding() public {
         // If the sender is already a valid provider
-        if (providerList[providerID[msg.sender]].addr == msg.sender) {
-            providerList[providerID[msg.sender]].available = false;
-            providerList[providerID[msg.sender]].addr = address(0);
-            // checking that theyre not the last provider to register 
+        if (providerList[msg.sender].addr == msg.sender) {
+            providerList[msg.sender].available = false;
+            providerList[msg.sender].addr = address(0);
+            providerCount--;
+            /*// checking that theyre not the last provider to register 
             if (providerID[msg.sender] != providerCount-1) {
                 // Label ID as vacant
                 spaces.push(providerID[msg.sender]);
-            }
-            providerCount--;
+            }*/         
         }
     }
 
@@ -117,14 +125,7 @@ contract TaskContract {
     //  }
     //}
 
-    // Used to dynamically remove elements from array of open provider spaces. 
-    function pop() private returns(uint64) {
-        if (spaces.length < 1) return 0x0;
-        uint64 value = spaces[spaces.length-1];
-        delete spaces[spaces.length-1];
-        spaces.length--;
-        return value;
-    }
+   
 
 
 
@@ -148,58 +149,69 @@ contract TaskContract {
             1,                      //numValidationsNeeded
             emptyArray,             //sig list
             false,                  //isValid
-            false                   //isCompleted
-            );
+            'pending'               //status
+        );
 
         //copy the mem var into storage
         requestList[requestCount] = req;        //requestCount used as index here, from 0 to +++
-        requestCount++;
-        return assignTask(req);
-	//return true;
+        //update requestPool
+        requestPool.push(requestCount);
+        //update requestID
+        requestID[msg.sender].push(requestCount);
+        //update count
+        requestCount++;     //count already stands for the # of req now.
+        return assignTask();
     }
 
     // Assigning task to one of the available providers. Only called from requestTask (private)
     //function assignTask(uint128 taskID, uint64 dataID, uint16 target, uint64 time, uint256 price) private returns (bool) {
 
+        //could only assign one at a time
+    function assignTask( ) private returns (bool) {
+        //provider availability is checked in pool not in list
+        Request memory req;
+        if (requestPool.length > 0){            //if any un-assgnied exist in pool
+            req = requestList[requestPool[0]];  //get the first item, there should always be one
+            //assign it to the provider pool.
+            for (uint64 i = 0; i < providerPool.length; i++) {
+                // Check if they are active provider, search pool first then list
+                address addr = providerPool[i];
+                if(addr != address(0) && providerList[addr].available == true){
+                    // Check if request conditions meet the providers requirements
+                    if (req.accuracy <= providerList[addr].maxTarget && 
+                            req.time <= providerList[addr].maxTime && 
+                            req.price >= providerList[addr].minPrice) {
+                        
+                        // records how much money the requester sent                
+                        balanceList[req.addr] += req.price; 
+                        
+                        //update request.provider -- assigned
+                        req.provider = providerList[addr].addr;
+                        req.status = 'providing';
+                        requestList[req.reqID] = req; // save to mapping of requests 
+                        providerList[addr].available = false;
+                        //status move from pending to providing
+                        pendingCount--;
+                        providingCount++;
+                        //NOTE: assign existing task should not increase the # of requestCount
 
-    function assignTask(Request memory req) private returns (bool) {
-        for (uint64 i = 0; i<providerCount + spaces.length; i++) {
-            // Check if they are active provider
-            if (providerList[i].addr == address(0)) {
-                continue;
-                
+                        //EVENT
+                        emit TaskAssigned(req.provider, req.reqID); // Let provider listen for this event to see he was selected
+                        return true;
+                    }
+                }
             }
-            // Check if request conditions meet the providers requirements
-            else if (req.accuracy <= providerList[i].maxTarget && 
-                    req.time <= providerList[i].maxTime && 
-                    req.price >= providerList[i].minPrice && 
-                    providerList[i].available) {
-                
-                // records how much money the requester sent                
-                balanceList[req.addr] += req.price; 
-                
-                //update request
-                req.provider = providerList[i].addr;
-                requestList[req.reqID] = req; // save to mapping of requests 
-                //requestCount++;       //done in RequestTask function
-                //NOTE: assign existing task should not increase the # of requestCount
-
-                providerList[i].available = false;
-                
-
-                //EVENT
-                emit TaskAssigned(req.provider, req.reqID); // Let provider listen for this event to see he was selected
-                return true;
-            }
+            // No provider was found matching the criteria -- request failed
+            req.addr.transfer(req.price); // Returns the ether to the sender
+            return false;
         }
-        // No provider was found matching the criteria -- request failed
-        req.addr.transfer(req.price); // Returns the ether to the sender
-        return false;
+        else        //requestPool.length == 0
+            return false;
     }
 
 
 
-
+/*
 
     // Provider will call this when they are done and the data is available.
     // This will invoke the validation stage
@@ -215,7 +227,7 @@ contract TaskContract {
             return false;
         }
     }
-
+/*
     // Called by completeTask before finalizing stuff. Contract checks with validators
     // Returns false if there wasnt enough free providers to send out the required number of validation requests
     function validateTask(uint128 reqID) private returns (bool) {
@@ -279,24 +291,49 @@ contract TaskContract {
         emit TaskCompleted(requestList[reqID].addr, reqID);
         return requestList[reqID].isValid;
     }
+*/
+/////////////////////////////////////////////////////////////////////
+ // Used to dynamically remove elements from array of open provider spaces. 
+    // Using a swap and delete method, search for the desired addr throughout the whole array
+    // delete the desired and swap the whole with last element
+    function providerPop(address addr) private returns(uint64) {
+        uint64 returnValue = 0;
+        for(uint64 i = 0; i < providerPool.length; i++){
+            if (providerPool[i] == addr) {
+                returnValue = i;    //return the index (location)
+                //swap
+                providerPool[i] = providerPool[providerPool.length-1];
+                delete providerPool[providerPool.length-1];
+                providerPool.length--;
+                continue;
+            }
+        }
+        return returnValue; //return 0 mean failed to pop
+    }
 
-
+    function requestPop(uint128 reqID) private returns(uint64) {
+        uint64 returnValue = 0;
+        for(uint64 i = 0; i < requestPool.length; i++){
+            if (requestPool[i] == reqID) {
+                returnValue = i;        //return index
+                //swap
+                requestPool[i] = requestPool[requestPool.length-1];
+                delete requestPool[requestPool.length-1];
+                requestPool.length--;
+                continue;
+            }
+        }
+        return returnValue; //return 0 mean failed to pop
+    }
 
 
     /////////////////////////////////////////////////////////////////////////////////
     //some helpers defined here
-    function getProviderAddr(uint64 proID) public view returns (address) {
-        return providerList[proID].addr;
-    }
-    function getProviderID(address inAddr) public view returns(uint64){
-        return providerID[inAddr];
-    }
     function testTask() public {
         emit TaskAssigned(msg.sender, 1);
     }
-
-    function getProvider(uint64 proID) public view returns(Provider memory){
-        return providerList[proID];
+    function getProvider(address addr) public view returns(Provider memory){
+        return providerList[addr];
     }
     function getRequest(uint64 reqID) public view returns (Request memory){
 	    return requestList[reqID];
@@ -307,8 +344,15 @@ contract TaskContract {
     function getRequestCount() public view returns (uint128){
         return requestCount;
     }
-   
-    
+    function getProviderPool() public view returns (address[] memory){
+        return providerPool;
+    }
+    function getRequestPool() public view returns (uint128[] memory){
+        return requestPool;
+    }
+    function getBalance(address addr) public view returns (uint256){
+        return balanceList[addr];
+    }
     function listRequests() public view returns(Request[3] memory){
 	    Request[3] memory allRequest;
 	    for (uint64 i = 0; i < 3; i++){
@@ -316,19 +360,25 @@ contract TaskContract {
 	    }
 	    return allRequest;
     }
-    function listProviders() public view returns(Provider[3] memory){
-        Provider[3] memory allProvider;
-        //Provider memory localPro;
-        //allProvider[0] = getProvider(0);
-        //allProvider[1] = getProvider(1);
-        //allProvider[2] = getProvider(2);
-        //allProvider[0] = getProvider(0);
-        //allProvider[1] = getProvider(1);
-        //NOTE: for loop is not functional here
-        //Must be a bug, return invalid VM opcode error
-        for (uint64 i = 0; i < 3;i++){
-            allProvider[i] = getProvider(i);
+    function listProviders() public view returns(Provider[5] memory){
+        Provider[5] memory allProvider;
+        address addr;
+        for (uint64 i = 0; i < providerPool.length;i++){
+            if(providerPool.length > 0) {
+                addr = providerPool[i];     
+            }else {
+                addr = address(0);
+            }
+            allProvider[i] = getProvider(addr);
         }
         return allProvider;
     }
+    /*function listTestProviders() public view returns(Provider[3] memory){
+        Provider[3] memory allProvider;
+        for (uint64 i = 0; i < 3;i++){
+            allProvider[i] = getTestProvider(i);
+        }
+        return allProvider;
+    }*/
+
 }
