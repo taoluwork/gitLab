@@ -223,7 +223,7 @@ contract TaskContract {
                         
                         //update request.provider -- assigned
                         req.provider = providerList[addr].addr;
-                        req.status = 'providing';
+                        req.status = '1';
                         requestList[req.reqID] = req; // save to mapping of requests 
                         providerList[addr].available = false;
                         //status move from pending to providing
