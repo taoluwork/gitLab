@@ -4,6 +4,10 @@ var argv = require('minimist')(process.argv.slice(2));
 //node worker.js -u 2 -b 3
 //{ _: [], u: 2, b: 3 }
 //console.log(argv)
+if(argv['help']) {
+	console.log("Arguments: -a # : accounts[#]");
+	process.exit();
+}
 
 //create web3 instance
 var Web3 = require('web3');
@@ -23,13 +27,13 @@ var addr = TaskContract.networks[512].address;
 const contract = new web3.eth.Contract(abi, addr);
 web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     //init account
-    if(argv['u'] == undefined) {
+    if(argv['a'] == undefined) {
         var workerAccount = accounts[8];
         console.log('Using default account:9', accounts[9]);
         console.log('You can infer specific account by passing -u #');
     }
     else {
-        workerAccount = accounts[argv['u']];
+        workerAccount = accounts[argv['a']];
         console.log('Using account:',argv['u'], accounts[argv['u']]);
     }
     
@@ -45,14 +49,17 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         minPrice)
         .send({from: workerAccount, gas: 800000})
     .then(function(ret){
-        console.log("start providing: Block = ", ret.blockNumber);
-        contract.methods.getProviderCount().call().then(function(ret){
+        if(argv['debug']) console.log(ret);
+	    else console.log("start providing: Block = ", ret.blockNumber);
+        
+	contract.methods.getProviderCount().call().then(function(ret){
             console.log("Provider count = ",ret);
         })
-
-
-
     })
+    
+    contract.methods.getProvider(workerAccount).call().then(function(ret){
+	    console.log(ret);
+	   });
 
     console.log("start listening...");
 
@@ -76,7 +83,8 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
 	    toBlock: 'latest'
     }, function(err, eve){
 	    if(err!= null) console.log("ERROR!",err);
-	    console.log("Task Assigned to Provider", eve.returnValues);
+	    if(argv['debug']) console.log(eve);
+	    else console.log("Task Assigned to Provider", eve.returnValues);
     })
 
 

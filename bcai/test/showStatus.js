@@ -11,40 +11,27 @@ function init() {
 
 	MyContract = require('../build/contracts/TaskContract.json');
 	myContract = new web3.eth.Contract(MyContract.abi, MyContract.networks[512].address);
-
-	testAccounts = web3.eth.getAccounts().then(res=>
-		//testAccounts = web3.eth.getAccounts(function(err, res){
-		testAccounts = res
-	)
-	console.log("fesh: ",testAccounts);
-	web3.eth.getAccounts().then(function(accounts){
-		//print accounts List
-		//console.log("------------------------------------->Current Accounts:");
-		//console.log(accounts);
-		testAccounts = new accounts;
-
-		console.log(testAccounts);
-		//return accounts;
-	})
 }
 
-////////////////////////////////////////// main
-testAccounts = init()
-//console.log(web3.eth)
-showCurrentStatus(testAccounts);
+///////////////////////////////////////////////main
+init();
+web3.eth.getAccounts().then(function(testAccounts){
 
-web3.eth.subscribe('newBlockHeaders', function(err, result){
-	if(err) console.log("ERRRR", err, result);
-	showCurrentStatus();
+//	console.log(testAccounts);
+	showCurrentStatus(testAccounts);
+
+	web3.eth.subscribe('newBlockHeaders', function(err, result){
+		if(err) console.log("ERRRR", err, result);
+		showCurrentStatus();
+	})
 })
-
 ////////////////////////////////////////////////
 
 
-function showCurrentStatus(testAcounts){
+function showCurrentStatus(testAccounts){
 		//print accounts List
 		console.log("------------------------------------->Current Accounts:");
-		console.log(testAccounts[2]);
+		console.log(testAccounts);
 
 		//get # of providers and print
 		showProviders();
