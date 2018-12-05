@@ -47,7 +47,7 @@ contract TaskContract {
         uint64  numValidationsNeeded;   //user defined the validation
         bool[]  validations;        //multisignature from validations
         bool    isValid;            //the final flag
-        bytes   status;             //'pending', 'providing', validating, complete
+        byte   status;              //0: 'pending', 1:'providing', 2: validating, 3: complete
     }
 
     struct Provider {
@@ -81,11 +81,11 @@ contract TaskContract {
                 maxTarget,     //maxTarget
                 minPrice,      //minPrice
                 true);         //available
-            //update providerList
+            //add new to providerList
             providerList[msg.sender] = prov;
-            //update providerID list
+            //add to providerID list
             providerID[msg.sender] = providerCount;
-            //update Pool
+            //add to Pool
             providerPool.push(msg.sender);
             //update count
             providerCount++;      
@@ -125,7 +125,41 @@ contract TaskContract {
     //  }
     //}
 
-   
+
+    // Search in the requestPool, find a job for current provider. Triggered by startProviding
+    // Return true if a match or false if not.
+    // Returns: 0: successfully assigned
+    //          1: searched all providers but find no match
+    //          2: no available provider right now
+    function findRequest(Provider memory prov) private returns (byte){
+        if(requestPool.length != 0){
+            for (uint128 i = 0; i< requestPool.length; i++){
+                //fetch  request object, may save gas
+                Request memory req = requestList[requestPool[i]];
+                if( req.time < prov.maxTime &&
+                    req.accuracy < prov.maxTarget &&
+                    req.price > prov.minPrice){
+                        //meet the requirement, assign the task
+                        //update task
+                        req.provider = prov.addr;
+                        req.status = '1';
+                        requestList[requestPool[i]] = req;  //write back to storage
+                        emit TaskAssigned(req.provider, req.reqID);
+                        //update pools
+                        requestPop(req.reqID);
+                        providerPop(prov.addr); 
+                        //update the counts
+                        pendingCount--;
+                        providingCount++;
+                        return '0';
+                    
+                }
+                
+            }
+            //after for loop and no match
+            return '1';
+        } else return '2';
+    }
 
 
 
@@ -149,25 +183,27 @@ contract TaskContract {
             1,                      //numValidationsNeeded
             emptyArray,             //sig list
             false,                  //isValid
-            'pending'               //status
+            0                       //status  0-3 0: pending
         );
 
         //copy the mem var into storage
         requestList[requestCount] = req;        //requestCount used as index here, from 0 to +++
-        //update requestPool
+        //add new to requestPool
         requestPool.push(requestCount);
         //update requestID
         requestID[msg.sender].push(requestCount);
         //update count
         requestCount++;     //count already stands for the # of req now.
-        return assignTask();
+        pendingCount++;
+        return assignTask(req);
     }
 
-    // Assigning task to one of the available providers. Only called from requestTask (private)
-    //function assignTask(uint128 taskID, uint64 dataID, uint16 target, uint64 time, uint256 price) private returns (bool) {
-
-        //could only assign one at a time
-    function assignTask( ) private returns (bool) {
+    // Assigning one task to one of the available providers. Only called from requestTask (private)
+    // Search in the providerPool, if no match in the end, return false
+    //could only assign one task at a time
+    //auto sel the first searching result for now, no comparation between multiple availability.
+    //TODO: need ot add preference next patch
+    function assignTask(Request memory req) private returns (bool) {
         //provider availability is checked in pool not in list
         Request memory req;
         if (requestPool.length > 0){            //if any un-assgnied exist in pool
