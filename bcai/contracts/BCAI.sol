@@ -132,7 +132,8 @@ contract TaskContract {
     //          1: searched all providers but find no match
     //          2: no available provider right now
     function findRequest(Provider memory prov) private returns (byte){
-        if(requestPool.length != 0){
+        if(requestPool.length == 0) return '2';
+        else {
             for (uint128 i = 0; i< requestPool.length; i++){
                 //fetch  request object, may save gas
                 Request memory req = requestList[requestPool[i]];
@@ -158,7 +159,6 @@ contract TaskContract {
             }
             //after for loop and no match
             return '1';
-        } else return '2';
     }
 
 
