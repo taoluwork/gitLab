@@ -1,11 +1,33 @@
+////////////////////////////////////////////////////////////////
+//user's js script
+//version: 0.9
+//author: taurus tlu4@lsu.edu
+//use: $ node user.js -a 4 --debug --help
+/////////////////////////////////////////////////////////////////
+
+//edit parameter here:
+var dataID = 11;
+var target = 90;        //this must be less than workders target limt
+var time = 90000;       //this must less than worker's time limit
+var money = 800000;      //this must be greater than worker's price
+////////////////////////////////////////////////////////////////////
+
+
 //get arguments from console
 var argv = require('minimist')(process.argv.slice(2));
 //argument example:
 //node worker.js -u 2 -b 3
 //{ _: [], u: 2, b: 3 }
 //console.log(argv['u'])
+if(argv['help']) {
+    console.log("Arguments: -a # : accounts[#]");
+    console.log(" -a list : list all accounts address");
+    console.log(" --debug : enable more details");
+    //console.log(" --stop :  stop the current provider")
+	process.exit();
+}
 
-
+////////////////////////////////////////////////////////////////////////
 //create web3 instance
 var Web3 = require('web3');
 //use websocket provider here, http is deprecated.
@@ -21,53 +43,49 @@ var addr = TaskContract.networks[512].address;
 //note: networkID can be given to ganache by
 
 //ganache-cli -i or --networkId 512
-const contract = new web3.eth.Contract(abi, addr);
+const myContract = new web3.eth.Contract(abi, addr);
 web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
-    if(argv['u'] == undefined) {
-        var workerAccount = accounts[1];
-        console.log('Using default account:1', accounts[1]);
-        console.log('You can infer specific account by passing -u #');
+    //list all accounts
+    if (argv['a'] == 'list'){
+        console.log(accounts);
+        process.exit();
+    }
+    else if(argv['a'] == undefined) {
+        var myAccount = accounts[0];
+        console.log('Using default account:0', accounts[0]);
+        console.log('You can infer specific account by passing -a #');
     }
     else {
-        workerAccount = accounts[argv['u']];
-        console.log('Using account:',argv['u'], accounts[argv['u']]);
+        myAccount = accounts[argv['a']];
+        console.log('Using account:',argv['a'], accounts[argv['a']]);
     }
-    
-    
-    
-    var userAccount = accounts[0];
-
-    //create a local request
-    var dataID = 11;
-    var target = 90;        //this must be less than workders target limt
-    var time = 90000;       //this must less than worker's time limit
-    var money = 800000;      //this must be greater than worker's price
 
     //call request task
-    contract.methods.requestTask(
+    myContract.methods.requestTask(
         dataID,
         target,
         time
-    ).send({from: userAccount, gas: 80000000, value: money})
+    ).send({from: myAccount, gas: 80000000, value: money})
     .then(function(ret){
         console.log("Request Submitted! Block: ",ret.blockNumber);
 	    //console.log("return = ", ret.returnValue);
-        
-        contract.methods.getRequestCount().call().then(function(ret){
+    }).then(function(){
+        myContract.methods.getRequestCount().call().then(function(ret){
             console.log("Request Count = ", ret);
-            })
-            
+        })          
     }).catch(function(err){
         if(err != null) console.log("ERROR", err);
     })
+
+
     
 
     //call taskAssign  -- this is automatically done by contract
 
 
     //now catch the event TaskAssigned
-    //contract.events.TaskAssigned({
-    contract.once('TaskAssigned',{
+    //myContract.events.TaskAssigned({
+    myContract.once('TaskAssigned',{
         fromBlock: 0,
 	    toBlock: 'latest'
     }, function(err, eve){
