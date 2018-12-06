@@ -472,7 +472,7 @@ contract TaskContract {
     }
     function listRequests() public view returns(Request[50] memory){
 	    Request[50] memory allRequest;
-	    for (uint64 i = 0; i < requestPool.length; i++){
+	    for (uint64 i = 0; i < requestCount; i++){
 		    allRequest[i] = getRequest(i);
 	    }
 	    return allRequest;

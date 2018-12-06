@@ -100,6 +100,7 @@ function showRequest(){
 						myContract.methods.listRequests().call().then(function(reqList){
 							console.log("-----------------------------------------------------");
 							if(count > 0) console.log("List all the Requests : ")
+							//NOTE: difference request list all history
 							for(var i = 0;i < totalCount;i++){
 								if(argv['debug']){
 									console.log(reqList[i]);
@@ -136,7 +137,8 @@ function showProviders(){
 						myContract.methods.listProviders().call().then(function(proList){
 							console.log("-----------------------------------------------------");
 							if(count > 0) console.log("List all the Providers: ")
-							for (var i = 0;i < totalCount ;i++){
+							//NOTE: difference here: provider only list in the pool
+							for (var i = 0;i < count ;i++){
 								//or print in full
 								if(argv['debug']){
 									console.log(proList[i]);
