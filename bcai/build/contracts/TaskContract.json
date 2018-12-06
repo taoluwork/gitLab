@@ -25154,8 +25154,8 @@
     "512": {
       "events": {},
       "links": {},
-      "address": "0xD2150018B807b89918290E4E571F6f9a9F17BD8f",
-      "transactionHash": "0x372dce982f0ad598028326842a969001158a176a52d1413a727e11d6c89a15b4"
+      "address": "0xE324C05BF5F2123c1bFbD69aEa91455f12Efa648",
+      "transactionHash": "0xa0f28160fc86f7f29d8a0403880145696621b5fbc1ef4aef50bbbb847dd331aa"
     },
     "1526485329989": {
       "events": {},
@@ -25213,7 +25213,7 @@
     }
   },
   "schemaVersion": "3.0.0-beta.2",
-  "updatedAt": "2018-12-05T23:33:25.831Z",
+  "updatedAt": "2018-12-06T01:39:43.741Z",
   "devdoc": {
     "methods": {}
   },
