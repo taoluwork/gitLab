@@ -83,7 +83,7 @@ function showCurrentStatus(myAccounts){
 
 function showRequest(){
 	myContract.methods.getRequestPoolSize().call().then(function(count){
-		console.log("Now total Requests: ", count, "<<========####");
+		console.log("Now total Requests:  ", count, "<<=======####");
 		myContract.methods.getRequestCount().call().then(function(totalCount){
 			console.log("Total Request since start: ", totalCount);
 		}).then(function(){
