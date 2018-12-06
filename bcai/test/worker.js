@@ -21,7 +21,9 @@ var argv = require('minimist')(process.argv.slice(2));
 if(argv['help']) {
     console.log("Arguments: -a # : accounts[#]");
     console.log(" --debug : enable more details");
-    console.log(" --stop :  stop the current provider")
+    console.log(" --stop  : stop the current provider");
+    console.log(" --recpt : transaction receipt");
+    console.log(" --nl    : no listening for events (default will do)")
 	process.exit();
 }
 
@@ -62,28 +64,29 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     
 
     //call startProviding
-    if(!argv['stop']){
+    if(!argv['stop']){      //start
         myContract.methods.startProviding(maxTime, maxTarget, minPrice)
         .send({from: myAccount, gas: 200000})
         .then(function(ret){
-            console.log("start providing: Block = ", ret.blockNumber, "<<==============================############");
-                if(argv['debug']) console.log(ret);
-            console.log("start listening...");
+            console.log("-----------------------------------------------------------------")
+            console.log("start providing: Block = ", ret.blockNumber);
+            if(argv['recpt']) console.log("Receipt:    <=====###### ", ret);
         }).then(function(){
             //show providerCount
-            console.log("now counting");
             myContract.methods.getProviderCount().call().then(function(ret){
-                console.log("Provider count = ",ret, "<<==============================############");
+                console.log("Provider count = ",ret);
             })
         }).then(function(){
             //get Provider pool     
             myContract.methods.getProviderPool().call().then(function(ret){
+                console.log("-----------------------------------------------------------------");
                 console.log("Provider Pool: ");
                 console.log(ret);   
             })
         }).then(function(prov){
             if(argv['debug']){
                 myContract.methods.getProvider(myAccount).call().then(function(ret){
+                    console.log("-----------------------------------------------------------------");
                     console.log(ret);
                 });
             }
@@ -143,6 +146,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
 	    if(argv['debug']) console.log(eve);
 	    else console.log("Task Assigned to Provider", eve.returnValues);
     })
+    if(argv['nl']) process.exit();
 })
 
 //console.log(contract.address);
