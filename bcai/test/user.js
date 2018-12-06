@@ -73,10 +73,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
             //console.log("return = ", ret.returnValue);
             if(argv['recpt'] || argv['debug']) console.log("Receipt:    <=====######", ret);
         }).then(function(){
-            showRequestInfo();
-            myContract.methods.getRequestCount().call().then(function(ret){
-                console.log("Request Count = ", ret);
-            })          
+            showRequestInfo();          
         })
     } else {
         //cancel TOD:
@@ -110,23 +107,25 @@ function showRequestInfo(){
     myContract.methods.getRequestPoolSize().call().then(function(ret){
         console.log("-----------------------------------------------------------------");
         console.log("Request count = ",ret);
-        reqID = ret;
     })
     .then(function(){
     //get Provider pool     
         myContract.methods.getRequestPool().call().then(function(ret){
             console.log("-----------------------------------------------------------------");
             console.log("Request Pool: ");
-            console.log(ret);   
+            console.log(ret);
+               
         })
     }).then(function(){
-        //print provider detals (object)
-        if(argv['obj'] || argv['debug']){
-            myContract.methods.getRequest(reqID).call().then(function(ret){
-                console.log("-----------------------------------------------------------------");
-                console.log(ret);
-            });
-        }
+        myContract.methods.getRequestCount().call().then(function(reqCount){
+             //print provider detals (object)
+            if(argv['obj'] || argv['debug']){
+                myContract.methods.getRequest(reqCount-1).call().then(function(ret){
+                    console.log("-----------------------------------------------------------------");
+                    console.log(ret);
+                });
+            }
+        })      
     }).then(function(){
         if(argv['nl']) process.exit();
     })

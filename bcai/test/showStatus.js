@@ -99,7 +99,7 @@ function showRequest(){
 					if(argv['list'] || argv['debug']){
 						myContract.methods.listRequests().call().then(function(reqList){
 							console.log("-----------------------------------------------------");
-							if(count > 0) console.log("List all the Requests : ")
+							if(totalCount > 0) console.log("List all the Requests : ")
 							//NOTE: difference request list all history
 							for(var i = 0;i < totalCount;i++){
 								if(argv['debug']){
