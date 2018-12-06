@@ -90,6 +90,8 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
                     console.log(ret);
                 });
             }
+        }).then(function(){
+            if(argv['nl']) process.exit();
         })
     } else {//stop 
         myContract.methods.stopProviding()
@@ -106,8 +108,12 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
                 console.log("Provider Pool: ")
                 console.log(ret)
             })
+        }).then(function(){
+            if(argv['nl']) process.exit();
         })
     }
+    
+    
     /*//show providerCount
     myContract.methods.getProviderCount().call().then(function(ret){
         console.log("Provider count = ",ret);
@@ -135,7 +141,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         console.log(eventList);
     })*/
 
-    if(argv['nl']) process.exit();
+    
     //waiting to be triggered:
     //TODO: once or subscribe!
     myContract.once('TaskAssigned',{
