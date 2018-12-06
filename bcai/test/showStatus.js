@@ -97,22 +97,22 @@ function showRequest(){
 				})			
 				.then(function(){
 					if(argv['list'] || argv['debug']){
-					myContract.methods.listRequests().call().then(function(reqList){
-						console.log("-----------------------------------------------------");
-						if(count >0) console.log("List all the Requests : ")
-						for(var i = 0;i < count;i++){
-							if(argv['debug']){
-								console.log(reqList[i]);
-							} else {
-								//simple print:
-								if(reqList[i]['addr'] != 0){
-									console.log("reqID = ", reqList[i]['reqID']);
-									console.log("addr = ", reqList[i]['addr']);
-									console.log("provider = ", reqList[i]['provider']);							
+						myContract.methods.listRequests().call().then(function(reqList){
+							console.log("-----------------------------------------------------");
+							if(count >0) console.log("List all the Requests : ")
+							for(var i = 0;i < totalCount;i++){
+								if(argv['debug']){
+									console.log(reqList[i]);
+								} else {
+									//simple print:
+									if(reqList[i]['addr'] != 0){
+										console.log("reqID = ", reqList[i]['reqID']);
+										console.log("addr = ", reqList[i]['addr']);
+										console.log("provider = ", reqList[i]['provider']);							
+									}
 								}
 							}
-						}
-					})
+						})
 					}
 				})
 			}
@@ -133,23 +133,23 @@ function showProviders(){
 					console.log(res);
 				}).then(function(){ 
 					if(argv['list'] || argv['debug']){	
-					myContract.methods.listProviders().call().then(function(proList){
-						console.log("-----------------------------------------------------");
-						if(count >0) console.log("List all the Providers: ")
-						for (var i = 0;i < count;i++){
-							//or print in full
-							if(argv['debug']){
-								console.log(proList[i]);
-							} else{
-								//simple print:
-								if(proList[i]['addr'] != 0){
-									console.log("ID = ", proList[i]['providedCount']);
-									console.log("addr = ", proList[i]['addr']);
-									console.log("available = ", proList[i]['available']);
+						myContract.methods.listProviders().call().then(function(proList){
+							console.log("-----------------------------------------------------");
+							if(count >0) console.log("List all the Providers: ")
+							for (var i = 0;i < totalCount;i++){
+								//or print in full
+								if(argv['debug']){
+									console.log(proList[i]);
+								} else{
+									//simple print:
+									if(proList[i]['addr'] != 0){
+										console.log("ID = ", proList[i]['providedCount']);
+										console.log("addr = ", proList[i]['addr']);
+										console.log("available = ", proList[i]['available']);
+									}
 								}
-							}
-						}			
-					})
+							}			
+						})
 					}
 				})
 			}	

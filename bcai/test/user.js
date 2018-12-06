@@ -71,7 +71,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
             console.log("-----------------------------------------------------------------")
             console.log("Request Submitted! Block: ",ret.blockNumber);
             //console.log("return = ", ret.returnValue);
-            if(argv['recpt'] || argv['debug']) console.log("Receipt:    <=====###### ", ret);
+            if(argv['recpt'] || argv['debug']) console.log("Receipt:    <=====######", ret);
         }).then(function(){
             showRequestInfo();
             myContract.methods.getRequestCount().call().then(function(ret){
