@@ -441,7 +441,7 @@ contract TaskContract {
     /////////////////////////////////////////////////////////////////////////////////
     //some helpers defined here
     function testTask() public {
-        emit TaskAssigned(msg.sender, 1);
+        emit TaskAssigned(msg.sender, 11, 22);
     }
     function getProvider(address addr) public view returns(Provider memory){
         return providerList[addr];
