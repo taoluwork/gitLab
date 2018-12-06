@@ -135,7 +135,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         console.log(eventList);
     })*/
 
-
+    if(argv['nl']) process.exit();
     //waiting to be triggered:
     //TODO: once or subscribe!
     myContract.once('TaskAssigned',{
@@ -146,7 +146,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
 	    if(argv['debug']) console.log(eve);
 	    else console.log("Task Assigned to Provider", eve.returnValues);
     })
-    if(argv['nl']) process.exit();
+    
 })
 
 //console.log(contract.address);
