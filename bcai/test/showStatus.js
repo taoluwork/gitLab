@@ -88,7 +88,7 @@ function showRequest(){
 		console.log("Now active Requests:  ", count, "<<=======####");
 		myContract.methods.getRequestCount().call().then(function(totalCount){
 			console.log("Total Request since start: ", totalCount);
-		}).then(function(){
+		//}).then(function(){
 			if(argv['pool'] || argv['debug'] || argv['list']){
 				myContract.methods.getRequestPool().call().then(function(res){
 					console.log("-----------------------------------------------------");
@@ -99,7 +99,7 @@ function showRequest(){
 					if(argv['list'] || argv['debug']){
 						myContract.methods.listRequests().call().then(function(reqList){
 							console.log("-----------------------------------------------------");
-							if(count >0) console.log("List all the Requests : ")
+							if(count > 0) console.log("List all the Requests : ")
 							for(var i = 0;i < totalCount;i++){
 								if(argv['debug']){
 									console.log(reqList[i]);
@@ -125,7 +125,7 @@ function showProviders(){
 		console.log("Now active Providers: ",count, "<<=======####");
 		myContract.methods.getProviderCount().call().then(function(totalCount){
 			console.log("Total provider since start: ", totalCount);
-		}).then(function(){
+		//}).then(function(){
 			if(argv['pool'] || argv['debug'] || argv['list']){
 				myContract.methods.getProviderPool().call().then(function(res){
 					console.log("-----------------------------------------------------");
@@ -135,8 +135,8 @@ function showProviders(){
 					if(argv['list'] || argv['debug']){	
 						myContract.methods.listProviders().call().then(function(proList){
 							console.log("-----------------------------------------------------");
-							if(count >0) console.log("List all the Providers: ")
-							for (var i = 0;i < totalCount;i++){
+							if(count > 0) console.log("List all the Providers: ")
+							for (var i = 0;i < totalCount ;i++){
 								//or print in full
 								if(argv['debug']){
 									console.log(proList[i]);
