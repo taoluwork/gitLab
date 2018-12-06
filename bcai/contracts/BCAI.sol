@@ -60,7 +60,7 @@ contract TaskContract {
         bool    available;          // Used to determine if provider is already doing something
     }
 
-    event TaskAssigned          (address provider, uint128 reqID);     // next step: call completeTask
+    event TaskAssigned          (address providerAddr, uint128 providerID, uint128 reqID);     // next step: call completeTask
     event ValidationRequested   (address validator, uint128 reqID);    // next step: validator calls submitValidation
     event TaskCompleted         (address requestor, uint128 reqID);    // done
 
@@ -194,7 +194,7 @@ contract TaskContract {
                         //status move from pending to providing
                         pendingCount--;
                         providingCount++;
-                        emit TaskAssigned(addr, reqID);
+                        emit TaskAssigned(addr, providerID[addr], reqID);
                         return '0';                   
                 }                
             }
@@ -309,7 +309,7 @@ contract TaskContract {
                         //NOTE: assign existing task should not increase the # of requestCount
 
                         //EVENT
-                        emit TaskAssigned(addr, reqID); // Let provider listen for this event to see he was selected
+                        emit TaskAssigned(addr, providerID[addr], reqID); // Let provider listen for this event to see he was selected
                         return '0';
                     }
                 }
