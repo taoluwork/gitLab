@@ -14,8 +14,8 @@ var argv = require('minimist')(process.argv.slice(2));
 if(argv['help']) {
     //console.log("Arguments: -a # : accounts[#]");
     console.log(" --acc   : list all accounts address / -a list");
-	console.log(" --debug : show all debug details");
-	console.log(" --list  : list all the object Request and Provider");
+	console.log(" --debug : show all debug details, including object details");
+	console.log(" --list  : list minimum object Request and Provider");
 	console.log(" --pool  : show only minimum pool info");
     //console.log(" --stop :  stop the current provider")
 	process.exit();
@@ -89,7 +89,7 @@ function showRequest(){
 		myContract.methods.getRequestCount().call().then(function(totalCount){
 			console.log("Total Request since start: ", totalCount);
 		}).then(function(){
-			if(argv['pool'] || argv['debug']){
+			if(argv['pool'] || argv['debug'] || argv['list']){
 				myContract.methods.getRequestPool().call().then(function(res){
 					console.log("-----------------------------------------------------");
 					console.log("Active request pool: ");
@@ -126,7 +126,7 @@ function showProviders(){
 		myContract.methods.getProviderCount().call().then(function(totalCount){
 			console.log("Total provider since start: ", totalCount);
 		}).then(function(){
-			if(argv['pool'] || argv['debug']){
+			if(argv['pool'] || argv['debug'] || argv['list']){
 				myContract.methods.getProviderPool().call().then(function(res){
 					console.log("-----------------------------------------------------");
 					console.log("Active provider pool: ");
