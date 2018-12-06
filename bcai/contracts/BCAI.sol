@@ -100,7 +100,7 @@ contract TaskContract {
 
     // Function called to become a provider of tasks for anyone requesting. 
     // NOTE: does nothing if already a provider - also used to update
-    function startProviding(uint64 maxTime, uint16 maxTarget, uint64 minPrice) public returns (bool) {
+    function startProviding(uint64 maxTime, uint16 maxTarget, uint64 minPrice) public returns (byte) {
         //NOTE: avoid using local memory copy and write back to providerList
         // modify it directly here will save gas cost
         // If new provider,
@@ -129,6 +129,7 @@ contract TaskContract {
             providerList[msg.sender].minPrice = minPrice;
 	        providerList[msg.sender].available = true;
         }
+        return assignProvider(msg.sender);
     }
 
     // Treats msg.sender as provider and makes them unavailable for requests
@@ -161,27 +162,36 @@ contract TaskContract {
     // Returns: 0: successfully assigned
     //          1: searched all providers but find no match
     //          2: no available provider right now
-    function findRequest(Provider memory prov) private returns (byte){
+    //          3: failure during poping pool
+    function assignProvider(address payable addr) private returns (byte){
         if(requestPool.length == 0) return '2';
         else {
+            //search throught the requestPool
             for (uint128 i = 0; i< requestPool.length; i++){
-                //fetch  request object, may save gas
-                Request memory req = requestList[requestPool[i]];
-                if( req.time < prov.maxTime &&
-                    req.target < prov.maxTarget &&
-                    req.price > prov.minPrice){
+                //save the re-usable reqID , may save gas
+                uint128 reqID = requestPool[i];
+                if( requestList[reqID].time < providerList[addr].maxTime &&
+                    requestList[reqID].target < providerList[addr].maxTarget &&
+                    requestList[reqID].price > providerList[addr].minPrice){
                         //meet the requirement, assign the task
-                        //update task
-                        req.provider = prov.addr;
-                        req.status = '1';
-                        requestList[requestPool[i]] = req;  //write back to storage
-                        emit TaskAssigned(req.provider, req.reqID);
-                        //update pools
-                        requestPop(req.reqID);
-                        providerPop(prov.addr); 
-                        //update the counts
+                        //update provider
+                        providerList[addr].available = false;
+                        bool isPopped = providerPop(addr);
+                        if(!isPopped) return '3';
+
+                        //update request
+                        requestList[reqID].provider = addr;
+                        requestList[reqID].status = '1';    //providing
+                        isPopped = requestPop(reqID);
+                        if(!isPopped) return '3';
+
+                        //update balanceList            addr here is requester's
+                        balanceList[requestList[reqID].addr] += requestList[reqID].price; 
+                                               
+                        //status move from pending to providing
                         pendingCount--;
                         providingCount++;
+                        emit TaskAssigned(addr, reqID);
                         return '0';
                     
                 }
@@ -261,19 +271,23 @@ contract TaskContract {
     //could only assign one task at a time
     //auto sel the first searching result for now, no comparation between multiple availability.
     //TODO: need ot add preference next patch
+    // Returns: 0: successfully assigned
+    //          1: searched all providers but find no match
+    //          2: no available provider right now
+    //          3: failure during poping pool
     function assignTask(uint128 reqID) private returns (byte) {
         //provider availability is checked in pool not in list
-        if (providerPool.length > 0){            //if any provider in pool
-            Request memory req = requestList[reqID];
-            //assign it to the provider pool.
+        if (providerPool.length == 0)   return '2';
+        else {            //if any provider in pool
             for (uint64 i = 0; i < providerPool.length; i++) {
-                // Check if they are active provider, search pool first then list
+                // save the provider's addr, reusable and save gas cost
                 address payable addr  = providerPool[i];
                 if(addr != address(0) && providerList[addr].available == true){
                     // Check if request conditions meet the providers requirements
-                    if (req.target <= providerList[addr].maxTarget && 
-                            req.time <= providerList[addr].maxTime && 
-                            req.price >= providerList[addr].minPrice) {
+                    if (requestList[reqID].target <= providerList[addr].maxTarget && 
+                        requestList[reqID].time <= providerList[addr].maxTime && 
+                        requestList[reqID].price >= providerList[addr].minPrice) {
+                        
                         //update provider:
                         providerList[addr].available = false;
                         bool isPopped = providerPop(addr);
@@ -286,7 +300,7 @@ contract TaskContract {
                         if(!isPopped) return '3';
 
                         //update balanceList              
-                        balanceList[req.addr] += req.price; 
+                        balanceList[requestList[reqID].addr] += requestList[reqID].price; 
                                                
                         //status move from pending to providing
                         pendingCount--;
@@ -300,11 +314,9 @@ contract TaskContract {
                 }
             }
             // No provider was found matching the criteria -- request failed
-            req.addr.transfer(req.price); // Returns the ether to the sender
+            requestList[reqID].addr.transfer(requestList[reqID].price); // Returns the ether to the sender
             return '1';
         }
-        else        //requestPool.length == 0
-            return '2';
     }
 
 

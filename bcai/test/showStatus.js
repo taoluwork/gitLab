@@ -2,7 +2,7 @@
 //user's js script
 //version: 0.9
 //author: taurus tlu4@lsu.edu
-//use: $ node user.js -a 4 --debug --help
+//use: $ node user.js --help
 /////////////////////////////////////////////////////////////////
 
 //get arguments from console

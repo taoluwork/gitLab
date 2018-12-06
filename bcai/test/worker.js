@@ -2,7 +2,7 @@
 //worker's js script
 //version: 0.9
 //author: taurus tlu4@lsu.edu
-//use: $ node worker.js -a 4 --debug --stop --help
+//use: $ node worker.js --help
 /////////////////////////////////////////////////////////////////
 
 //edit parameter here:
