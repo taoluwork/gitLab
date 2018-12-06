@@ -170,12 +170,12 @@ contract TaskContract {
         if(requestPool.length == 0) return '2';
         else {
             //search throught the requestPool
-            for (uint128 i = 0; i< requestPool.length; i++){
+            for (uint128 i = 0; i < requestPool.length; i++){
                 //save the re-usable reqID , may save gas
                 uint128 reqID = requestPool[i];
-                if( requestList[reqID].time < providerList[addr].maxTime &&
-                    requestList[reqID].target < providerList[addr].maxTarget &&
-                    requestList[reqID].price > providerList[addr].minPrice){
+                if( requestList[reqID].time     < providerList[addr].maxTime &&
+                    requestList[reqID].target   < providerList[addr].maxTarget &&
+                    requestList[reqID].price    > providerList[addr].minPrice){
                         //meet the requirement, assign the task
                         //update provider
                         providerList[addr].available = false;
