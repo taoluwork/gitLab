@@ -75,50 +75,13 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         }).then(function(){
             showProviderInfo();
         })
-            /*
-            //show providerCount
-            myContract.methods.getProviderCount().call().then(function(ret){
-                console.log("-----------------------------------------------------------------");
-                console.log("Provider count = ",ret);
-            })
-        }).then(function(){
-            //get Provider pool     
-            myContract.methods.getProviderPool().call().then(function(ret){
-                console.log("-----------------------------------------------------------------");
-                console.log("Provider Pool: ");
-                console.log(ret);   
-            })
-        }).then(function(prov){
-            //print provider detals (object)
-            if(argv['obj'] || argv['debug']){
-                myContract.methods.getProvider(myAccount).call().then(function(ret){
-                    console.log("-----------------------------------------------------------------");
-                    console.log(ret);
-                });
-            }
-        }).then(function(){
-            if(argv['nl']) process.exit();
-        })*/
     } else {//stop 
         myContract.methods.stopProviding()
         .send({from:myAccount, gas:200000})
         .then(function(ret){
-            if(argv['debug'] || argv['recpt']) console.log(ret);
+            if(argv['debug'] || argv['recpt']) console.log("Receipt :    <<====####  ", ret);
         }).then(function(){
             showProviderInfo();
-            /*myContract.methods.getProviderCount().call().then(function(ret){
-                console.log("-----------------------------------------------------------------");
-                console.log("Provider count = ",ret);
-            })
-        }).then(function(){
-            //get Provider pool    
-            myContract.methods.getProviderPool().call().then(function(ret){
-                console.log("-----------------------------------------------------------------");                
-                console.log("Provider Pool: ")
-                console.log(ret)
-            })
-        }).then(function(){
-            if(argv['nl']) process.exit();*/
         })
     }
     
@@ -185,5 +148,7 @@ function showProviderInfo(){
                 console.log(ret);
             });
         }
+    }).then(function(){
+        if(argv['nl']) process.exit();
     })
 }
