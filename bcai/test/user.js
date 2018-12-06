@@ -41,6 +41,7 @@ var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
 var TaskContract = require('../build/contracts/TaskContract.json');
 var abi = TaskContract.abi;
 var addr = TaskContract.networks[512].address;
+var myAccount;
 //note: networkID can be given to ganache by
 
 //ganache-cli -i or --networkId 512
@@ -52,13 +53,13 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         process.exit();
     }
     else if(argv['a'] == undefined) {
-        var myAccount = accounts[0];
+        myAccount = accounts[0];
         console.log('Using default account:0', accounts[0]);
         console.log('You can infer specific account by passing -a #');
     }
     else {
         myAccount = accounts[argv['a']];
-        console.log('Using account:',argv['a'], accounts[argv['a']]);
+        console.log('Using account: [',argv['a'], '] ', myAccount);
     }
 
     //call request task
