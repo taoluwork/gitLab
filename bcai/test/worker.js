@@ -19,10 +19,11 @@ var argv = require('minimist')(process.argv.slice(2));
 //{ _: [], u: 2, b: 3 }
 //console.log(argv)
 if(argv['help']) {
-    console.log("Arguments: -a # : accounts[#]");
-    console.log(" --debug : enable more details");
+    console.log("Arguments: -a # : accounts[#] / -a list : for all accounts");
     console.log(" --stop  : stop the current provider");
+    console.log(" --debug : enable all details");
     console.log(" --recpt : transaction receipt");
+    console.log(" --obj   : list provider objects ");
     console.log(" --nl    : no listening for events (default will do)")
 	process.exit();
 }
@@ -70,7 +71,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         .then(function(ret){
             console.log("-----------------------------------------------------------------")
             console.log("start providing: Block = ", ret.blockNumber);
-            if(argv['recpt']) console.log("Receipt:    <=====###### ", ret);
+            if(argv['recpt'] || argv['debug']) console.log("Receipt:    <=====###### ", ret);
         }).then(function(){
             //show providerCount
             myContract.methods.getProviderCount().call().then(function(ret){
@@ -84,7 +85,8 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
                 console.log(ret);   
             })
         }).then(function(prov){
-            if(argv['debug']){
+            //print provider detals (object)
+            if(argv['obj'] || argv['debug']){
                 myContract.methods.getProvider(myAccount).call().then(function(ret){
                     console.log("-----------------------------------------------------------------");
                     console.log(ret);
@@ -97,14 +99,16 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         myContract.methods.stopProviding()
         .send({from:myAccount, gas:200000})
         .then(function(ret){
-            if(argv['debug'] ) console.log(ret);
+            if(argv['debug'] || argv['recpt']) console.log(ret);
         }).then(function(){
             myContract.methods.getProviderCount().call().then(function(ret){
-                console.log("Provider count = ",ret, "<<==============================############");
+                console.log("-----------------------------------------------------------------");
+                console.log("Provider count = ",ret);
             })
         }).then(function(){
             //get Provider pool    
             myContract.methods.getProviderPool().call().then(function(ret){
+                console.log("-----------------------------------------------------------------");                
                 console.log("Provider Pool: ")
                 console.log(ret)
             })
