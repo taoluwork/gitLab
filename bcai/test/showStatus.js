@@ -13,8 +13,9 @@ var argv = require('minimist')(process.argv.slice(2));
 //console.log(argv['u'])
 if(argv['help']) {
     //console.log("Arguments: -a # : accounts[#]");
-    console.log(" -a list : list all accounts address");
-    console.log(" --debug : enable more details");
+    console.log(" --acc   : list all accounts address");
+	console.log(" --debug : list object details");
+	console.log(" --list  : list all Request and Provider");
     //console.log(" --stop :  stop the current provider")
 	process.exit();
 }
@@ -48,7 +49,7 @@ web3.eth.getAccounts().then(function(myAccounts){
 
 function showCurrentStatus(myAccounts){
 	console.log("------------------------------------------------------------>update: ");
-	if (argv['a'] == 'list' || argv['l']){
+	if (argv['acc']){
         console.log(myAccounts);
         process.exit();
     }
@@ -93,6 +94,7 @@ function showRequest(){
 				console.log(res);
 			})
 			.then(function(){
+				if(argv['list']){
 				myContract.methods.listRequests().call().then(function(reqList){
 					console.log("-----------------------------------------------------");
 					if(count >0) console.log("List all the Requests : ")
@@ -109,8 +111,9 @@ function showRequest(){
 						}
 					}
 				})
-				
-			})	
+				}
+			})
+			
 		})		
 	})
 }
@@ -125,7 +128,8 @@ function showProviders(){
 				console.log("-----------------------------------------------------");
 				console.log("Active provider pool: ");
 				console.log(res);
-			}).then(function(){ 	
+			}).then(function(){ 
+				if(argv['list']){	
 				myContract.methods.listProviders().call().then(function(proList){
 					console.log("-----------------------------------------------------");
 					if(count >0) console.log("List all the Providers: ")
@@ -143,6 +147,7 @@ function showProviders(){
 						}
 					}			
 				})
+				}
 			})	
 		})
 	})
