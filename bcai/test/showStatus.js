@@ -20,7 +20,7 @@ if(argv['help']) {
     //console.log(" --stop :  stop the current provider")
 	process.exit();
 }
-
+argv['pool'] = true;
 ////////////////////////////////////////////
 var Web3, web3, MyContract, myContract;
 var myAccounts;
