@@ -7,24 +7,24 @@ pragma experimental ABIEncoderV2;   //return self-defined type
 
 contract TaskContract {
 
-    uint128 public requestCount;                    //total number of requests sent to contract
-    uint128 public pendingCount;                    //totla # of requests pending (after submission before assigned)
-    uint128 public providingCount;                  //total number of requests that contract found provider for
-    uint64  public providerCount;                    //number of active providers in the mapping below
-    mapping (address => Provider) public providerList;   //list of known providers. must apply. maps providerID to struct
+    uint128 public requestCount;                        //total number of requests sent to contract
+    uint128 public pendingCount;                        //totla # of requests pending (after submission before assigned)
+    uint128 public providingCount;                      //total number of requests that contract found provider for
+    uint64  public providerCount;                       //number of active providers in the mapping below
+    mapping (address => Provider) public providerList;  //list of known providers. must apply. maps providerID to struct
     mapping (address => uint64) public providerID;      //look up providerID using address     NOTE: possible not needed
     //NOTE: addr is the only identifier for provider object.
     //However, providerID could possibly be same between different address.
     //e.g. Tom has Two account with addr_1, addr_2, but he could be assigned an unique providerID.
 
     mapping (uint128 => Request) public requestList;    //mapping requestCount to Request object, requestCount is the unique number used as identifier
-    mapping (address => uint128[]) public requestID;      //look up requestID using user address , NOTE: single user could have multiply requestID
+    mapping (address => uint128[]) public requestID;    //look up requestID using user address , NOTE: single user could have multiply requestID
     //for the request, requestID(uint128) is the only identifier.
     //address is not because multiple request could come from same address
 
-    address payable [] public  providerPool;                   //record the available providers;
-    uint128[] public requestPool;                    //record the pending request;
-    //uint64[] public spaces;                             //Open spaces where providers left. should be filled when new provider comes
+    address payable [] public  providerPool;            //record the available providers;
+    uint128[] public requestPool;                       //record the pending request;
+    //uint64[] public spaces;                           //Open spaces where providers left. should be filled when new provider comes
     mapping (address => uint256) public balanceList;    //for keeping track of how much money requesters have sent
     
 
@@ -41,7 +41,7 @@ contract TaskContract {
         uint128 reqID;              //requestID is the only identifier for each Request
         uint64  dataID;             //dataID used to fetch the off-chain data
         uint64  time;               //time
-        uint16  target;           //target 0-100.00
+        uint16  target;             //target 0-100.00
         uint256 price;              //the max amount he can pay
         uint64  resultID;           //dataID to fetch the result
         uint64  numValidationsNeeded;   //user defined the validation
@@ -60,9 +60,9 @@ contract TaskContract {
         bool    available;          // Used to determine if provider is already doing something
     }
 
-    event TaskAssigned(address provider, uint128 reqID);            // next step: call completeTask
-    event ValidationRequested(address validator, uint128 reqID);    // next step: validator calls submitValidation
-    event TaskCompleted(address requestor, uint128 reqID);          // done
+    event TaskAssigned          (address provider, uint128 reqID);     // next step: call completeTask
+    event ValidationRequested   (address validator, uint128 reqID);    // next step: validator calls submitValidation
+    event TaskCompleted         (address requestor, uint128 reqID);    // done
 
 
 
@@ -127,7 +127,10 @@ contract TaskContract {
             providerList[msg.sender].maxTime = maxTime;
             providerList[msg.sender].maxTarget = maxTarget;
             providerList[msg.sender].minPrice = minPrice;
-	        providerList[msg.sender].available = true;
+	        if(providerList[msg.sender].available == false){
+                providerPool.push(msg.sender);
+                providerList[msg.sender].available = true;
+            }        
         }
         return assignProvider(msg.sender);
     }
@@ -192,10 +195,8 @@ contract TaskContract {
                         pendingCount--;
                         providingCount++;
                         emit TaskAssigned(addr, reqID);
-                        return '0';
-                    
-                }
-                
+                        return '0';                   
+                }                
             }
             //after for loop and no match
             return '1';
