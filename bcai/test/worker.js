@@ -22,8 +22,8 @@ if(argv['help']) {
     console.log("Arguments: -a # : accounts[#] / -a list : for all accounts");
     console.log(" --stop  : stop the current provider");
     console.log(" --debug : enable all details");
-    console.log(" --recpt : transaction receipt");
-    console.log(" --obj   : list provider objects ");
+    //console.log(" --recpt : transaction receipt");
+    //console.log(" --obj   : list provider objects ");
     console.log(" --nl    : no listening for events (default will do)")
 	process.exit();
 }
@@ -84,22 +84,6 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
             showProviderInfo();
         })
     }
-    
-    
-    /*//show providerCount
-    myContract.methods.getProviderCount().call().then(function(ret){
-        console.log("Provider count = ",ret);
-    })*/
-    //get Provider object
-    //NOTE: cannot getProvider at the same block because storage data is not updated onchain.
-    /*if(argv['debug']){
-        myContract.methods.getProvider(workerAccount).call().then(function(ret){
-            console.log(ret);
-        });
-    }*/
-
-   
-
     //wait until to be assigned.
     /*contract.events.TaskAssigned({
     //contract.once('TaskAssigned', { 
