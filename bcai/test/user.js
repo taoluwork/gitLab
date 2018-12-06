@@ -20,10 +20,11 @@ var argv = require('minimist')(process.argv.slice(2));
 //{ _: [], u: 2, b: 3 }
 //console.log(argv['u'])
 if(argv['help']) {
-    console.log("Arguments: -a # : accounts[#]");
-    console.log(" -a list : list all accounts address");
+    console.log("Arguments: -a # : accounts[#] /   -a list : list all accounts address");
+    console.log(" --cancel: cancel existing request");
     console.log(" --debug : enable more details");
     //console.log(" --stop :  stop the current provider")
+    console.log(" --nl    : no listening for events (default will do)")
 	process.exit();
 }
 
@@ -61,25 +62,24 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     }
 
     //call request task
-    myContract.methods.requestTask(
-        dataID,
-        target,
-        time
-    ).send({from: myAccount, gas: 80000000, value: money})
-    .then(function(ret){
-        console.log("Request Submitted! Block: ",ret.blockNumber);
-	    //console.log("return = ", ret.returnValue);
-    }).then(function(){
-        myContract.methods.getRequestCount().call().then(function(ret){
-            console.log("Request Count = ", ret);
-        })          
-    }).catch(function(err){
-        if(err != null) console.log("ERROR", err);
-    })
-
-
-    
-
+    if(!argv['cancel']){
+        myContract.methods.requestTask(dataID, target, time)
+        .send({from: myAccount, gas: 80000000, value: money})
+        .then(function(ret){
+            console.log("-----------------------------------------------------------------")
+            console.log("Request Submitted! Block: ",ret.blockNumber);
+            //console.log("return = ", ret.returnValue);
+            if(argv['recpt'] || argv['debug']) console.log("Receipt:    <=====###### ", ret);
+        }).then(function(){
+            showRequestInfo();
+            myContract.methods.getRequestCount().call().then(function(ret){
+                console.log("Request Count = ", ret);
+            })          
+        })
+    } else {
+        //cancel TOD:
+        showRequestInfo();
+    }    
     //call taskAssign  -- this is automatically done by contract
 
 
@@ -101,3 +101,30 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
 
 
 })
+
+
+//console.log(contract.address);
+function showRequestInfo(){
+    myContract.methods.getRequestCount().call().then(function(ret){
+        console.log("-----------------------------------------------------------------");
+        console.log("Request count = ",ret);
+    })
+    .then(function(){
+    //get Provider pool     
+        myContract.methods.getRequestPool().call().then(function(ret){
+            console.log("-----------------------------------------------------------------");
+            console.log("Request Pool: ");
+            console.log(ret);   
+        })
+    }).then(function(){
+        //print provider detals (object)
+        if(argv['obj'] || argv['debug']){
+            myContract.methods.getRequest(myAccount).call().then(function(ret){
+                console.log("-----------------------------------------------------------------");
+                console.log(ret);
+            });
+        }
+    }).then(function(){
+        if(argv['nl']) process.exit();
+    })
+}
