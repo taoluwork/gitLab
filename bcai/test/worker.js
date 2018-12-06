@@ -67,7 +67,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     //call startProviding
     if(!argv['stop']){      //start
         myContract.methods.startProviding(maxTime, maxTarget, minPrice)
-        .send({from: myAccount, gas: 200000})
+        .send({from: myAccount, gas: 400000})
         .then(function(ret){
             console.log("-----------------------------------------------------------------")
             console.log("start providing: Block = ", ret.blockNumber);

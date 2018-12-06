@@ -172,7 +172,7 @@ contract TaskContract {
             //search throught the requestPool
             for (uint128 i = 0; i < requestPool.length; i++){
                 //save the re-usable reqID , may save gas
-                uint128 reqID = requestPool[i];
+                uint128 reqID = requestPool[i]; //     
                 if( requestList[reqID].time     < providerList[addr].maxTime &&
                     requestList[reqID].target   < providerList[addr].maxTarget &&
                     requestList[reqID].price    > providerList[addr].minPrice){
