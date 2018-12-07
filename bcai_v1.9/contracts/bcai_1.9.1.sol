@@ -83,7 +83,7 @@ contract TaskContract {
     // Function called to become a provider. New on List, Map and Pool. 
     // NOTE: cannot use to update. You must stop a previous one and start a new one.
     // TIPS: gas cost: don't create local copy and write back, modify the storage directly.
-    //gas cost 165K without event / 
+    //gas cost 165K without event / 167K with event / 92K overwrite
     function startProviding(uint64 maxTime, uint16 maxTarget, uint64 minPrice) public returns (byte) {
         // register a new provider object in the List and map              
         providerList[msg.sender].provID         = providerCount;      //cost 50k per item edit
