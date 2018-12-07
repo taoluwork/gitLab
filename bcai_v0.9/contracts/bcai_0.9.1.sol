@@ -57,9 +57,7 @@ contract TaskContract {
     struct Provider {
         uint256 provID;
         uint256 blockNumber;
-        address payable addr;       //providers address
-
-        
+        address payable addr;       //providers address    
                                     //TODO: the provider name registration.
         uint64  maxTime;            //max time
         uint16  maxTarget;          //max target he need
@@ -70,8 +68,12 @@ contract TaskContract {
     event ProviderAdded     (uint256 provID, address payable addr);
     event ProviderStopped   (uint256 provID, address payable addr);
     event ProviderUpdated   (uint256 provID, address payable addr);
-    event TaskAssigned          (uint256 reqID, uint256 provID);     // next step: call completeTask
+    event TaskAssigned      (uint256 reqID, uint256 provID);     // next step: call completeTask
+    
     event RequestAdded      (uint256 reqID, address payable addr);
+    //TODO: Request updated
+    //TODO: Request deleted
+    //event
     
     //event ValidationRequested   (address validator, uint128 reqID);    // next step: validator calls submitValidation
     //event TaskCompleted         (address requestor, uint128 reqID);    // done
@@ -164,19 +166,6 @@ contract TaskContract {
     }
 
 /*
-    // Used to be sure you are seen as available. e.g. power outage caused you to lose available status on network.
-    // Not to be called after stopProviding to resume -- startProviding used in this case.
-    //function restart() public returns (bool) {
-    //if (providerList[providerID[msg.sender]].addr == msg.sender) {
-    //     providers[providerID[msg.sender]].available = true;
-    //       return true;
-    //    }
-    //else {
-    //    return false; // provider wasnt found in mapping
-    //  }
-    //}
-
-
     // Search in the requestPool, find a job for current provider. Triggered by startProviding
     // Return true if a match or false if not.
     // Returns: 0: successfully assigned
