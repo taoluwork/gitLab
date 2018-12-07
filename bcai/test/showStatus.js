@@ -16,11 +16,10 @@ if(argv['help']) {
     console.log(" --acc   : list all accounts address / -a list");
 	console.log(" --debug : show all debug details, including object details");
 	console.log(" --list  : list minimum object Request and Provider");
-	console.log(" --pool  : show only minimum pool info");
+	console.log(" --all   : most powerful history tracing option / use with caution");
     //console.log(" --stop :  stop the current provider")
 	process.exit();
 }
-argv['pool'] = true;
 ////////////////////////////////////////////
 var Web3, web3, MyContract, myContract;
 var myAccounts;
@@ -49,16 +48,13 @@ web3.eth.getAccounts().then(function(myAccounts){
 
 
 function showCurrentStatus(myAccounts){
-	console.log("------------------------------------------------------------>update: ");
-	console.log("\"0x023425626266\"");
-	if (argv['acc'] || argv['a'] == 'list'){
-        console.log(myAccounts);
+	console.log("------------------------------------------------------------> updated: ");
+	if (myAccounts != undefined)
+		console.log(myAccounts);			//print accounts List //when updating , will be undefined
+	if (argv['acc'] || argv['a'] != undefined){
         process.exit();
     }
-	if(myAccounts != undefined){
-		//print accounts List
-		console.log(myAccounts);
-	}
+				
 	//get # of providers and print
 	showProviders();
 
@@ -90,15 +86,16 @@ function showRequest(){
 		myContract.methods.getRequestCount().call().then(function(totalCount){
 			console.log("Total Request since start: ", totalCount);
 		//}).then(function(){
-			if(argv['pool'] || argv['debug'] || argv['list']){
-				myContract.methods.getRequestPool().call().then(function(res){
+			if(argv['all'] || argv['debug'] || argv['list']){
+				myContract.methods.getRequestPool().call().then(function(reqPool){
 					console.log("-----------------------------------------------------");
 					console.log("Active request pool: ");
-					console.log(res);
+					console.log(reqPool);
+					return reqPool;
 				})			
-				.then(function(){
-					if(argv['list'] || argv['debug']){
-						myContract.methods.listRequests().call().then(function(reqList){
+				.then(function(reqPool){
+					if(argv['list']){
+						myContract.methods.listRequests(reqPool).call().then(function(reqList){
 							console.log("-----------------------------------------------------");
 							if(totalCount > 0) console.log("List all the Requests : ")
 							//NOTE: difference request list all history
@@ -111,6 +108,24 @@ function showRequest(){
 										console.log("reqID = ", reqList[i]['reqID']);
 										console.log("addr = ", reqList[i]['addr']);
 										console.log("provider = ", reqList[i]['provider']);							
+									}
+								}
+							}
+						})
+					}else if (argv['all']){
+						myContract.methods.listAllRequests().call().then(function(allList){
+							if(totalCount > 0) 
+								console.log("-----------------------------------------------------");	
+								console.log("List all the Requests : <++ in history -----------")
+							for(var i = 0;i < totalCount;i++){
+								if(argv['debug']){
+									console.log("##############: ", i, allList[i]);
+								} else {
+									//simple print:
+									if(allList[i]['addr'] != 0){
+										console.log("reqID = ", allList[i]['reqID']);
+										console.log("addr = ", allList[i]['addr']);
+										console.log("provider = ", allList[i]['provider']);							
 									}
 								}
 							}
@@ -128,14 +143,15 @@ function showProviders(){
 		myContract.methods.getProviderCount().call().then(function(totalCount){
 			console.log("Total provider since start: ", totalCount);
 		//}).then(function(){
-			if(argv['pool'] || argv['debug'] || argv['list']){
-				myContract.methods.getProviderPool().call().then(function(res){
+			if(argv['all'] || argv['debug'] || argv['list']){
+				myContract.methods.getProviderPool().call().then(function(provPool){
 					console.log("-----------------------------------------------------");
 					console.log("Active provider pool: ");
-					console.log(res);
-				}).then(function(){ 
-					if(argv['list'] || argv['debug']){	
-						myContract.methods.listProviders().call().then(function(proList){
+					console.log(provPool);
+					return provPool;
+				}).then(function(provPool){ 
+					if(argv['list']){	
+						myContract.methods.listProviders(provPool).call().then(function(proList){
 							console.log("-----------------------------------------------------");
 							if(count > 0) console.log("List all the Providers: ")
 							//NOTE: difference here: provider only list in the pool
@@ -152,6 +168,24 @@ function showProviders(){
 									}
 								}
 							}			
+						})
+					}else if (argv['all']){
+						myContract.methods.listAllProviders().call().then(function(allproList){
+							if(totalCount > 0) 
+								console.log("-----------------------------------------------------");
+								console.log("List all the Providers : <++ in history -----------")
+							for(var i = 0;i < totalCount;i++){
+								if(argv['debug']){
+									console.log("##############: ", i,  allproList[i]);
+								} else {
+									//simple print:
+									if(allproList[i]['addr'] != 0){
+										console.log("reqID = ", allproList[i]['reqID']);
+										console.log("addr = ", allproList[i]['addr']);
+										console.log("provider = ", allproList[i]['provider']);							
+									}
+								}
+							}
 						})
 					}
 				})

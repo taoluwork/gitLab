@@ -56,9 +56,6 @@ var TaskContract = require('../build/contracts/TaskContract.json');
 var abi = TaskContract.abi;
 var addr = TaskContract.networks[512].address;
 var myAccount;
-var proCount;
-var IDList;
-var printDone = false;
 
 //note: networkID can be given to ganache by
 //ganache-cli -i or --networkId 512
@@ -85,6 +82,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
 
     //call check or not
     if(argv['list'] || argv['my'])  {  //only list providers
+        console.log(accounts);
         showProviderInfo();
     }
     //call startProviding
@@ -188,10 +186,9 @@ function showProviderInfo(){
                 myContract.methods.listProviders(IDList).call().then(function(objList){                   
                     console.log("-----------------------------------------------------------------");
                     console.log("Debug details: ");
-                    for(var i = 0; i<IDList.length; i++){
+                    for(var i = 0; i < IDList.length; i++){
                         console.log(objList[i]);
-                    }
-                                       
+                    }                                      
                 })
                 .then(function(){
                     process.exit();
@@ -203,7 +200,7 @@ function showProviderInfo(){
         myContract.methods.getProviderPoolSize().call().then(function(PoolCount){
             console.log("-----------------------------------------------------");
             console.log("Now active Providers: ",PoolCount);
-        }).then(function(PoolCount){
+        }).then(function(){
             myContract.methods.getProviderPool().call().then(function(pool){             
                 console.log("Active provider pool: ");
                 console.log(pool);

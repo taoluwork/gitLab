@@ -96,6 +96,7 @@ contract TaskContract {
         // ready for the next       
         emit ProviderAdded(providerCount, msg.sender);
         providerCount++;
+        
     }
     
     // Send a request from user to blockchain.
@@ -120,7 +121,7 @@ contract TaskContract {
         
         //add new to requestPool
         pendingPool.push(requestCount);
-        requestList[requestCount].status        = '0' ;     //pending 0x30, not 0
+        requestList[requestCount].status = '0' ;     //pending 0x30, not 0
         //update requestID
         
         //update count
@@ -489,6 +490,13 @@ contract TaskContract {
 		    allRequest[i] = getRequest(i);
 	    }
 	    return allRequest;
+    }
+    function listAllProviders() public view returns(Provider[50] memory){
+	    Provider[50] memory allProvider;
+	    for (uint64 i = 0; i < providerCount; i++){
+		    allProvider[i] = getProvider(i);
+	    }
+	    return allProvider;
     }
     function listProviders() public view returns(Provider[50] memory){
         Provider[50] memory allProvider;
