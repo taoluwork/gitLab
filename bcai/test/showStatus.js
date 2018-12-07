@@ -50,6 +50,7 @@ web3.eth.getAccounts().then(function(myAccounts){
 
 function showCurrentStatus(myAccounts){
 	console.log("------------------------------------------------------------>update: ");
+	console.log("\"0x023425626266\"");
 	if (argv['acc'] || argv['a'] == 'list'){
         console.log(myAccounts);
         process.exit();
@@ -145,7 +146,7 @@ function showProviders(){
 								} else{
 									//simple print:
 									if(proList[i]['addr'] != 0){
-										console.log("ID = ", proList[i]['providedCount']);
+										console.log("provD = ", proList[i]['provID']);
 										console.log("addr = ", proList[i]['addr']);
 										console.log("available = ", proList[i]['available']);
 									}
