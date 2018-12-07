@@ -1,15 +1,13 @@
 ////////////////////////////////////////////////////////////////
 //worker's js script
-//version: 0.9
 //author: taurus tlu4@lsu.edu
 //use: $ node worker.js --help / -h
 /////////////////////////////////////////////////////////////////
-
+var version = "worker.js v1.9.1     ----  by Taurus"
 //edit parameter here:
 var maxTime = 100000;
 var maxTarget = 100;
 var minPrice = 50;
-var version = "worker.js v0.9.1     ----  by Taurus"
 ////////////////////////////////////////////////////////////////////
 
 
@@ -114,7 +112,7 @@ function fireMessage(){
                 console.log(ret.events.ProviderAdded.returnValues)
             }          
         }).then(function(){
-            showLatestProvider();
+            //showLatestProvider();
         }).catch(function(){
             console.log("Start provider failed! Check receipt by --recpt");
             process.exit();

@@ -1,10 +1,9 @@
 ////////////////////////////////////////////////////////////////
 //user's js script
-//version: 0.9.1
 //author: taurus tlu4@lsu.edu
 //use: $ node user.js -a 4 --debug --help
 /////////////////////////////////////////////////////////////////
-
+var version = "worker.js v1.9.1     ----  by Taurus"
 //edit parameter here:
 var dataID = 11;
 var target = 90;        //this must be less than workders target limt
