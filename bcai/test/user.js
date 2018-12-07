@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////
 //user's js script
-//version: 0.9
+//version: 0.9.1
 //author: taurus tlu4@lsu.edu
 //use: $ node user.js -a 4 --debug --help
 /////////////////////////////////////////////////////////////////
@@ -20,7 +20,13 @@ var argv = require('minimist')(process.argv.slice(2));
 //{ _: [], u: 2, b: 3 }
 //console.log(argv['u'])
 if(argv['help']) {
-    console.log("Arguments: -a # : accounts[#] /   -a list : list all accounts address");
+    console.log("Arguments:")
+    console.log(" -a #    : use Account[#]  /  -a @$!$ list address");
+    console.log(" -s #    : cancel request # ");
+    console.log(" -u #    : update request # ");
+    console.log(" -t #    : time ");
+    console.log(" -T #    : target ");
+    console.log(" -p #    : price");
     console.log(" --cancel: cancel existing request");
     console.log(" --debug : enable more details");
     //console.log(" --stop :  stop the current provider")
@@ -41,28 +47,74 @@ var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
 var TaskContract = require('../build/contracts/TaskContract.json');
 var abi = TaskContract.abi;
 var addr = TaskContract.networks[512].address;
+const myContract = new web3.eth.Contract(abi, addr);
 var myAccount;
 var reqID;
+//////////////////////////////////////////////////////////////////////////
 //note: networkID can be given to ganache by
-
 //ganache-cli -i or --networkId 512
-const myContract = new web3.eth.Contract(abi, addr);
+// start your ganache-cli now!
+/////////////////////////////////////////////////////////////////////////
 web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     //list all accounts
-    if (argv['a'] == 'list'){
+    if (argv['a'] > 9){
         console.log(accounts);
         process.exit();
     }
     else if(argv['a'] == undefined) {
         myAccount = accounts[0];
-        console.log('Using default account:0', myAccount);
+        console.log('Using default account: [0]', myAccount);
         console.log('You can infer specific account by passing -a #');
     }
     else {
         myAccount = accounts[argv['a']];
         console.log('Using account: [',argv['a'], '] ', myAccount);
     }
+    return new Promise(function(resolve, reject){
+        if (accounts == undefined)  reject();
+        else resolve(accounts);
+    })
+})
+.then(function(){
+    fireMessage();
+})
+.catch(function(){
+    console.log("Getting accounts failed!");
+    console.log("Check your depolyment! ");
+    process.exit();
+})
 
+
+//console.log(contract.address);
+/*function showRequestInfo(){
+    myContract.methods.getRequestPoolSize().call().then(function(ret){
+        console.log("-----------------------------------------------------------------");
+        console.log("Request count = ",ret);
+    })
+    .then(function(){
+    //get Provider pool     
+        myContract.methods.getRequestPool().call().then(function(ret){
+            console.log("-----------------------------------------------------------------");
+            console.log("Request Pool: ");
+            console.log(ret);
+               
+        })
+    }).then(function(){
+        myContract.methods.getRequestCount().call().then(function(reqCount){
+             //print provider detals (object)
+            if(argv['obj'] || argv['debug']){
+                myContract.methods.getRequest(reqCount-1).call().then(function(ret){
+                    console.log("-----------------------------------------------------------------");
+                    console.log(ret);
+                });
+            }
+        })      
+    }).then(function(){
+        if(argv['nl']) process.exit();
+    })
+}*/
+
+function fireMessage(){
     //call request task
     if(!argv['cancel']){
         myContract.methods.requestTask(dataID, target, time)
@@ -96,37 +148,90 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     //.on('data',function(event){
     //    console.log(event);
     //})
-
-
-
-})
-
-
-//console.log(contract.address);
-function showRequestInfo(){
-    myContract.methods.getRequestPoolSize().call().then(function(ret){
-        console.log("-----------------------------------------------------------------");
-        console.log("Request count = ",ret);
-    })
-    .then(function(){
-    //get Provider pool     
-        myContract.methods.getRequestPool().call().then(function(ret){
-            console.log("-----------------------------------------------------------------");
-            console.log("Request Pool: ");
-            console.log(ret);
-               
-        })
-    }).then(function(){
-        myContract.methods.getRequestCount().call().then(function(reqCount){
-             //print provider detals (object)
-            if(argv['obj'] || argv['debug']){
-                myContract.methods.getRequest(reqCount-1).call().then(function(ret){
-                    console.log("-----------------------------------------------------------------");
-                    console.log(ret);
-                });
-            }
-        })      
-    }).then(function(){
-        if(argv['nl']) process.exit();
-    })
 }
+
+function showRequestInfo(){
+    //Promise(function(resolve){
+        if(argv['my'])  {  //only list Requests under MY addr
+            myContract.methods.getRequestID(myAccount).call().then(function(IDList){
+                console.log("All my posted Request: ")
+                console.log(IDList);
+                return IDList;
+                
+            }).then(function(IDList){
+                if(argv['debug']){
+                    myContract.methods.listRequests(IDList).call().then(function(objList){                   
+                        console.log("-----------------------------------------------------------------");
+                        console.log("Debug details: ");
+                        for(var i = 0; i < IDList.length; i++){
+                            console.log(objList[i]);
+                        }                                      
+                    })
+                    .then(function(){
+                        process.exit();
+                    })
+                } else process.exit();
+            })
+        }
+        else if(argv['list']){
+            myContract.methods.getRequestPoolSize().call().then(function(PoolCount){
+                console.log("-----------------------------------------------------");
+                console.log("Now active Requests: ",PoolCount);
+            }).then(function(){
+                myContract.methods.getRequestPool().call().then(function(pool){             
+                    console.log("Active Request pool: ");
+                    console.log(pool);
+                }).then(function(){
+                    myContract.methods.getRequestCount().call().then(function(totalCount){
+                        console.log("-----------------------------------------------------");
+                        console.log("Total Request since start: ", totalCount);
+                        return totalCount;
+                    }).then(function(totalCount){	
+                        myContract.methods.listRequests().call().then(function(proList){                          
+                            if(totalCount > 0) console.log("List all the Requests: ")
+                            //NOTE: difference here: Request only list in the pool
+                            for (var i = 0;i < totalCount ;i++){
+                                //or print in full
+                                if(argv['debug']){
+                                    console.log(proList[i]);
+                                } else{ //simple print:     
+                                    if(proList[i]['addr'] != 0){
+                                        console.log("provD = ", proList[i]['provID']);
+                                        console.log("addr = ", proList[i]['addr']);
+                                        console.log("available = ", proList[i]['available']);
+                                    }
+                                }
+                            }			
+                        })
+                        //process.exit();
+                    })
+                })
+            })
+        }
+        else{       //not just list, show current status
+            myContract.methods.getRequestCount().call().then(function(totalCount){
+                console.log("-----------------------------------------------------------------");
+                console.log("Total Request count = ",totalCount);
+                return totalCount;
+            }).then(function(totalCount){
+                //get Request pool     
+                myContract.methods.getRequestPool().call().then(function(pool){
+                    console.log("Active Request count = ",pool.length);
+                    console.log("Request Pool: ");
+                    console.log(pool); 
+                    return totalCount;  
+                }).then(function(totalCount){
+                    //print Request detals (object)
+                    if(argv['debug']){
+                        myContract.methods.getRequest(totalCount-1).call().then(function(ret){
+                            console.log("-----------------------------------------------------------------");
+                            console.log("Last Request: ", ret);
+                        }).then(function(){
+                            if(argv['nl']) process.exit();
+                        });
+                    }
+                    else if(argv['nl']) process.exit();
+                    })
+                })
+        }
+    }
