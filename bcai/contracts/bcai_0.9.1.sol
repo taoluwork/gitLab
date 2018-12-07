@@ -12,7 +12,7 @@ contract TaskContract {
     mapping (uint256 => Provider) public providerList;  //history
     mapping (uint256 => Request) public requestList;    //history
     
-    //mapping address with ID
+    //mapping address with ID       //editing these mapping cost a lot
     mapping (address => uint256[])  public providerMap;
     mapping (address => uint256[])  public requestMap;
  
@@ -71,9 +71,11 @@ contract TaskContract {
     event ProviderStopped   (uint256 provID, address payable addr);
     event ProviderUpdated   (uint256 provID, address payable addr);
     event TaskAssigned          (uint256 reqID, uint256 provID);     // next step: call completeTask
+    event RequestAdded      (uint256 reqID, address payable addr);
+    
     //event ValidationRequested   (address validator, uint128 reqID);    // next step: validator calls submitValidation
     //event TaskCompleted         (address requestor, uint128 reqID);    // done
-
+    /////////////////////////////////////////////////////////////////////////////////////
 
     
     // Function called to become a provider. New on List, Map and Pool. 
@@ -88,7 +90,7 @@ contract TaskContract {
         providerList[providerCount].maxTarget      = maxTarget;
         providerList[providerCount].minPrice       = minPrice;
         
-        // add to map
+        // add to map       //TODO: this cost 70000 gas
         providerMap[msg.sender].push(providerCount);
         // put it into the pool
         providerPool.push(providerCount);
@@ -98,7 +100,38 @@ contract TaskContract {
         providerCount++;
         
     }
-    
+    // Stop a provider, if you know a provider ID. Get em using getProvID()
+    // Must be sent from the provider address or it will be failed.
+    function stopProviding(uint256 provID) public returns (bool) {
+        // If the sender is currently an active provider
+        bool flag = false;
+        if (providerList[provID].available == true                 //can only stop available provider
+                && providerList[provID].addr == msg.sender) {      //you cannot delete other's provider            
+            delete providerList[provID];                           //delete from List
+            flag = ArrayPop(providerMap[msg.sender], provID);      //delete form Map
+            flag = ArrayPop(providerPool, provID) && flag;         //delete from Pool             
+        }
+        if(flag) emit ProviderStopped(provID, msg.sender);
+        return flag;
+    }
+    //update a provider, you must know the provID and must sent from right addr
+    function updateProvider(uint64 maxTime, uint16 maxTarget, uint64 minPrice, uint256 provID) public returns (bool) {      
+        bool flag = false;
+        if(providerList[provID].available == true           //can only modify available provider
+        && providerList[provID].addr != msg.sender){        //you are modify other's config
+            providerList[provID].blockNumber    = block.number;         
+            providerList[provID].maxTime        = maxTime;       
+            providerList[provID].maxTarget      = maxTarget;
+            providerList[provID].minPrice       = minPrice;
+            //update pool       -- pop then push , because we need to scan pool anyway
+            flag = ArrayPop(providerPool,provID);           // pop first                                      
+            providerPool.push(provID);                      // push in both case anyway
+            //update map -- no need provID not changed.
+            emit ProviderUpdated(provID, msg.sender);
+            return flag;
+        }
+    }
+
     // Send a request from user to blockchain.
     // Assumes price is including the cost for verification
     function requestTask(uint64 dataID, uint16 target, uint64 time) payable public returns (byte) {
@@ -122,46 +155,14 @@ contract TaskContract {
         //add new to requestPool
         pendingPool.push(requestCount);
         requestList[requestCount].status = '0' ;     //pending 0x30, not 0
-        //update requestID
+        emit RequestAdded(requestCount,msg.sender);
         
         //update count
-        requestCount++;     //count already stands for the # of req now.
+        requestCount++;     
         return '0';
         //assignTask(requestCount -1);
     }
-    
-    
-    // Stop a provider, if you know a provider ID. Get em using getProvID()
-    // Must be sent from the provider address or it will be failed.
-    function stopProviding(uint256 provID) public returns (bool) {
-        // If the sender is currently an active provider
-        bool flag = false;
-        if (providerList[provID].available == true                 //can only stop available provider
-                && providerList[provID].addr == msg.sender) {      //you cannot delete other's provider            
-            delete providerList[provID];                           //delete from List
-            flag = ArrayPop(providerMap[msg.sender], provID);      //delete form Map
-            flag = ArrayPop(providerPool, provID) && flag;         //delete from Pool             
-        }
-        if(flag) emit ProviderStopped(provID, msg.sender);
-        return flag;
-    }
 
-    function updateProvider(uint64 maxTime, uint16 maxTarget, uint64 minPrice, uint256 provID) public returns (bool) {      
-        bool flag = false;
-        if(providerList[provID].available == true           //can only modify available provider
-        && providerList[provID].addr != msg.sender){        //you are modify other's config
-            providerList[provID].blockNumber    = block.number;         
-            providerList[provID].maxTime        = maxTime;       
-            providerList[provID].maxTarget      = maxTarget;
-            providerList[provID].minPrice       = minPrice;
-            //update pool       -- pop then push , because we need to scan pool anyway
-            flag = ArrayPop(providerPool,provID);           // pop first                                      
-            providerPool.push(provID);                      // push in both case anyway
-            //update map -- no need provID not changed.
-            emit ProviderUpdated(provID, msg.sender);
-            return flag;
-        }
-    }
 /*
     // Used to be sure you are seen as available. e.g. power outage caused you to lose available status on network.
     // Not to be called after stopProviding to resume -- startProviding used in this case.

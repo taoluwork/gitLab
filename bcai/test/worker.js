@@ -27,6 +27,7 @@ if(argv['help'] || argv['h']) {
     console.log(" -t #    : time ");
     console.log(" -T #    : target ");
     console.log(" -p #    : price");
+
     console.log(" --view  : view all current providers / do nothing");
     console.log(" --my    : view all my providers");
     console.log(" --debug : show all details");
@@ -58,8 +59,11 @@ var addr = TaskContract.networks[512].address;
 const myContract = new web3.eth.Contract(abi, addr);
 var myAccount;
 
+//////////////////////////////////////////////////////////////////////////
 //note: networkID can be given to ganache by
 //ganache-cli -i or --networkId 512
+// start your ganache-cli now!
+/////////////////////////////////////////////////////////////////////////
 
 web3.eth.getAccounts().then(function(accounts){     //get and use accoutns  
     if (argv['a'] > 9){                              //list all accounts
@@ -69,7 +73,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     if(argv['a'] == undefined) {               //init account using 9 or -a #
         myAccount = accounts[9];
         console.log("-----------------------------------------------------------------")
-        console.log('Using default account:9', accounts[9]);
+        console.log('Using default account: [9]', accounts[9]);
         console.log('You can infer specific account by passing -a #');
     }
     else {
@@ -103,9 +107,9 @@ function fireMessage(){
         .then(function(ret){
             console.log("Start providing: Block = ", ret.blockNumber);
             console.log("-----------------------------------------------------------------")
-            if(argv['recpt']) 
+            if(argv['recpt']!= 0 && argv['recpt']!=undefined)
                 console.log("Receipt:    <=====###### ", ret);
-            else{
+            else if (argv['recpt'] !=0){
                 console.log("Event: ", ret.events.ProviderAdded.event)
                 console.log(ret.events.ProviderAdded.returnValues)
             }          
