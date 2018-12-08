@@ -85,15 +85,15 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     return accounts;
 }).then(
     function(accounts){ //success
-        if (argv['view']){
-            console.log(accounts); 
-            listPoolProviders();
-        }
-        else if (argv['all']){
+        if (argv['all']){
             listAllProviders();
         }
         else if (argv['my'])
             listProviderOnlyMy(myAccount);
+        else if (argv['view']){
+            console.log(accounts); 
+            listPoolProviders();
+        }     
         else 
             fireMessage();
     },

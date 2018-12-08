@@ -83,16 +83,16 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     return accounts;
 }).then(
     function(accounts){         //success
-        if (argv['view']){
-            console.log(accounts); 
-            listPoolRequests();
-        }
-        else if (argv['all']){
+        if (argv['all']){
             console.log(accounts);
             listAllRequests();
         }
         else if (argv['my'])
             listRequestOnlyMy(myAccount);
+        else if (argv['view']){
+            console.log(accounts); 
+            listPoolRequests();
+        }
         else 
             fireMessage();
     },
