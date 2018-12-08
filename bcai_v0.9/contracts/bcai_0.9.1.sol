@@ -37,21 +37,21 @@ contract TaskContract {
     }
 
     struct Request {
-        uint256 reqID;              //requestID is the only identifier for each Request
+        uint256 reqID;                  //requestID is the only identifier for each Request
         uint256 blockNumber;
-        address payable addr;       //payable is new feature from sol v5.0
+        address payable addr;           //payable is new feature from sol v5.0
         //uint256 assignedProvider;
-        address payable provider;         //
-        //address payable provider;   //addr of worker
-        uint64  time;               //time
-        uint16  target;             //target 0-100.00
-        uint256 price;              //the max amount he can pay
-        uint64  dataID;             //dataID used to fetch the off-chain data
-        uint64  resultID;           //dataID to fetch the result
+        address payable provider;        
+        //address payable provider;     //addr of worker
+        uint64  time;                   //time
+        uint16  target;                 //target 0-100.00
+        uint256 price;                  //the max amount he can pay
+        uint64  dataID;                 //dataID used to fetch the off-chain data
+        uint64  resultID;               //dataID to fetch the result
         uint64  numValidationsNeeded;   //user defined the validation
-        bool[]  validations;        //multisignature from validations
-        bool    isValid;            //the final flag
-        byte    status;              //0: 'pending', 1:'providing', 2: validating, 3: complete
+        bool[]  validations;            //multisignature from validations
+        bool    isValid;                //the final flag
+        byte    status;                 //0: 'pending', 1:'providing', 2: validating, 3: complete
     }
 
     struct Provider {
@@ -62,7 +62,7 @@ contract TaskContract {
         uint64  maxTime;            //max time
         uint16  maxTarget;          //max target he need
         uint256 minPrice;           //lowest price can accept
-        bool    available;          // Used to determine if provider is already doing something
+        bool    available;          //Used to determine if provider is already doing something
     }
 
     event ProviderAdded     (uint256 provID, address payable addr);
@@ -158,12 +158,17 @@ contract TaskContract {
         //add new to requestPool
         pendingPool.push(requestCount);
         requestList[requestCount].status = '0' ;     //pending 0x30, not 0
-        emit RequestAdded(requestCount,msg.sender);
-        
-        //update count
-        requestCount++;     
-        return '0';
-        //assignTask(requestCount -1);
+               
+        //try assign and handle return value
+        byte ret = assignTask(requestCount);
+        if (ret == '0')  {
+            emit RequestAdded(requestCount, msg.sender);
+            requestCount++;
+            return '0';
+        } else {   //TODO: may add more handler, e.g.increse the price or sth.
+            requestCount++;
+            return ret;
+        }
     }
 
 
@@ -178,126 +183,64 @@ contract TaskContract {
         if(pendingPool.length == 0) return '2';
         else {
             //search throught the pendingPool
-            for (uint128 i = 0; i < pendingPool.length; i++){
+            for (uint64 i = 0; i < pendingPool.length; i++){
                 //save the re-usable reqID , may save gas
-                uint256 reqID = pendingPool[i]; //     
+                uint256 reqID = pendingPool[i]; //
                 if( requestList[reqID].time     < providerList[provID].maxTime &&
                     requestList[reqID].target   < providerList[provID].maxTarget &&
-                    requestList[reqID].price    > providerList[provID].minPrice){
-                        //update provider
-                        providerList[provID].available = false;
-                        //update request
-                        requestList[reqID].provider = providerList[provID].addr;
-                        requestList[reqID].status = '1';    //providing
-                        //update the pool, move ID#
-                        bool isPopped = false;
-                        isPopped = ArrayPop(pendingPool, reqID);
-                        isPopped = ArrayPop(providerPool, provID) && isPopped;
-                        if(!isPopped) return '3';
-                        providingPool.push(reqID);
-                        
-                        //update balanceList            addr here is requester's
-                        balanceList[reqID] += requestList[reqID].price; 
-                        emit TaskAssigned(reqID,requestList[reqID].addr,  
-                                        provID, providerList[provID].addr);
-                        return '0';                   
-                }                
+                    requestList[reqID].price    > providerList[provID].minPrice)
+                    return assign(reqID, provID);                
             }
             //after for loop and no match
             return '1';
         }
     }
-
-
-
-
-
     
-
-/*  function requestTask(uint64 dataID, uint16 target, uint64 time) payable public returns (bool) {
-    //a legacy version of requestTask, using a local memory copy and write back
-        bool[] memory emptyArray;
-        Request memory req = Request(           //create a temp memory var
-            msg.sender,             //addr
-            address(0),             //provider
-            requestCount,           //reqID
-            dataID,                 //dataID
-            time,                   //time    
-            target,                 //target   0-100
-            msg.value,              //price 
-            0,                      //resultID
-            1,                      //numValidationsNeeded
-            emptyArray,             //sig list
-            false,                  //isValid
-            0                       //status  0-3 0: pending
-        );
-
-        //copy the mem var into storage
-        requestList[requestCount] = req;        //requestCount used as index here, from 0 to +++
-        //add new to requestPool
-        requestPool.push(requestCount);
-        //update requestID
-        requestID[msg.sender].push(requestCount);
-        //update count
-        requestCount++;     //count already stands for the # of req now.
-        pendingCount++;
-        return assignTask();
-    }
-
-
     // Assigning one task to one of the available providers. Only called from requestTask (private)
-    // Search in the providerPool, if no match in the end, return false
-    //could only assign one task at a time
-    //auto sel the first searching result for now, no comparation between multiple availability.
-    //TODO: need ot add preference next patch
+    // Search in the providerPool, could only assign one task at a time
+    // TODO: need to add preference next patch
     // Returns: 0: successfully assigned
     //          1: searched all providers but find no match
     //          2: no available provider right now
     //          3: failure during poping pool
-    function assignTask(uint128 reqID) private returns (byte) {
+    function assignTask(uint256 reqID) private returns (byte) {
         //provider availability is checked in pool not in list
         if (providerPool.length == 0)   return '2';
         else {            //if any provider in pool
             for (uint64 i = 0; i < providerPool.length; i++) {
                 // save the provider's addr, reusable and save gas cost
-                address payable addr  = providerPool[i];
-                if(addr != address(0) && providerList[addr].available == true){
-                    // Check if request conditions meet the providers requirements
-                    if (requestList[reqID].target <= providerList[addr].maxTarget && 
-                        requestList[reqID].time <= providerList[addr].maxTime && 
-                        requestList[reqID].price >= providerList[addr].minPrice) {
-                        
-                        //update provider:
-                        providerList[addr].available = false;
-                        bool isPopped = providerPop(addr);
-                        if(!isPopped) return '3';
-
-                        //update request
-                        requestList[reqID].provider = addr;
-                        requestList[reqID].status = '1';    //providing
-                        isPopped = requestPop(reqID);
-                        if(!isPopped) return '3';
-
-                        //update balanceList              
-                        balanceList[requestList[reqID].addr] += requestList[reqID].price; 
-                                               
-                        //status move from pending to providing
-                        pendingCount--;
-                        providingCount++;
-                        //NOTE: assign existing task should not increase the # of requestCount
-
-                        //EVENT
-                        emit TaskAssigned(addr, providerID[addr], reqID); // Let provider listen for this event to see he was selected
-                        return '0';
-                    }
-                }
+                uint256 provID  = providerPool[i];
+                if( requestList[reqID].time     < providerList[provID].maxTime &&
+                    requestList[reqID].target   < providerList[provID].maxTarget &&
+                    requestList[reqID].price    > providerList[provID].minPrice)
+                    return assign(reqID, provID);
             }
             // No provider was found matching the criteria -- request failed
-            requestList[reqID].addr.transfer(requestList[reqID].price); // Returns the ether to the sender
+            //requestList[reqID].addr.transfer(requestList[reqID].price); // Returns the ether to the sender
             return '1';
-        }
+        }       
     }
-
+    
+    //triggered by assignTask or assignProvider, do the state change and pool move
+    function assign(uint256 reqID, uint256 provID) private returns (byte) {
+        //update provider
+        providerList[provID].available = false;
+        //update request
+        requestList[reqID].provider = providerList[provID].addr;
+        requestList[reqID].status = '1';    //providing
+        //update the pool, move ID#
+        bool isPopped = false;
+        isPopped = ArrayPop(pendingPool, reqID);
+        isPopped = ArrayPop(providerPool, provID) && isPopped;
+        if(!isPopped) return '3';
+        providingPool.push(reqID);
+        
+        //update balanceList            addr here is requester's
+        balanceList[reqID] += requestList[reqID].price; 
+        emit TaskAssigned(reqID,requestList[reqID].addr,  
+                        provID, providerList[provID].addr);
+        return '0';   
+    }
 
 
 /*
@@ -381,6 +324,38 @@ contract TaskContract {
         return requestList[reqID].isValid;
     }
 */
+//////////////////////////////////////////////////////////////////////
+/*  function requestTask(uint64 dataID, uint16 target, uint64 time) payable public returns (bool) {
+    //a legacy version of requestTask, using a local memory copy and write back
+        bool[] memory emptyArray;
+        Request memory req = Request(           //create a temp memory var
+            msg.sender,             //addr
+            address(0),             //provider
+            requestCount,           //reqID
+            dataID,                 //dataID
+            time,                   //time    
+            target,                 //target   0-100
+            msg.value,              //price 
+            0,                      //resultID
+            1,                      //numValidationsNeeded
+            emptyArray,             //sig list
+            false,                  //isValid
+            0                       //status  0-3 0: pending
+        );
+
+        //copy the mem var into storage
+        requestList[requestCount] = req;        //requestCount used as index here, from 0 to +++
+        //add new to requestPool
+        requestPool.push(requestCount);
+        //update requestID
+        requestID[msg.sender].push(requestCount);
+        //update count
+        requestCount++;     //count already stands for the # of req now.
+        pendingCount++;
+        return assignTask();
+    }
+*/
+
 /////////////////////////////////////////////////////////////////////
  // Used to dynamically remove elements from array of open provider spaces. 
     // Using a swap and delete method, search for the desired addr throughout the whole array
