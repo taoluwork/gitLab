@@ -25,6 +25,8 @@ contract TaskContract {
     uint256[] pendingPool;      //requests
     uint256[] providingPool;    //requests
     uint256[] validatingPool;   //requests
+
+    bool autoAssign;            //whether auto assign the task
     
 
     constructor() public {      //sol 5.0 syntax
@@ -101,6 +103,9 @@ contract TaskContract {
         // ready for the next       
         emit ProviderAdded(providerCount, msg.sender);
         providerCount++;
+        //try assign and handle return value
+        if(autoAssign) return assignProvider(providerCount-1);
+
         
     }
     // Stop a provider, if you know a provider ID. Get em using getProvID()
@@ -161,7 +166,7 @@ contract TaskContract {
         emit RequestAdded(requestCount, msg.sender);       
         requestCount++;
         //try assign and handle return value
-        return assignTask(requestCount-1);
+        if (autoAssign) return assignTask(requestCount-1);
     }
 
 
