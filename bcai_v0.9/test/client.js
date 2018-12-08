@@ -176,6 +176,7 @@ function userFireMessage(){
         .send({from: myAccount, gas: 80000000, value: money})
         .then(function(ret){
             console.log("-----------------------------------------------------------------")
+            console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("Request Submitted! Block: ",ret.blockNumber);
             //console.log("return = ", ret.returnValue);
             if(argv['recpt']!= 0 && argv['recpt']!=undefined) 
@@ -219,6 +220,7 @@ function userFireMessage(){
         .send({from: myAccount, gas: 200000})
         .then(function(ret){
             console.log("Update request: Block = ", ret.blockNumber);
+            console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
@@ -261,6 +263,7 @@ function workerFireMessage(){
         .send({from: myAccount, gas: 400000})
         .then(function(ret){
             console.log("Start providing: Block = ", ret.blockNumber);
+            console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
             console.log("-----------------------------------------------------------------")
             if(argv['recpt']!= 0 && argv['recpt']!=undefined)
                 console.log("Receipt:    <=====###### ", ret);
@@ -303,6 +306,7 @@ function workerFireMessage(){
         .send({from: myAccount, gas: 200000})
         .then(function(ret){
             console.log("Update providing: Block = ", ret.blockNumber);
+            console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
