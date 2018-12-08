@@ -77,8 +77,9 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     }
     else {
         myAccount = accounts[argv['a']];
+        if (myAccount == undefined) throw 'setting account error!';
         console.log("-----------------------------------------------------------------")
-        console.log('Using account: [',argv['a'], '] ', accounts[argv['a']]);
+        console.log('Using account: [',argv['a'], '] ', myAccount);
     }
     return accounts;
 }).then(
