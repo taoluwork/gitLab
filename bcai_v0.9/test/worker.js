@@ -74,7 +74,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     if(argv['a'] == undefined) {               //init account using 9 or -a #
         myAccount = accounts[9];
         console.log("-----------------------------------------------------------------")
-        console.log('Using default account: [9]', accounts[9]);
+        console.log('Using default account: [9]', myAccount);
         console.log('You can infer specific account by passing -a #');
     }
     else {

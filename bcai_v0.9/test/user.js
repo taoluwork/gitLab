@@ -72,7 +72,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     }
     else if(argv['a'] == undefined) {
         myAccount = accounts[0];
-        console.log('Using default account: [0]', accounts[argv['a']]);
+        console.log('Using default account: [0]', myAccount);
         console.log('You can infer specific account by passing -a #');
     }
     else {
