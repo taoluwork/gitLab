@@ -218,7 +218,7 @@ function userFireMessage(){
     else { 
         //TODO: update request need refund 
         myContract.methods.updateRequest(time, target, argv['u'])
-        .send({from: myAccount, gas: 200000, value = money})
+        .send({from: myAccount, gas: 200000, value: money})
         .then(function(ret){
             console.log("Update request: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
