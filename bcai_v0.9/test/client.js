@@ -9,11 +9,15 @@ var version = "bcai_client v0.9.2     ----  by Taurus"
 //Avoid using version earlier than 0.9.2
 /////////////////////////////////////////////////////////////////
 //edit default parameter here:
-var dataID = 11;
+var dataID = 31415926;
 var target = 90;        //this must be less than workders target limt
 var time = 90000;       //this must less than worker's time limit
 var money = 800000;      //this must be greater than worker's price
-var mode = 'user';
+
+var maxTime = 100000;
+var maxTarget = 99;
+var minPrice = 500000;
+var mode;// = 'user';      //default mode
 ////////////////////////////////////////////////////////////////////
 
 
