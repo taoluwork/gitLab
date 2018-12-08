@@ -28,9 +28,10 @@ if(argv['help'] || argv['h']) {
     console.log(" -T #    : target ");
     console.log(" -p #    : price");
 
-    console.log(" --view  : view all current providers / do nothing");
+    console.log(" --view  : view all active providers / do nothing");
     console.log(" --my    : view all my providers");
     console.log(" --debug : show all details");
+    console.log(" --all   : list all info / use with caution")
     //console.log(" --stop  : stop all providers from current address details");
     console.log(" --recpt : transaction receipt");
     //console.log(" --obj   : list provider objects ");
@@ -86,6 +87,9 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     function(accounts){ //success
         if (argv['view']){
             console.log(accounts); 
+            listPoolProviders();
+        }
+        else if (argv['all']){
             listAllProviders();
         }
         else if (argv['my'])
@@ -225,7 +229,7 @@ function showLatestProvider(){
 //show Active Pool
 //show Total Count
 //view Total List
-function listAllProviders (){
+function listPoolProviders (){
     myContract.methods.getProviderPoolSize().call().then(function(actCount){
         console.log("-----------------------------------------------------");
         console.log("Total active provider = ", actCount);
@@ -234,15 +238,16 @@ function listAllProviders (){
         myContract.methods.getProviderPool().call().then(function(pool){             
             console.log("Active provider pool: ");
             console.log(pool);
-        }).then(function(){       
+            return pool;
+        }).then(function(pool){       
             myContract.methods.getProviderCount().call().then(function(totalCount){
                 console.log("-----------------------------------------------------");
                 console.log("Total provider since start = ", totalCount);
-                return totalCount;
-            }).then(function(totalCount){	
+                return pool;
+            }).then(function(pool){	
                 myContract.methods.listProviders().call().then(function(proList){                          
-                    if(totalCount > 0) console.log("List all the Providers: ")
-                    for (var i = 0;i < totalCount ;i++){
+                    if(pool.length > 0) console.log("List all the Providers: ")
+                    for (var i = 0;i < pool.length ;i++){
                         if(argv['debug']){          //in a detail pattern
                             console.log(proList[i]);
                         } else{                     //or simple print:    3 key values 
@@ -284,5 +289,32 @@ function listProviderOnlyMy(myAccount){
         else process.exit();
     }, function(){
         console.log("Error listing my own!")
+    })
+}
+
+function listAllProviders(){
+    myContract.methods.getProviderCount().call().then(function(totalCount){
+        console.log("-----------------------------------------------------");
+        console.log("Total provider since start = ", totalCount);
+        return totalCount;
+    }).then(function(totalCount){	
+        myContract.methods.listAllProviders().call().then(function(proList){                          
+            if(totalCount > 0) console.log("List all the Providers: ")
+            for (var i = 0;i < totalCount ;i++){
+                if(argv['debug']){          //in a detail pattern
+                    console.log(proList[i]);
+                } else{                     //or simple print:    3 key values 
+                    if(proList[i]['addr'] != 0){
+                        console.log("provD = ", proList[i]['provID']);
+                        console.log("addr = ", proList[i]['addr']);
+                        console.log("available = ", proList[i]['available']);
+                    }
+                }
+            }		
+        })
+        .catch(function(){      //catch any error at end of .then() chain!
+            console.log("List All Provider Info Failed! ")
+            process.exit();
+        })               
     })
 }
