@@ -87,11 +87,13 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     else if(argv['a'] == undefined) {
         if(mode == 'user'){
             myAccount = accounts[0];
+            console.log("=================================================================")
             console.log('Using default account: [0]', myAccount);
             console.log('You can infer specific account by passing -a #');
         }
         else if (mode == 'worker'){
             myAccount = accounts[9];
+            console.log("=================================================================")
             console.log('Using default account: [9]', myAccount);
             console.log('You can infer specific account by passing -a #');
         }
@@ -99,7 +101,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     else {      //-a is given
         myAccount = accounts[argv['a']];
         if (myAccount == undefined) throw 'setting account error!';
-        console.log("-----------------------------------------------------------------")
+        cconsole.log("=================================================================")
         console.log('Using account: [',argv['a'], '] ', myAccount);
     }
     console.log("Client Mode: ", mode);
