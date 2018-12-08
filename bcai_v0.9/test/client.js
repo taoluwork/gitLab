@@ -105,7 +105,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     else {      //-a is given
         myAccount = accounts[argv['a']];
         if (myAccount == undefined) throw 'setting account error!';
-        cconsole.log("=================================================================")
+        console.log("=================================================================")
         console.log('Using account: [',argv['a'], '] ', myAccount);
     }
     console.log("Client Mode: ", mode);
@@ -175,9 +175,10 @@ function userFireMessage(){
         myContract.methods.requestTask(dataID, target, time)
         .send({from: myAccount, gas: 80000000, value: money})
         .then(function(ret){
-            console.log("-----------------------------------------------------------------")
+            //console.log("-----------------------------------------------------------------")
             console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("Request Submitted! Block: ",ret.blockNumber);
+            console.log("-----------------------------------------------------------------")
             //console.log("return = ", ret.returnValue);
             if(argv['recpt']!= 0 && argv['recpt']!=undefined) 
                 console.log("Receipt:    <=====######", ret);
