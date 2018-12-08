@@ -217,7 +217,7 @@ function listPoolRequests (){
                 console.log("Total Request since start = ", totalCount);
                 return pool;
             }).then(function(pool){	
-                myContract.methods.listRequests().call().then(function(proList){                          
+                myContract.methods.listRequests(pool).call().then(function(proList){                          
                     if(pool.length > 0) console.log("List all the Requests in Pool: ")
                     for (var i = 0;i < pool.length ;i++){
                         if(argv['debug']){          //in a detail pattern
