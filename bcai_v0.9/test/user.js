@@ -224,7 +224,7 @@ function listPoolRequests (){
                             console.log(proList[i]);
                         } else{                     //or simple print:    3 key values 
                             if(proList[i]['addr'] != 0){
-                                console.log("reqvD = ", proList[i]['reqvD']);
+                                console.log("reqID = ", proList[i]['reqID']);
                                 console.log("addr = ", proList[i]['addr']);
                                 console.log("provider = ", proList[i]['provider']);
                             }
