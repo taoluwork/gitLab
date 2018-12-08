@@ -253,19 +253,19 @@ function listPoolProviders (){
                 console.log(pool);
                 return pool;
             }).then(function(pool){	
-                myContract.methods.listProviders().call().then(function(proList){                          
+                myContract.methods.listProviders(pool).call().then(function(List){                          
                     if(pool.length > 0) {
                         console.log("-----------------------------------------------------");
                         console.log("List all the Providers: ")
                     }
                     for (var i = 0;i < pool.length ;i++){
                         if(argv['debug']){          //in a detail pattern
-                            console.log(proList[i]);
+                            console.log(List[i]);
                         } else{                     //or simple print:    3 key values 
                             if(proList[i]['addr'] != 0){
-                                console.log("provD = ", proList[i]['provID']);
-                                console.log("addr = ", proList[i]['addr']);
-                                console.log("available = ", proList[i]['available']);
+                                console.log("provID = ", List[i]['provID']);
+                                console.log("addr = ", List[i]['addr']);
+                                console.log("available = ", List[i]['available']);
                             }
                         }
                     }		

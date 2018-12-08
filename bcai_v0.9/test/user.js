@@ -227,19 +227,19 @@ function listPoolRequests (){
                 console.log(pool);
                 return pool;
             }).then(function(pool){	
-                myContract.methods.listRequests(pool).call().then(function(proList){                          
+                myContract.methods.listRequests(pool).call().then(function(List){                          
                     if(pool.length > 0) {
                         console.log("-----------------------------------------------------");
                         console.log("List all the Requests in Pool: ")
                     }
                     for (var i = 0;i < pool.length ;i++){
                         if(argv['debug']){          //in a detail pattern
-                            console.log(proList[i]);
+                            console.log(List[i]);
                         } else{                     //or simple print:    3 key values 
                             if(proList[i]['addr'] != 0){
-                                console.log("reqID = ", proList[i]['reqID']);
-                                console.log("addr = ", proList[i]['addr']);
-                                console.log("provider = ", proList[i]['provider']);
+                                console.log("reqID = ", List[i]['reqID']);
+                                console.log("addr = ", List[i]['addr']);
+                                console.log("provider = ", List[i]['provider']);
                             }
                         }
                     }		
