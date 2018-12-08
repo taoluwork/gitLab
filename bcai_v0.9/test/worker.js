@@ -145,7 +145,7 @@ function fireMessage(){
             showLatestProvider();
         }).catch(function(err){
             console.log("Stop provider failed! Check your provID by --my");
-            console.log(err);
+            //console.log(err);
             process.exit();
         })
     }  
@@ -166,7 +166,7 @@ function fireMessage(){
             showLatestProvider();
         }).catch(function(err){
             console.log("Update provider failed! Check your provID by --my");
-            console.log(err);
+            //console.log(err);
             process.exit();
         })
     }

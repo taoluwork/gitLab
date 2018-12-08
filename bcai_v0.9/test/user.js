@@ -153,7 +153,7 @@ function fireMessage(){
             }
         }).then(function(){
             showLatestRequest();          
-        }).catch(function(){
+        }).catch(function(err){
             console.log("Submit request failed! Check receipt by --recpt");
             process.exit();
         })
