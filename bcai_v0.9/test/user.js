@@ -66,19 +66,19 @@ var reqID;
 // start your ganache-cli now!
 /////////////////////////////////////////////////////////////////////////
 web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
-    //list all accounts
-    if (argv['a'] > 9){
+    if (argv['a'] > 9){     //list all accounts
         console.log(accounts);
         process.exit();
     }
     else if(argv['a'] == undefined) {
         myAccount = accounts[0];
-        console.log('Using default account: [0]', myAccount);
+        console.log('Using default account: [0]', accounts[argv['a']]);
         console.log('You can infer specific account by passing -a #');
     }
     else {
         myAccount = accounts[argv['a']];
-        console.log('Using account: [',argv['a'], '] ', myAccount);
+        console.log("-----------------------------------------------------------------")
+        console.log('Using account: [',argv['a'], '] ', accounts[argv['a']]);
     }
     return accounts;
 }).then(
