@@ -82,7 +82,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         console.log("-----------------------------------------------------------------")        
         console.log('Using account:[',argv['a'], '] ' ,accounts[argv['a']]);
     }
-    if (myAccount == address(0)) throw 'setting account error!';
+    //if (myAccount == address(0)) throw 'setting account error!';
     return accounts;
 }).then(
     function(accounts){ //success
