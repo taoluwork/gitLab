@@ -36,6 +36,7 @@ if(argv['help'] || argv['h']) {
     console.log(" --recpt : transaction receipt");
     //console.log(" --obj   : list provider objects ");
     console.log(" --nl    : no listening for events (default will do)")
+    console.log("NOTE: you cannot view other accounts' info, use --my -a#")
 	process.exit();
 }
 if(argv['v'] || argv['version']){
@@ -174,8 +175,15 @@ function fireMessage(){
 	    toBlock: 'latest'
     }, function(err, eve){
 	    if(err!= null) console.log("ERROR!",err);
-	    if(argv['debug']) console.log(eve);
-	    else console.log("Task Assigned to Provider", eve.returnValues);
+        if(argv['debug']) {
+            console.log("=================================================================")
+            console.log(eve);
+            console.log("=================================================================")
+        } else {
+            console.log("=================================================================")
+            console.log("Task Assigned to Provider", eve.returnValues);           
+            console.log("=================================================================")
+        }
     })
     //wait until to be assigned.
     /*contract.events.TaskAssigned({

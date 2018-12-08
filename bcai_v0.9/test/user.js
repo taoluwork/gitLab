@@ -35,6 +35,7 @@ if(argv['help']) {
     console.log(" --debug : enable more details");
     //console.log(" --stop :  stop the current provider")
     console.log(" --nl    : no listening for events (default will do)")
+    console.log("NOTE: you cannot view other accounts' info, use --my -a#")
 	process.exit();
 }
 if(argv['v'] || argv['version']){
@@ -169,8 +170,16 @@ function fireMessage(){
         fromBlock: 0,
 	    toBlock: 'latest'
     }, function(err, eve){
-	    if(err!= null) console.log("ERROR!",err);
+        if(err!= null) console.log("ERROR!",err);
+        if(argv['debug']){
+            console.log("=================================================================")
+            console.log("Task Assigned to Provider", eve);
+            console.log("=================================================================")
+        }else{
+        console.log("=================================================================")
         console.log("Task Assigned to Provider", eve.returnValues)
+        console.log("=================================================================")
+        }
     })
 }
 
