@@ -50,7 +50,7 @@ contract TaskContract {
         uint256 price;                  //the max amount he can pay
         uint64  dataID;                 //dataID used to fetch the off-chain data
         uint64  resultID;               //dataID to fetch the result
-        uint64  numValidationsNeeded;   //user defined the validation
+        uint64  numValidations;         //user defined the validation
         bool[]  validations;            //multisignature from validations
         bool    isValid;                //the final flag
         byte    status;                 //0: 'pending', 1:'providing', 2: validating, 3: complete
@@ -66,7 +66,8 @@ contract TaskContract {
         uint256 minPrice;           //lowest price can accept
         bool    available;          //Used to determine if provider is already doing something
     }
-
+    //event
+    //TODO: events optimization: many events have the similar structure, may be combined
     event ProviderAdded     (uint256 provID, address payable addr);
     event ProviderStopped   (uint256 provID, address payable addr);
     event ProviderUpdated   (uint256 provID, address payable addr);
@@ -74,11 +75,12 @@ contract TaskContract {
                             uint256 provID, address payable provAddr);     // next step: call completeTask
     
     event RequestAdded      (uint256 reqID, address payable addr);
-    //TODO: Request updated
-    //TODO: Request deleted
-    //event
+    event RequestUpdated    (uint256 reqID, address payable addr);
+    event RequestCanceled   (uint256 reqID, address payable addr);
     
-    //event ValidationRequested   (address validator, uint128 reqID);    // next step: validator calls submitValidation
+    event CompleteTask      (uint256 reqID, address payable addr);
+    event ValidationAssigned(uint256 reqID, uint256 provID, address payable addr);    // next step: validator calls submitValidation
+    event NotEnoughValidation(uint256 reqID);
     //event TaskCompleted         (address requestor, uint128 reqID);    // done
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -108,8 +110,7 @@ contract TaskContract {
 
         
     }
-    // Stop a provider, if you know a provider ID. Get em using getProvID()
-    // Must be sent from the provider address or it will be failed.
+    // Stop a provider, Must be sent from the provider address or it will be failed.
     function stopProviding(uint256 provID) public returns (bool) {
         // If the sender is currently an active provider
         bool flag = false;
@@ -153,7 +154,7 @@ contract TaskContract {
         requestList[requestCount].price         = msg.value;
         requestList[requestCount].dataID        = dataID;
         //requestList[requestCount].resultID  = 0;
-        requestList[requestCount].numValidationsNeeded = 1;
+        requestList[requestCount].numValidations = 1;
         //requestList[requestCount].validations = emptyArray;
         //requestList[requestCount].isValid   = false;
         
@@ -162,13 +163,12 @@ contract TaskContract {
         
         //add new to requestPool
         pendingPool.push(requestCount);
-        requestList[requestCount].status = '0' ;     //pending 0x30, not 0
+        requestList[requestCount].status = '0' ;     //web3.toAscii([hex])
         emit RequestAdded(requestCount, msg.sender);       
         requestCount++;
         //try assign and handle return value
         if (autoAssign) return assignTask(requestCount-1);
     }
-
     function cancelTask(uint256 reqID) public returns (bool){
         bool flag = false;
         if (requestList[reqID].status == '0'                       //can only cancel pending request
@@ -177,7 +177,7 @@ contract TaskContract {
             flag = ArrayPop(requestMap[msg.sender], reqID);        //delete form Map
             flag = ArrayPop(pendingPool, reqID) && flag;           //delete from Pool             
         }
-        if(flag) emit ProviderStopped(reqID, msg.sender);
+        if(flag) emit RequestCanceled(reqID, msg.sender);
         return flag;
     }
     function updateRequest(uint64 time, uint16 target, uint256 reqID) payable public returns (bool) {      
@@ -192,7 +192,7 @@ contract TaskContract {
             flag = ArrayPop(pendingPool,reqID);           // pop first                                      
             pendingPool.push(reqID);                      // push in both case anyway
             //update map -- no need provID not changed.
-            emit ProviderUpdated(reqID, msg.sender);
+            emit RequestUpdated(reqID, msg.sender);
             return flag;
         }
     }
@@ -248,7 +248,7 @@ contract TaskContract {
         }       
     }
     
-    //triggered by assignTask or assignProvider, do the state change and pool move
+    //supporting function :triggered by assignTask or assignProvider, do the state change and pool move
     function assign(uint256 reqID, uint256 provID) private returns (byte) {
         //update provider
         providerList[provID].available = false;
@@ -270,49 +270,94 @@ contract TaskContract {
     }
 
 
-/*
+    ////////////////////////////////////////////////////////////////////////////////////////
+    // off-chain actions happen here!
+    // After assignment, provider will fetch off-chain data and 
+    // update this action by sending a confirm online, (not necessarily).
+    //
+    // TODO: function providerGotData() public returns (byte){}
+    //
+    // Then provider will start computation right now.
+    // Return the result adn call completeTask
+    ////////////////////////////////////////////////////////////////////////////////////////
+    //Exceptions: 
+    // 1.Computation aborted/fail == retry within time limit
+    // 2.timeout == refund request / status: providing -> pending
+    // ##$$ Golden Rule: Costomer is God, whoever PAYED must got result or refund.
+    // Deal with money using extreme caution!
+
 
     // Provider will call this when they are done and the data is available.
     // This will invoke the validation stage
-    function completeTask(uint128 reqID, uint64 resultID) public returns (bool) {
+    function completeTask(uint256 reqID, uint64 resultID) public returns (bool) {
         // Confirm msg.sender is actually the provider of the task he claims
         if (msg.sender == requestList[reqID].provider) {
-            requestList[reqID].isCompleted = true;
+            //change request obj
+            requestList[reqID].status = '2';    //validating
             requestList[reqID].resultID = resultID;
-            providerList[providerID[msg.sender]].available = true;
+            //move in pool
+            bool flag = false;
+            flag = ArrayPop(providingPool, reqID);
+            if(!flag) return false;
+            validatingPool.push(reqID);
+            //release provider (not necessarily depend on provider)
+            //providerList[providerID[msg.sender]].available = true;
+            emit CompleteTask(reqID, msg.sender);
+            //start validation process
             return validateTask(reqID);
         }
         else {
             return false;
         }
     }
-/*
+
     // Called by completeTask before finalizing stuff. Contract checks with validators
     // Returns false if there wasnt enough free providers to send out the required number of validation requests
-    function validateTask(uint128 reqID) private returns (bool) {
-        uint64 numValidators = 3; // need validation from 1/10 of nodes -- could change
+    // need validation from 1/10 of nodes -- could change
+    function validateTask(uint256 reqID) private returns (bool) {
+        uint64 numValidatorsNeeded = requestList[reqID].numValidations; 
         //uint numValidators = providerCount / 10; 
-        uint validatorsFound = 0;
-        requestList[reqID].numValidationsNeeded = numValidators;
-        for (uint64 i=0; i<providerCount + spaces.length && validatorsFound<numValidators; i++) {
-            if (providerList[i].addr == address(0)) {
-                continue;
+        uint64 validatorsFound = 0;
+        //requestList[reqID].numValidationsNeeded = numValidators;
+        //select # of available provider from the pool and force em to do the validation
+        for (uint64 i = 0; i < providerPool.length; i++) {
+            //get provider ID
+            uint256 provID = providerPool[i];
+            //validator and computer cannot be same
+            if(validatorsFound < numValidatorsNeeded){
+                if(providerList[provID].addr != requestList[reqID].provider){
+                    //qualified validator
+                    emit ValidationAssigned(reqID, provID, providerList[provID].addr);
+                    validatorsFound++;
+                    //remove the providers availablity and pop from pool
+                    providerList[provID].available = false;
+                    bool flag = ArrayPop(providerPool, provID);
+                    if (!flag) return false;
+                }       //else continue
             }
-            if (providerList[i].available) {
-                // EVENT: informs validator that they were selected and need to validate
-                emit ValidationRequested(providerList[i].addr, reqID);
-                validatorsFound++;
+            else{       //enough validator
+                return true;
+                break;
             }
-        }
-        if (validatorsFound == numValidators) {
-            return true;
-        }
-        return false;
+            //loop until certain # of validators selected
+        }   
+        //exit loop without enough validators
+        emit NotEnoughValidation(reqID);    
+
+        
+
+            // if (providerList[i].addr == address(0)) {   //not happen
+            //     continue;
+            // }
+            // if (providerList[i].available) {
+            //     // EVENT: informs validator that they were selected and need to validate
+            //     emit ValidationRequested(providerList[i].addr, reqID);
+            //     validatorsFound++;
+            // }
     }
 
 
-
-
+/*
 
     // needs to be more secure by ensuring the submission is coming from someone legit 
     function submitValidation(uint128 reqID, bool result) public returns (bool) {
