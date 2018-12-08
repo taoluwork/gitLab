@@ -31,6 +31,7 @@ if(argv['help']) {
     console.log(" --view  : view all current requests / no change");
     console.log(" --my    : view all my requests");
     console.log(" --cancel: cancel existing request");
+    console.log(" --all   : show all the infomation / use with caution")
     console.log(" --debug : enable more details");
     //console.log(" --stop :  stop the current provider")
     console.log(" --nl    : no listening for events (default will do)")
@@ -84,6 +85,10 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     function(accounts){         //success
         if (argv['view']){
             console.log(accounts); 
+            listPoolRequests();
+        }
+        else if (argv['all']){
+            console.log(accounts);
             listAllRequests();
         }
         else if (argv['my'])
@@ -167,92 +172,6 @@ function fireMessage(){
     })
 }
 
-function showRequestInfo(){
-    //Promise(function(resolve){
-        if(argv['my'])  {  //only list Requests under MY addr
-            myContract.methods.getRequestID(myAccount).call().then(function(IDList){
-                console.log("All my posted Request: ")
-                console.log(IDList);
-                return IDList;
-                
-            }).then(function(IDList){
-                if(argv['debug']){
-                    myContract.methods.listRequests(IDList).call().then(function(objList){                   
-                        console.log("-----------------------------------------------------------------");
-                        console.log("Debug details: ");
-                        for(var i = 0; i < IDList.length; i++){
-                            console.log(objList[i]);
-                        }                                      
-                    })
-                    .then(function(){
-                        process.exit();
-                    })
-                } else process.exit();
-            })
-        }
-        else if(argv['list']){
-            myContract.methods.getRequestPoolSize().call().then(function(PoolCount){
-                console.log("-----------------------------------------------------");
-                console.log("Now active Requests: ",PoolCount);
-            }).then(function(){
-                myContract.methods.getRequestPool().call().then(function(pool){             
-                    console.log("Active Request pool: ");
-                    console.log(pool);
-                }).then(function(){
-                    myContract.methods.getRequestCount().call().then(function(totalCount){
-                        console.log("-----------------------------------------------------");
-                        console.log("Total Request since start: ", totalCount);
-                        return totalCount;
-                    }).then(function(totalCount){	
-                        myContract.methods.listRequests().call().then(function(proList){                          
-                            if(totalCount > 0) console.log("List all the Requests: ")
-                            //NOTE: difference here: Request only list in the pool
-                            for (var i = 0;i < totalCount ;i++){
-                                //or print in full
-                                if(argv['debug']){
-                                    console.log(proList[i]);
-                                } else{ //simple print:     
-                                    if(proList[i]['addr'] != 0){
-                                        console.log("provD = ", proList[i]['provID']);
-                                        console.log("addr = ", proList[i]['addr']);
-                                        console.log("available = ", proList[i]['available']);
-                                    }
-                                }
-                            }			
-                        })
-                        //process.exit();
-                    })
-                })
-            })
-        }
-        else{       //not just list, show current status
-            myContract.methods.getRequestCount().call().then(function(totalCount){
-                console.log("-----------------------------------------------------------------");
-                console.log("Total Request count = ",totalCount);
-                return totalCount;
-            }).then(function(totalCount){
-                //get Request pool     
-                myContract.methods.getRequestPool().call().then(function(pool){
-                    console.log("Active Request count = ",pool.length);
-                    console.log("Request Pool: ");
-                    console.log(pool); 
-                    return totalCount;  
-                }).then(function(totalCount){
-                    //print Request detals (object)
-                    if(argv['debug']){
-                        myContract.methods.getRequest(totalCount-1).call().then(function(ret){
-                            console.log("-----------------------------------------------------------------");
-                            console.log("Last Request: ", ret);
-                        }).then(function(){
-                            if(argv['nl']) process.exit();
-                        });
-                    }
-                    else if(argv['nl']) process.exit();
-                    })
-                })
-        }
-    }
-
 //called by --my
 function listRequestOnlyMy(myAccount){
     myContract.methods.getRequestID(myAccount).call().then(function(IDList){
@@ -282,7 +201,7 @@ function listRequestOnlyMy(myAccount){
 //show Active Pool
 //show Total Count
 //view Total List
-function listAllRequests (){
+function listPoolRequests (){
     myContract.methods.getRequestPoolSize().call().then(function(actCount){
         console.log("-----------------------------------------------------");
         console.log("Total active Request = ", actCount);
@@ -291,15 +210,16 @@ function listAllRequests (){
         myContract.methods.getRequestPool().call().then(function(pool){             
             console.log("Active Request pool: ");
             console.log(pool);
-        }).then(function(){       
+            return pool;
+        }).then(function(pool){       
             myContract.methods.getRequestCount().call().then(function(totalCount){
                 console.log("-----------------------------------------------------");
                 console.log("Total Request since start = ", totalCount);
-                return totalCount;
-            }).then(function(totalCount){	
+                return pool;
+            }).then(function(pool){	
                 myContract.methods.listRequests().call().then(function(proList){                          
-                    if(totalCount > 0) console.log("List all the Requests: ")
-                    for (var i = 0;i < totalCount ;i++){
+                    if(pool.length > 0) console.log("List all the Requests in Pool: ")
+                    for (var i = 0;i < pool.length ;i++){
                         if(argv['debug']){          //in a detail pattern
                             console.log(proList[i]);
                         } else{                     //or simple print:    3 key values 
@@ -312,7 +232,7 @@ function listAllRequests (){
                     }		
                 })
                 .catch(function(){      //catch any error at end of .then() chain!
-                    console.log("List All Request Info Failed! ")
+                    console.log("List Pool Request Info Failed! ")
                     process.exit();
                 })               
             })
@@ -347,5 +267,33 @@ function showLatestRequest(){
             }
             else if(argv['nl']) process.exit();
         })
+    })
+}
+
+//the most heavy duty
+function listAllRequests(){
+    myContract.methods.getRequestCount().call().then(function(totalCount){
+        console.log("-----------------------------------------------------");
+        console.log("Total Request since start = ", totalCount);
+        return totalCount;
+    }).then(function(totalCount){	
+        myContract.methods.listAllRequests().call().then(function(proList){                          
+            if(totalCount > 0) console.log("List all the Requests in History:   <<======####")
+            for (var i = 0;i < totalCount ;i++){
+                if(argv['debug']){          //in a detail pattern
+                    console.log(proList[i]);
+                } else{                     //or simple print:    3 key values 
+                    if(proList[i]['addr'] != 0){
+                        console.log("provD = ", proList[i]['provID']);
+                        console.log("addr = ", proList[i]['addr']);
+                        console.log("available = ", proList[i]['available']);
+                    }
+                }
+            }		
+        })
+        .catch(function(){      //catch any error at end of .then() chain!
+            console.log("List Request History Info Failed! ")
+            process.exit();
+        })               
     })
 }
