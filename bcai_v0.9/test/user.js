@@ -207,20 +207,21 @@ function listPoolRequests (){
     myContract.methods.getRequestPoolSize().call().then(function(actCount){
         console.log("-----------------------------------------------------");
         console.log("Total active Request = ", actCount);
-    })
-    .then(function(){	        
-        myContract.methods.getRequestPool().call().then(function(pool){             
-            console.log("Active Request pool: ");
-            console.log(pool);
+    }).then(function(pool){       
+        myContract.methods.getRequestCount().call().then(function(totalCount){            
+            console.log("Total Request since start = ", totalCount);
             return pool;
-        }).then(function(pool){       
-            myContract.methods.getRequestCount().call().then(function(totalCount){
-                console.log("-----------------------------------------------------");
-                console.log("Total Request since start = ", totalCount);
+        }).then(function(){	        
+            myContract.methods.getRequestPool().call().then(function(pool){             
+                console.log("Active Request pool: ");
+                console.log(pool);
                 return pool;
             }).then(function(pool){	
                 myContract.methods.listRequests(pool).call().then(function(proList){                          
-                    if(pool.length > 0) console.log("List all the Requests in Pool: ")
+                    if(pool.length > 0) {
+                        console.log("-----------------------------------------------------");
+                        console.log("List all the Requests in Pool: ")
+                    }
                     for (var i = 0;i < pool.length ;i++){
                         if(argv['debug']){          //in a detail pattern
                             console.log(proList[i]);

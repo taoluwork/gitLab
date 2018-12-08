@@ -235,20 +235,21 @@ function listPoolProviders (){
     myContract.methods.getProviderPoolSize().call().then(function(actCount){
         console.log("-----------------------------------------------------");
         console.log("Total active provider = ", actCount);
-    })
-    .then(function(){	        
-        myContract.methods.getProviderPool().call().then(function(pool){             
-            console.log("Active provider pool: ");
-            console.log(pool);
+    }).then(function(pool){       
+        myContract.methods.getProviderCount().call().then(function(totalCount){
+            console.log("Total provider since start = ", totalCount);
             return pool;
-        }).then(function(pool){       
-            myContract.methods.getProviderCount().call().then(function(totalCount){
-                console.log("-----------------------------------------------------");
-                console.log("Total provider since start = ", totalCount);
+        }).then(function(){	        
+            myContract.methods.getProviderPool().call().then(function(pool){             
+                console.log("Active provider pool: ");
+                console.log(pool);
                 return pool;
             }).then(function(pool){	
                 myContract.methods.listProviders().call().then(function(proList){                          
-                    if(pool.length > 0) console.log("List all the Providers: ")
+                    if(pool.length > 0) {
+                        console.log("-----------------------------------------------------");
+                        console.log("List all the Providers: ")
+                    }
                     for (var i = 0;i < pool.length ;i++){
                         if(argv['debug']){          //in a detail pattern
                             console.log(proList[i]);
