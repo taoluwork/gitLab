@@ -126,7 +126,7 @@ contract TaskContract {
     function updateProvider(uint64 maxTime, uint16 maxTarget, uint64 minPrice, uint256 provID) public returns (bool) {      
         bool flag = false;
         if(providerList[provID].available == true           //can only modify available provider
-        && providerList[provID].addr != msg.sender){        //you are modify other's config
+        && providerList[provID].addr == msg.sender){        //you cannot modify other's config
             providerList[provID].blockNumber    = block.number;         
             providerList[provID].maxTime        = maxTime;       
             providerList[provID].maxTarget      = maxTarget;
@@ -169,6 +169,35 @@ contract TaskContract {
         if (autoAssign) return assignTask(requestCount-1);
     }
 
+    function cancelTask(uint256 reqID) public returns (bool){
+        bool flag = false;
+        if (requestList[reqID].status == '0'                       //can only cancel pending request
+                && requestList[reqID].addr == msg.sender) {        //you cannot delete other's provider            
+            delete requestList[reqID];                             //delete from List
+            flag = ArrayPop(requestMap[msg.sender], reqID);        //delete form Map
+            flag = ArrayPop(pendingPool, reqID) && flag;           //delete from Pool             
+        }
+        if(flag) emit ProviderStopped(reqID, msg.sender);
+        return flag;
+    }
+    function updateRequest(uint64 time, uint16 target, uint256 reqID) payable public returns (bool) {      
+        bool flag = false;
+        if(requestList[reqID].status == '0'                 //can only update pending request
+        && requestList[reqID].addr == msg.sender){          //you cannot modify other's config
+            requestList[reqID].blockNumber    = block.number;         
+            requestList[reqID].time        = time;       
+            requestList[reqID].target      = target;
+            requestList[reqID].price       = msg.value;
+            //update pool       -- pop then push , because we need to scan pool anyway
+            flag = ArrayPop(pendingPool,reqID);           // pop first                                      
+            pendingPool.push(reqID);                      // push in both case anyway
+            //update map -- no need provID not changed.
+            emit ProviderUpdated(reqID, msg.sender);
+            return flag;
+        }
+    }
+
+    
 
     // Search in the pendingPool, find a job for current provider. Triggered by startProviding
     // Input: uint256 provider ID
