@@ -176,9 +176,9 @@ function fireMessage(){
             console.log("Task Assigned to Provider", eve);
             console.log("=================================================================")
         }else{
-        console.log("=================================================================")
-        console.log("Task Assigned to Provider", eve.returnValues)
-        console.log("=================================================================")
+            console.log("=================================================================")
+            console.log("Task Assigned to Provider", eve.returnValues)
+            console.log("=================================================================")
         }
     })
 }
@@ -291,16 +291,17 @@ function listAllRequests(){
         console.log("Total Request since start = ", totalCount);
         return totalCount;
     }).then(function(totalCount){	
-        myContract.methods.listAllRequests().call().then(function(proList){                          
+        myContract.methods.listAllRequests().call().then(function(List){                          
             if(totalCount > 0) console.log("List all the Requests in History:   <<======####")
             for (var i = 0;i < totalCount ;i++){
                 if(argv['debug']){          //in a detail pattern
-                    console.log(proList[i]);
+                    console.log(List[i]);
                 } else{                     //or simple print:    3 key values 
-                    if(proList[i]['addr'] != 0){
-                        console.log("provD = ", proList[i]['provID']);
-                        console.log("addr = ", proList[i]['addr']);
-                        console.log("available = ", proList[i]['available']);
+                    if(List[i]['addr'] != 0){
+                        console.log("reqID = ", List[i]['reqID']);
+                        console.log("addr = ", List[i]['addr']);
+                        console.log("provider = ", List[i]['provider']);
+                        console.log("status = ", List[i]['status']);
                     }
                 }
             }		
