@@ -4,7 +4,7 @@
 //author: taurus tlu4@lsu.edu
 //use: $ node user.js -a 4 --debug --help
 /////////////////////////////////////////////////////////////////
-var version = "worker.js v0.9.2     ----  by Taurus"
+var version = "bcai_client v0.9.2     ----  by Taurus"
 //NOTE: combine user and worker client together switch using --user, --worker
 //Avoid using version earlier than 0.9.2
 /////////////////////////////////////////////////////////////////
@@ -52,8 +52,13 @@ if(argv['T'] != undefined) maxTime = argv['T'];
 if(argv['p'] != undefined) maxTime = argv['p'];
 if(argv['user']) mode = 'user';
 else if(argv['worker']) mode = 'worker';
-else console.log("You must specify worker or user mode.")
-////////////////////////////////////////////////////////////////////////
+else {
+    console.log("-----------------------------------------------------------------")
+    console.log("You must specify worker or user mode.")
+    console.log("-----------------------------------------------------------------")
+    process.exit();
+}
+    ////////////////////////////////////////////////////////////////////////
 //create web3 instance
 var Web3 = require('web3');
 //use websocket provider here, http is deprecated.
