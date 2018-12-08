@@ -177,6 +177,7 @@ function fireMessage(){
 //called by --my
 function listRequestOnlyMy(myAccount){
     myContract.methods.getRequestID(myAccount).call().then(function(IDList){
+        console.log("-----------------------------------------------------------------");
         console.log("All my posted Request: ")
         console.log(IDList);
         return IDList;           

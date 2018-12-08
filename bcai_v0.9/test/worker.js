@@ -273,6 +273,7 @@ function listPoolProviders (){
 
 function listProviderOnlyMy(myAccount){
     myContract.methods.getProviderID(myAccount).call().then(function(IDList){
+        console.log("-----------------------------------------------------------------");
         console.log("All my posted provider: ")
         console.log(IDList);
         return IDList;           
