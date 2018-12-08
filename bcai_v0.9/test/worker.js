@@ -122,8 +122,9 @@ function fireMessage(){
             }          
         }).then(function(){
             showLatestProvider();
-        }).catch(function(){
+        }).catch(function(err){
             console.log("Start provider failed! Check receipt by --recpt");
+            console.log(err);
             process.exit();
         })
     } 
@@ -142,8 +143,9 @@ function fireMessage(){
             }
         }).then(function(){
             showLatestProvider();
-        }).catch(function(){
+        }).catch(function(err){
             console.log("Stop provider failed! Check your provID by --my");
+            console.log(err);
             process.exit();
         })
     }  
@@ -162,8 +164,9 @@ function fireMessage(){
             }
         }).then(function(){
             showLatestProvider();
-        }).catch(function(){
+        }).catch(function(err){
             console.log("Update provider failed! Check your provID by --my");
+            console.log(err);
             process.exit();
         })
     }
@@ -261,7 +264,7 @@ function listPoolProviders (){
                         if(argv['debug']){          //in a detail pattern
                             console.log(List[i]);
                         } else{                     //or simple print:    3 key values 
-                            if(proList[i]['addr'] != 0){
+                            if(List[i]['addr'] != 0){
                                 console.log("provID = ", List[i]['provID']);
                                 console.log("addr = ", List[i]['addr']);
                                 console.log("available = ", List[i]['available']);
@@ -299,7 +302,8 @@ function listProviderOnlyMy(myAccount){
             })  
         }
         else process.exit();
-    }, function(){
+    }, function(err){
+        console.log(err);
         console.log("Error listing my own!")
     })
 }
@@ -324,8 +328,9 @@ function listAllProviders(){
                 }
             }		
         })
-        .catch(function(){      //catch any error at end of .then() chain!
+        .catch(function(err){      //catch any error at end of .then() chain!
             console.log("List All Provider Info Failed! ")
+            console.log(err);
             process.exit();
         })               
     })

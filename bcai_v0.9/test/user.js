@@ -204,7 +204,8 @@ function listRequestOnlyMy(myAccount){
             })  
         }
         else process.exit();
-    }, function(){
+    }, function(err){
+        console.log(err);
         console.log("Error listing my own!")
     })
 }
@@ -235,7 +236,7 @@ function listPoolRequests (){
                         if(argv['debug']){          //in a detail pattern
                             console.log(List[i]);
                         } else{                     //or simple print:    3 key values 
-                            if(proList[i]['addr'] != 0){
+                            if(List[i]['addr'] != 0){
                                 console.log("reqID = ", List[i]['reqID']);
                                 console.log("addr = ", List[i]['addr']);
                                 console.log("provider = ", List[i]['provider']);
