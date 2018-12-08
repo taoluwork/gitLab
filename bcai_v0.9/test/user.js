@@ -81,7 +81,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     }
     return accounts;
 }).then(
-    function(){         //success
+    function(accounts){         //success
         if (argv['view']){
             console.log(accounts); 
             listAllRequests();

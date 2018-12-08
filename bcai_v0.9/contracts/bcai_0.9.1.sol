@@ -158,17 +158,10 @@ contract TaskContract {
         //add new to requestPool
         pendingPool.push(requestCount);
         requestList[requestCount].status = '0' ;     //pending 0x30, not 0
-               
+        emit RequestAdded(requestCount, msg.sender);       
+        requestCount++;
         //try assign and handle return value
-        byte ret = assignTask(requestCount);
-        if (ret == '0')  {
-            emit RequestAdded(requestCount, msg.sender);
-            requestCount++;
-            return '0';
-        } else {   //TODO: may add more handler, e.g.increse the price or sth.
-            requestCount++;
-            return ret;
-        }
+        return assignTask(requestCount-1);
     }
 
 
@@ -189,7 +182,7 @@ contract TaskContract {
                 if( requestList[reqID].time     < providerList[provID].maxTime &&
                     requestList[reqID].target   < providerList[provID].maxTarget &&
                     requestList[reqID].price    > providerList[provID].minPrice)
-                    return assign(reqID, provID);                
+                    return assign(reqID, provID);         //emit here btw       
             }
             //after for loop and no match
             return '1';
@@ -213,7 +206,7 @@ contract TaskContract {
                 if( requestList[reqID].time     < providerList[provID].maxTime &&
                     requestList[reqID].target   < providerList[provID].maxTarget &&
                     requestList[reqID].price    > providerList[provID].minPrice)
-                    return assign(reqID, provID);
+                    return assign(reqID, provID);   //emit here btw
             }
             // No provider was found matching the criteria -- request failed
             //requestList[reqID].addr.transfer(requestList[reqID].price); // Returns the ether to the sender
