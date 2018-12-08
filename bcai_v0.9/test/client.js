@@ -171,7 +171,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
 
 function userFireMessage(){
     //call request task
-    if(!argv['cancel']){        //submit a request
+    if(!argv['cancel'] && argv['s'] == undefined && argv['u'] == undefined){        //submit a request
         myContract.methods.requestTask(dataID, target, time)
         .send({from: myAccount, gas: 80000000, value: money})
         .then(function(ret){
