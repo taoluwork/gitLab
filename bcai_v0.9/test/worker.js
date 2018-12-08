@@ -271,6 +271,7 @@ function listPoolProviders (){
                 })
                 .catch(function(){      //catch any error at end of .then() chain!
                     console.log("List All Provider Info Failed! ")
+                    console.log(err);
                     process.exit();
                 })               
             })

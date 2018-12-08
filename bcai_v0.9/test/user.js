@@ -243,8 +243,9 @@ function listPoolRequests (){
                         }
                     }		
                 })
-                .catch(function(){      //catch any error at end of .then() chain!
+                .catch(function(err){      //catch any error at end of .then() chain!
                     console.log("List Pool Request Info Failed! ")
+                    console.log(err);
                     process.exit();
                 })               
             })
