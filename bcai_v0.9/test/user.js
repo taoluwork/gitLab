@@ -97,7 +97,8 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         else 
             fireMessage();
     },
-    function(){     //failre
+    function(err){     //failre
+        console.log(err);
         console.log("Getting accounts failed!");
         console.log("Check your depolyment! ");
         process.exit();
