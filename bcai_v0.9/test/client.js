@@ -19,14 +19,10 @@ var maxTarget = 99;
 var minPrice = 500000;
 var mode;// = 'user';      //default mode
 ////////////////////////////////////////////////////////////////////
-
-
-//get arguments from console
+//get arguments from console , handle mode and parameter
 var argv = require('minimist')(process.argv.slice(2));
 //argument example:
-//node worker.js -u 2 -b 3
-//{ _: [], u: 2, b: 3 }
-//console.log(argv['u'])
+//node worker.js -u 2 -b 3    ==>   { _: [], u: 2, b: 3 }
 if(argv['help']) {
     console.log("Arguments:")
     console.log(" -a #    : use Account[#]  /  -a @$!$ list address");
@@ -51,9 +47,7 @@ if(argv['v'] || argv['version']){
     console.log(version);
     process.exit();
 }
-if(argv['t'] != undefined) maxTime = argv['t'];
-if(argv['T'] != undefined) maxTime = argv['T'];
-if(argv['p'] != undefined) maxTime = argv['p'];
+//setting up mode
 if(argv['user']) mode = 'user';
 else if(argv['worker']) mode = 'worker';
 else {
@@ -62,7 +56,18 @@ else {
     console.log("-----------------------------------------------------------------")
     process.exit();
 }
-    ////////////////////////////////////////////////////////////////////////
+//setting parameters
+if(mode == 'user'){
+    if(argv['t'] != undefined) time = argv['t'];
+    if(argv['T'] != undefined) target = argv['T'];
+    if(argv['p'] != undefined) money = argv['p']; 
+}
+else if(mode == 'worker'){
+    if(argv['t'] != undefined) maxTime = argv['t'];
+    if(argv['T'] != undefined) maxTarget = argv['T'];
+    if(argv['p'] != undefined) minPrice= argv['p']; 
+}
+///////////////////////////////////////////////////////////////////////////
 //create web3 instance
 var Web3 = require('web3');
 //use websocket provider here, http is deprecated.
