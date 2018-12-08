@@ -217,10 +217,9 @@ function listPoolRequests (){
     myContract.methods.getRequestPoolSize().call().then(function(actCount){
         console.log("-----------------------------------------------------");
         console.log("Total active Request = ", actCount);
-    }).then(function(pool){       
+    }).then(function(){       
         myContract.methods.getRequestCount().call().then(function(totalCount){            
             console.log("Total Request since start = ", totalCount);
-            return pool;
         }).then(function(){	        
             myContract.methods.getRequestPool().call().then(function(pool){             
                 console.log("Active Request pool: ");

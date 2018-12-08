@@ -243,10 +243,9 @@ function listPoolProviders (){
     myContract.methods.getProviderPoolSize().call().then(function(actCount){
         console.log("-----------------------------------------------------");
         console.log("Total active provider = ", actCount);
-    }).then(function(pool){       
+    }).then(function(){       
         myContract.methods.getProviderCount().call().then(function(totalCount){
             console.log("Total provider since start = ", totalCount);
-            return pool;
         }).then(function(){	        
             myContract.methods.getProviderPool().call().then(function(pool){             
                 console.log("Active provider pool: ");
