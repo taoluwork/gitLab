@@ -43,7 +43,13 @@ web3.eth.getAccounts().then(function(myAccounts){
 //	console.log(testAccounts);
 	showCurrentStatus(myAccounts);
 	
-	web3.eth.subscribe('events', 
+	web3.events.allEvents({
+		fromBLock: 0,
+		toBlock: 'latest'
+	}, function(err, event){
+		console.log(event);
+	})
+	/*web3.eth.subscribe('events', 
 		{ fromBlock: 0,
 			toBlock: 'latest'
 		}, function(err, res){
@@ -53,7 +59,7 @@ web3.eth.getAccounts().then(function(myAccounts){
 		}).on('data', function(){
 			showCurrentStatus();
 		})
-	
+	*/
 	// web3.eth.subscribe('newBlockHeaders', function(err, result){
 	// 	if(err) console.log("ERRRR", err, result);
 	// 	showCurrentStatus();
