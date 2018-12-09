@@ -2,7 +2,8 @@
 //Author: Taurus, Landry
 //Copyright: tlu4@lsu.edu
 
-//NOTE: non-view functions cannot return values, only possible way is event
+//NOTE: functions sending TX cannot retrieve returnValues, only possible way is event
+// Instead function calls can return value directly.
 
 pragma solidity ^0.5.0;
 pragma experimental ABIEncoderV2;   //return self-defined type
@@ -10,6 +11,7 @@ pragma experimental ABIEncoderV2;   //return self-defined type
 contract TaskContract {
     //config
     bool autoAssign = true;            //whether auto assign the task
+    bool autoValidate = false;         //whether auto pair validation
     
     
     //list
@@ -76,18 +78,18 @@ contract TaskContract {
     event ProviderStopped   (uint256 provID, address payable addr);
     event ProviderUpdated   (uint256 provID, address payable addr);
     event TaskAssigned      (uint256 reqID, address payable reqAddr,
-                            uint256 provID, address payable provAddr);     // next step: call completeTask
+                            uint256 provID, address payable provAddr);     // next step: call assignRequest
     
     event RequestAdded      (uint256 reqID, address payable addr);
     event RequestUpdated    (uint256 reqID, address payable addr);
     event RequestCanceled   (uint256 reqID, address payable addr);
     
-    event CompleteTask      (uint256 reqID, address payable addr);
+    //event assignRequest      (uint256 reqID, address payable addr);
     event ValidationAssigned(uint256 reqID, uint256 provID, address payable addr);    // next step: validator calls submitValidation
     event NotEnoughValidation(uint256 reqID);
     //event TaskCompleted         (address requestor, uint128 reqID);    // done
     /////////////////////////////////////////////////////////////////////////////////////
-    event SystemInfo        (uint256 ID, address payable addr , bytes20 info);  //NOTE: bytes32 saves up to 32 charactors ONLY
+    event SystemInfo        (uint256 ID, address payable addr , bytes info);  //NOTE: bytes32 saves up to 32 charactors ONLY
     event PairingInfo        (uint256 reqID, address payable reqAddr,
                             uint256 provID, address payable provAddr, bytes info);
     /////////////////////////////////////////////////////////////////////////////////////
@@ -150,9 +152,9 @@ contract TaskContract {
         }
     }
 
-    // Send a request from user to blockchain.
+    // Send a request from user to blockchain. (legacy name : RequestTask)
     // Assumes price is including the cost for verification
-    function requestTask(uint64 dataID, uint16 target, uint64 time) payable public returns (byte) {
+    function startRequest(uint64 dataID, uint16 target, uint64 time) payable public returns (byte) {
         //register on List
         requestList[requestCount].reqID         = requestCount;
         requestList[requestCount].blockNumber   = block.number;  
@@ -177,9 +179,9 @@ contract TaskContract {
         emit SystemInfo(requestCount, msg.sender,'Request Added');
         requestCount++;
         //try assign and handle return value
-        if (autoAssign) return assignTask(requestCount-1);
+        if (autoAssign) return assignRequest(requestCount-1);
     }
-    function cancelTask(uint256 reqID) public returns (bool){
+    function stopRequest(uint256 reqID) public returns (bool){
         bool flag = false;
         if (requestList[reqID].status == '0'                       //can only cancel pending request
                 && requestList[reqID].addr == msg.sender) {        //you cannot delete other's provider            
@@ -236,14 +238,14 @@ contract TaskContract {
         }
     }
     
-    // Assigning one task to one of the available providers. Only called from requestTask (private)
+    // Assigning one task to one of the available providers. Only called from startRequest (private)
     // Search in the providerPool, could only assign one task at a time
     // TODO: need to add preference next patch
     // Returns: 0: successfully assigned
     //          1: searched all providers but find no match
     //          2: no available provider right now
     //          3: failure during poping pool
-    function assignTask(uint256 reqID) private returns (byte) {
+    function assignRequest(uint256 reqID) private returns (byte) {
         //provider availability is checked in pool not in list
         if (providerPool.length == 0)   return '2';
         else {            //if any provider in pool
@@ -261,7 +263,7 @@ contract TaskContract {
         }       
     }
     
-    //supporting function :triggered by assignTask or assignProvider, do the state change and pool move
+    //supporting function :triggered by assignRequest or assignProvider, do the state change and pool move
     function assign(uint256 reqID, uint256 provID) private returns (byte) {
         //update provider
         providerList[provID].available = false;
@@ -289,11 +291,11 @@ contract TaskContract {
     // off-chain actions happen here!
     // After assignment, provider will fetch off-chain data and 
     // update this action by sending a confirm online, (not necessarily).
-    //
     // TODO: function providerGotData() public returns (byte){}
     //
     // Then provider will start computation right now.
-    // Return the result adn call completeTask
+    // ....
+    // Return the result and call completeRequest
     ////////////////////////////////////////////////////////////////////////////////////////
     //Exceptions: 
     // 1.Computation aborted/fail == retry within time limit
@@ -304,7 +306,7 @@ contract TaskContract {
 
     // Provider will call this when they are done and the data is available.
     // This will invoke the validation stage
-    function completeTask(uint256 reqID, uint64 resultID) public returns (bool) {
+    function completeRequest(uint256 reqID, uint64 resultID) public returns (bool) {
         // Confirm msg.sender is actually the provider of the task he claims
         if (msg.sender == requestList[reqID].provider) {
             //change request obj
@@ -317,19 +319,22 @@ contract TaskContract {
             validatingPool.push(reqID);
             //release provider (not necessarily depend on provider)
             //providerList[providerID[msg.sender]].available = true;
-            emit CompleteTask(reqID, msg.sender);
+            //emit assignRequest(reqID, msg.sender);
+            emit SystemInfo(reqID, msg.sender, 'Request Computation Completed');
             //start validation process
-            return validateTask(reqID);
+            if(autoValidate){
+                return validateRequest(reqID);
+            }else return true;
         }
         else {
             return false;
         }
     }
 
-    // Called by completeTask before finalizing stuff. Contract checks with validators
+    // Called by assignRequest before finalizing stuff. Contract checks with validators
     // Returns false if there wasnt enough free providers to send out the required number of validation requests
     // need validation from 1/10 of nodes -- could change
-    function validateTask(uint256 reqID) private returns (bool) {
+    function validateRequest(uint256 reqID) private returns (bool) {
         uint64 numValidatorsNeeded = requestList[reqID].numValidations; 
         //uint numValidators = providerCount / 10; 
         uint64 validatorsFound = 0;
@@ -342,7 +347,10 @@ contract TaskContract {
             if(validatorsFound < numValidatorsNeeded){
                 if(providerList[provID].addr != requestList[reqID].provider){
                     //qualified validator
-                    emit ValidationAssigned(reqID, provID, providerList[provID].addr);
+                    //EVENT: informs validator that they were selected and need to validate
+                    //emit ValidationAssigned(reqID, provID, providerList[provID].addr);
+                    emit PairingInfo(reqID, requestList[reqID].addr, 
+                            provID, providerList[provID].addr, 'Validation Assigned to Provider');
                     validatorsFound++;
                     //remove the providers availablity and pop from pool
                     providerList[provID].available = false;
@@ -357,18 +365,8 @@ contract TaskContract {
             //loop until certain # of validators selected
         }   
         //exit loop without enough validators
-        emit NotEnoughValidation(reqID);    
-
-        
-
-            // if (providerList[i].addr == address(0)) {   //not happen
-            //     continue;
-            // }
-            // if (providerList[i].available) {
-            //     // EVENT: informs validator that they were selected and need to validate
-            //     emit ValidationRequested(providerList[i].addr, reqID);
-            //     validatorsFound++;
-            // }
+        //emit NotEnoughValidation(reqID);    
+        emit SystemInfo(reqID, requestList[reqID].addr, 'Request got insufficient validation');
     }
 
 
@@ -412,8 +410,8 @@ contract TaskContract {
     }
 */
 //////////////////////////////////////////////////////////////////////
-/*  function requestTask(uint64 dataID, uint16 target, uint64 time) payable public returns (bool) {
-    //a legacy version of requestTask, using a local memory copy and write back
+/*  function startRequest(uint64 dataID, uint16 target, uint64 time) payable public returns (bool) {
+    //a legacy version of startRequest, using a local memory copy and write back
         bool[] memory emptyArray;
         Request memory req = Request(           //create a temp memory var
             msg.sender,             //addr
@@ -439,7 +437,7 @@ contract TaskContract {
         //update count
         requestCount++;     //count already stands for the # of req now.
         pendingCount++;
-        return assignTask();
+        return assignRequest();
     }
 */
 
