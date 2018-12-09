@@ -153,6 +153,13 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
                 console.log(eve.returnValues);           
                 console.log("=================================================================")
             }
+
+            //update the display
+            if(mode == 'user'){
+                listPoolRequests();
+            } else if (mode == 'worker'){
+                listProviders();
+            }
         })
 })
 .catch(function(err){           //failure: no accounts
