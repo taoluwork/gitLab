@@ -48,7 +48,10 @@ web3.eth.getAccounts().then(function(myAccounts){
 	// 	showCurrentStatus();
 	// })
 	web3.eth.subscribe('logs', function(err, res){
-		if(err) console.log("ERRRR", err, result);
+		if(err) console.log("ERRRR", err);
+		else console.log(res);
+		
+	}).on('data', function(){
 		showCurrentStatus();
 	})
 })
