@@ -43,7 +43,7 @@ web3.eth.getAccounts().then(function(myAccounts){
 //	console.log(testAccounts);
 	showCurrentStatus(myAccounts);
 	
-	web3.events.allEvents({
+	myContract.events.allEvents({
 		fromBLock: 0,
 		toBlock: 'latest'
 	}, function(err, event){
