@@ -47,7 +47,15 @@ web3.eth.getAccounts().then(function(myAccounts){
 		fromBLock: 0,
 		toBlock: 'latest'
 	}, function(err, event){
-		console.log(event);
+		if(argv['debug']){	
+			console.log("========================================================");
+			console.log(event);
+			console.log("========================================================");
+		} else 
+			console.log(event.returnValue);
+
+	}).on('data', function(){
+		showCurrentStatus();
 	})
 	/*web3.eth.subscribe('events', 
 		{ fromBlock: 0,
