@@ -158,7 +158,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
             if(mode == 'user'){
                 listPoolRequests();
             } else if (mode == 'worker'){
-                listProviders();
+                listPoolProviders();
             }
         })
 })
