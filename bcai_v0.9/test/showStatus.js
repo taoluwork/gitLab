@@ -41,19 +41,19 @@ init();
 web3.eth.getAccounts().then(function(myAccounts){
 
 //	console.log(testAccounts);
-	showCurrentStatus(myAccounts).then(function(){
-		web3.eth.subscribe('logs', 
-		{ fromBlock:0,
-			toBlock: 'latest'
-		},function(err, res){
-		if(err) console.log("ERRRR", err);
-		else console.log(res);
-		
+	showCurrentStatus(myAccounts);
+	
+	web3.eth.subscribe('logs', 
+		{ fromBlock: 0,
+			toBlock: 'latest'-1
+		}, function(err, res){
+			if(err) console.log("ERRRR", err);
+			else console.log(res);
+			
 		}).on('data', function(){
 			showCurrentStatus();
 		})
-	});
-
+	
 	// web3.eth.subscribe('newBlockHeaders', function(err, result){
 	// 	if(err) console.log("ERRRR", err, result);
 	// 	showCurrentStatus();
@@ -91,10 +91,10 @@ function showCurrentStatus(myAccounts){
 			console.log(specificReq);
 		})
 	*/
-	return new Promise(function(res, rej){
+	/*return new Promise(function(res, rej){
 		if (myAccounts!=undefined) res();
 		else rej();
-	})
+	})*/
 }
 
 
