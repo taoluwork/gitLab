@@ -206,11 +206,11 @@ function userFireMessage(){
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
-            // else {
+            else {
             //     console.log("Receipt:    <=====######")
-            //     console.log("Event: ", ret.events.SystemInfo.event)
+                console.log("Event: ", ret.events.SystemInfo.event)
             //     console.log(ret.events.SystemInfo.returnValues)
-            // }
+            }
         }).then(function(){
             showLatestRequest();
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
@@ -229,11 +229,11 @@ function userFireMessage(){
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
-            // else {
+            else {
             //     console.log("Receipt:    <=====######")
-            //     console.log("Event: ", ret.events.SystemInfo.event)
+                console.log("Event: ", ret.events.SystemInfo.event)
             //     console.log(ret.events.SystemInfo.returnValues)
-            // }
+            }
         }).then(function(){
             showLatestRequest();
         }).catch(function(err){         //this poped when edit other's config / fired using wrong account
@@ -295,11 +295,11 @@ function workerFireMessage(){
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
-            // else {
-            //     console.log("Receipt:    <=====######")
-            //     console.log("Event: ", ret.events.SystemInfo.event)
-            //     console.log(ret.events.SystemInfo.returnValues)
-            // }
+            else {
+                console.log("Event: ", ret.events.SystemInfo.event)
+                //     console.log("Receipt:    <=====######")
+                //     console.log(ret.events.SystemInfo.returnValues)
+            }
         }).then(function(){
             //showLatestProvider();
         }).catch(function(err){
@@ -317,11 +317,11 @@ function workerFireMessage(){
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
-            // else {
-            //     console.log("Receipt:    <=====######")
-            //     console.log("Event: ", ret.events.SystemInfo.event)
+            else {
+                console.log("Event: ", ret.events.SystemInfo.event)
+            //     console.log("Receipt:    <=====######")    
             //     console.log(ret.events.SystemInfo.returnValues)
-            // }
+            }
         }).then(function(){
             showLatestProvider();
         }).catch(function(err){
