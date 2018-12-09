@@ -56,7 +56,7 @@ web3.eth.getAccounts().then(function(myAccounts){
 		} else { 
 			console.log("=================================================================");
 			console.log(event.event, "  ==>  ", event.blockNumber);
-			console.log(event.returnValues.Result[0]);
+			console.log(event.returnValues[reqID]);
 			console.log(event.returnValues[0]);
 			console.log(event.returnValues);
 		}	
