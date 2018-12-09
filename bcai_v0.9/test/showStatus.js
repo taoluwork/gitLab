@@ -43,12 +43,12 @@ web3.eth.getAccounts().then(function(myAccounts){
 //	console.log(testAccounts);
 	showCurrentStatus(myAccounts);
 	
-	web3.eth.subscribe('logs', 
+	web3.eth.subscribe('events', 
 		{ fromBlock: 0,
-			toBlock: 'latest'-1
+			toBlock: 'latest'
 		}, function(err, res){
 			if(err) console.log("ERRRR", err);
-			else console.log(res.topics, "==>",web3.utils.toAscii(res.topics[0]));
+			else console.log(res);
 			
 		}).on('data', function(){
 			showCurrentStatus();
