@@ -55,6 +55,8 @@ web3.eth.getAccounts().then(function(myAccounts){
 			console.log("=================================================================");
 		} else { 
 			console.log("=================================================================");
+			console.log(event.event, "  ==>  ", event.blockNumber);
+
 			console.log(event.returnValues);
 		}	
 	}).then(function(){
@@ -130,12 +132,12 @@ function showRequest(){
 					return reqPool;
 				})			
 				.then(function(reqPool){
-					if(argv['list']){
+					if(argv['list']){		//only list active
 						myContract.methods.listRequests(reqPool).call().then(function(reqList){
 							console.log("-----------------------------------------------------");
 							if(reqPool.length > 0) console.log("List all the Requests : ")
 							//NOTE: difference request list all history
-							for(var i = 0;i < totalCount;i++){
+							for(var i = 0;i < reqPool.length;i++){
 								if(argv['debug']){
 									console.log(reqList[i]);
 								} else {
@@ -191,7 +193,7 @@ function showProviders(){
 							console.log("-----------------------------------------------------");
 							if(provPool.length > 0) console.log("List all the Providers: ")
 							//NOTE: difference here: provider only list in the pool
-							for (var i = 0;i < count ;i++){
+							for (var i = 0;i < provPool.length ;i++){
 								//or print in full
 								if(argv['debug']){
 									console.log(proList[i]);
