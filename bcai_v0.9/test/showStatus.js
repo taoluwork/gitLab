@@ -48,7 +48,7 @@ web3.eth.getAccounts().then(function(myAccounts){
 			toBlock: 'latest'-1
 		}, function(err, res){
 			if(err) console.log("ERRRR", err);
-			else console.log(res.topics, "==>",web3.utils.toAscii(res.topics));
+			else console.log(res.topics, "==>",web3.utils.toAscii(res.topics[0]));
 			
 		}).on('data', function(){
 			showCurrentStatus();
