@@ -54,7 +54,7 @@ web3.eth.getAccounts().then(function(myAccounts){
 			console.log(event);
 			console.log("========================================================");
 		} else 
-			console.log(event.returnValue);
+			console.log(event.returnValues);
 			
 	}).then(function(){
 		showCurrentStatus();
