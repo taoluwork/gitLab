@@ -212,7 +212,7 @@ function userFireMessage(){
             //     console.log(ret.events.SystemInfo.returnValues)
             }
         }).then(function(){
-            showLatestRequest();
+            listRequestOnlyMy();
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
             console.log("Cancel Request failed! Check your reqID by --my");
             //console.log(err);
@@ -301,7 +301,7 @@ function workerFireMessage(){
                 //     console.log(ret.events.SystemInfo.returnValues)
             }
         }).then(function(){
-            //showLatestProvider();
+            listProviderOnlyMy();
         }).catch(function(err){
             console.log("Stop provider failed! Check your provID by --my");
             //console.log(err);
