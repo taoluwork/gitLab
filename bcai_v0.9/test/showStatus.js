@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////////
 //user's js script
-//version: 0.9
+//version: 0.9.2
 //author: taurus tlu4@lsu.edu
 //use: $ node user.js --help
 /////////////////////////////////////////////////////////////////
-
+var version = "bcai_client v0.9.2     ----  by Taurus"
 //get arguments from console
 var argv = require('minimist')(process.argv.slice(2));
 //argument example:
@@ -19,6 +19,10 @@ if(argv['help']) {
 	console.log(" --all   : most powerful history tracing option / use with caution");
     //console.log(" --stop :  stop the current provider")
 	process.exit();
+}
+if(argv['v'] || argv['version']){
+    console.log(version);
+    process.exit();
 }
 ////////////////////////////////////////////
 var Web3, web3, MyContract, myContract;
@@ -97,7 +101,7 @@ function showRequest(){
 					if(argv['list']){
 						myContract.methods.listRequests(reqPool).call().then(function(reqList){
 							console.log("-----------------------------------------------------");
-							if(totalCount > 0) console.log("List all the Requests : ")
+							if(reqPool.length > 0) console.log("List all the Requests : ")
 							//NOTE: difference request list all history
 							for(var i = 0;i < totalCount;i++){
 								if(argv['debug']){
@@ -153,7 +157,7 @@ function showProviders(){
 					if(argv['list']){	
 						myContract.methods.listProviders(provPool).call().then(function(proList){
 							console.log("-----------------------------------------------------");
-							if(count > 0) console.log("List all the Providers: ")
+							if(provPool.length > 0) console.log("List all the Providers: ")
 							//NOTE: difference here: provider only list in the pool
 							for (var i = 0;i < count ;i++){
 								//or print in full
