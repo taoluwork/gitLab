@@ -113,9 +113,9 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     }
     //Important: display current mode
     console.log("Client Mode: ", mode);
-    //return accounts;
-///})
-//.then(function(accounts){                 //success: accounts got
+    return accounts;
+})
+.then(function(accounts){                 //success: accounts got
         if (argv['all']){               //display all info
             console.log(accounts);
             if      (mode == 'user')    listAllRequests();
@@ -156,9 +156,9 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
 
             //update the display
             if(mode == 'user'){
-                listPoolRequests();
+                showLatestRequest();
             } else if (mode == 'worker'){
-                listPoolProviders();
+                showLatestProvider();
             }
         })
 })
@@ -279,7 +279,7 @@ function workerFireMessage(){
             //     console.log(ret.events.SystemInfo.returnValues)
             // }          
         }).then(function(){
-            showLatestProvider();
+            //showLatestProvider();
         }).catch(function(err){
             console.log("Start provider failed! Check receipt by --recpt");
             console.log(err);
@@ -301,7 +301,7 @@ function workerFireMessage(){
             //     console.log(ret.events.SystemInfo.returnValues)
             // }
         }).then(function(){
-            showLatestProvider();
+            //showLatestProvider();
         }).catch(function(err){
             console.log("Stop provider failed! Check your provID by --my");
             //console.log(err);
