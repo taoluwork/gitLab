@@ -1,23 +1,24 @@
 ////////////////////////////////////////////////////////////////
-//user's js script
+//client's js app, combined --user mode and --worker mode
 //version: 0.9.2
 //author: taurus tlu4@lsu.edu
-//use: $ node user.js -a 4 --debug --help
+//use: $ node client.js --help --version
 /////////////////////////////////////////////////////////////////
-var version = "bcai_client v0.9.2     ----  by Taurus"
+const version = "bcai_client v0.9.2     ----  by Taurus"
+const NetworkID = 512;
 //NOTE: combine user and worker client together switch using --user, --worker
 //Avoid using version earlier than 0.9.2
 /////////////////////////////////////////////////////////////////
 //edit default parameter here:
 var dataID = 31415926;
-var target = 90;        //this must be less than workders target limt
-var time = 90000;       //this must less than worker's time limit
-var money = 800000;      //this must be greater than worker's price
-
+var target = 90;            //must < workders maxTarget
+var time = 90000;           //must < worker's maxTime
+var money = 800000;         //must > worker's minPrice
 var maxTime = 100000;
 var maxTarget = 99;
 var minPrice = 500000;
-var mode;// = 'user';      //default mode
+var mode;                   // = 'user';      //default mode: no
+var myAccount;              // default set below
 ////////////////////////////////////////////////////////////////////
 //get arguments from console , handle mode and parameter
 var argv = require('minimist')(process.argv.slice(2));
@@ -25,7 +26,7 @@ var argv = require('minimist')(process.argv.slice(2));
 //node worker.js -u 2 -b 3    ==>   { _: [], u: 2, b: 3 }
 if(argv['help']) {
     console.log("Arguments:")
-    console.log(" -a #    : use Account[#]  /  -a @$!$ list address");
+    console.log(" -a #    : use Account[#]  /  -a [#>9] list all address");
     console.log(" -s #    : cancel request # ");
     console.log(" -u #    : update request # ");
     console.log(" -t #    : time ");
@@ -43,6 +44,7 @@ if(argv['help']) {
     console.log("NOTE: you cannot view other accounts' info, use --my -a#")
 	process.exit();
 }
+//display version check
 if(argv['v'] || argv['version']){
     console.log(version);
     process.exit();
@@ -70,22 +72,18 @@ else if(mode == 'worker'){
 ///////////////////////////////////////////////////////////////////////////
 //create web3 instance
 var Web3 = require('web3');
-//use websocket provider here, http is deprecated.
+//use websocket provider here, NOTE: http is deprecated.
 var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
 
 //get contract instance
-//NOTE: this is not quite supported by Node.js
-//import TaskContract from '../build/contracts/TaskContract.json';
-//use this:
 var TaskContract = require('../build/contracts/TaskContract.json');
 var abi = TaskContract.abi;
-var addr = TaskContract.networks[512].address;
+var addr = TaskContract.networks[NetworkID].address;        //align to const ID defination on top
 const myContract = new web3.eth.Contract(abi, addr);
-var myAccount;
-var reqID;
 //////////////////////////////////////////////////////////////////////////
-//note: networkID can be given to ganache by
-//ganache-cli -i or --networkId 512
+//start your ganache testnet or connect to real blockcahin.
+//NOTE: networkID must be given and set to const NetworkID.
+// use: $ ganache-cli -i or --networkId 512
 // start your ganache-cli now!
 /////////////////////////////////////////////////////////////////////////
 web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
@@ -113,78 +111,49 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         console.log("=================================================================")
         console.log('Using account: [',argv['a'], '] ', myAccount);
     }
+    //Important: display current mode
     console.log("Client Mode: ", mode);
     return accounts;
 }).then(
-    function(accounts){         //success
-        if (argv['all']){
+    function(accounts){                 //success: accounts got
+        if (argv['all']){               //display all info
             console.log(accounts);
             if      (mode == 'user')    listAllRequests();
             else if(mode == 'worker')   listAllProviders();
         }
-        else if (argv['my']){
+        else if (argv['my']){           //display my info
             if(mode == 'user')  listRequestOnlyMy(myAccount);
             else if(mode == 'worker') listProviderOnlyMy(myAccount);
         }
         else if (argv['view']){
-            console.log(accounts); 
+            console.log(accounts);      //only view, no change
             if (mode == 'user') listPoolRequests();
             if (mode == 'worker') listPoolProviders();
         }
-        else {  //real state change
+        else {                          //real state change
             if (mode == 'user') userFireMessage();
             else if (mode =='worker') workerFireMessage();
         }
     },
-    function(err){     //failure
+    function(err){                      //failure: no accounts
         console.log(err);
         console.log("Getting accounts failed!");
         console.log("Check your depolyment! ");
         process.exit();
     }
 )
-
-
-//console.log(contract.address);
-/*function showRequestInfo(){
-    myContract.methods.getRequestPoolSize().call().then(function(ret){
-        console.log("-----------------------------------------------------------------");
-        console.log("Request count = ",ret);
-    })
-    .then(function(){
-    //get Provider pool     
-        myContract.methods.getRequestPool().call().then(function(ret){
-            console.log("-----------------------------------------------------------------");
-            console.log("Request Pool: ");
-            console.log(ret);
-               
-        })
-    }).then(function(){
-        myContract.methods.getRequestCount().call().then(function(reqCount){
-             //print provider detals (object)
-            if(argv['obj'] || argv['debug']){
-                myContract.methods.getRequest(reqCount-1).call().then(function(ret){
-                    console.log("-----------------------------------------------------------------");
-                    console.log(ret);
-                });
-            }
-        })      
-    }).then(function(){
-        if(argv['nl']) process.exit();
-    })
-}*/
-
+/////////////////////////////////////////////////////////////////////////////////////////
+//supporting functions below.
+//the main 'state-changing' function. --user and --worker have their own func, in pairs.
 function userFireMessage(){
-    //call request task
     if(!argv['cancel'] && argv['s'] == undefined && argv['u'] == undefined){        //submit a request
         myContract.methods.requestTask(dataID, target, time)
         .send({from: myAccount, gas: 80000000, value: money})
-        .then(function(ret){
+        .then(function(ret){                                                        //handle the receipt
             //console.log("-----------------------------------------------------------------")
             console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("Request Submitted! Block: ",ret.blockNumber);
             console.log("-----------------------------------------------------------------")
-            //console.log("return = ", ret.returnValue);
             if(argv['recpt']!= 0 && argv['recpt']!=undefined) 
                 console.log("Receipt:    <=====######", ret);
             else if (argv['recpt'] !=0){
@@ -198,8 +167,8 @@ function userFireMessage(){
             process.exit();
         })
     }
-    else if(argv['stop'] || argv['s'] != undefined) {   //stop 
-        //TODO: cancel request need refund , use caution
+    else if(argv['stop'] || argv['s'] != undefined) {                               //cancel a request 
+        //TODO: [Important] cancel request need refund (not yet designed), use caution
         myContract.methods.cancelTask(argv['s'])
         .send({from:myAccount, gas:200000})
         .then(function(ret){
@@ -213,15 +182,14 @@ function userFireMessage(){
             }
         }).then(function(){
             showLatestRequest();
-        }).catch(function(err){ //this poped when edit other's config/ fired using wrong account
+        }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
             console.log("Cancel Request failed! Check your reqID by --my");
             //console.log(err);
             process.exit();
         })
     }  
-    // call updateProviding
-    else { 
-        //TODO: update request need refund 
+    else {                              // call updateProviding
+        //TODO: [Important] update request need refund 
         myContract.methods.updateRequest(time, target, argv['u'])
         .send({from: myAccount, gas: 200000, value: money})
         .then(function(ret){
@@ -236,13 +204,13 @@ function userFireMessage(){
             }
         }).then(function(){
             showLatestRequest();
-        }).catch(function(err){ //this poped when edit other's config/ fired using wrong account
+        }).catch(function(err){         //this poped when edit other's config / fired using wrong account
             console.log("Update Request failed! Check your reqID by --my");
             //console.log(err);
             process.exit();
         })
     }  
-    //call taskAssign  -- this is automatically done by contract
+
 
 
     //now catch the event TaskAssigned
@@ -264,7 +232,7 @@ function userFireMessage(){
     })
 }
 function workerFireMessage(){
-    if(!argv['stop'] && argv['s'] == undefined && argv['u'] == undefined){     //start new
+    if(!argv['stop'] && argv['s'] == undefined && argv['u'] == undefined){     //start new provider
         myContract.methods.startProviding(maxTime, maxTarget, minPrice)
         .send({from: myAccount, gas: 400000})
         .then(function(ret){
@@ -285,8 +253,8 @@ function workerFireMessage(){
             process.exit();
         })
     } 
-    // call stopProviding
-    else if(argv['stop'] || argv['s'] != undefined) {   //stop 
+    
+    else if(argv['stop'] || argv['s'] != undefined) {                           // call stopProviding
         myContract.methods.stopProviding(argv['s'])
         .send({from:myAccount, gas:200000})
         .then(function(ret){
@@ -306,8 +274,7 @@ function workerFireMessage(){
             process.exit();
         })
     }  
-    // call updateProviding
-    else { 
+    else {                                                                     // call updateProviding
         myContract.methods.updateProvider(maxTime, maxTarget, minPrice, argv['u'])
         .send({from: myAccount, gas: 200000})
         .then(function(ret){
@@ -360,9 +327,7 @@ function workerFireMessage(){
     })*/
 }
 
-
-
-//called by --my
+//list only active pool linked the current account , called by --my
 function listRequestOnlyMy(myAccount){
     myContract.methods.getRequestID(myAccount).call().then(function(IDList){
         console.log("-----------------------------------------------------------------");
@@ -415,11 +380,8 @@ function listProviderOnlyMy(myAccount){
 }
 
 
-//call by --view
-//show Active Count
-//show Active Pool
-//show Total Count
-//view Total List
+//call by --view [--debug]
+//list out  Active Count, Total Count, Active Pool, List out Pool item
 function listPoolRequests (){
     myContract.methods.getRequestPoolSize().call().then(function(actCount){
         console.log("-----------------------------------------------------");
@@ -500,6 +462,7 @@ function listPoolProviders (){
 }
 
 //called after submit a new request
+//list out Total count, Active pool, last item
 function showLatestRequest(){
     myContract.methods.getRequestCount().call().then(function(totalCount){
         console.log("-----------------------------------------------------------------");
@@ -556,7 +519,7 @@ function showLatestProvider(){
         })
     })
 }
-//the most heavy duty
+//the most heavy duty, --all
 function listAllRequests(){
     myContract.methods.getRequestCount().call().then(function(totalCount){
         console.log("-----------------------------------------------------");
@@ -568,7 +531,7 @@ function listAllRequests(){
             for (var i = 0;i < totalCount ;i++){
                 if(argv['debug']){          //in a detail pattern
                     console.log(List[i]);
-                } else{                     //or simple print:    3 key values 
+                } else{                     //or simple print: 3 key values 
                     if(List[i]['addr'] != 0){
                         console.log("reqID = ", List[i]['reqID']);
                         console.log("addr = ", List[i]['addr']);
@@ -596,7 +559,7 @@ function listAllProviders(){
             for (var i = 0;i < totalCount ;i++){
                 if(argv['debug']){          //in a detail pattern
                     console.log(proList[i]);
-                } else{                     //or simple print:    3 key values 
+                } else{                     //or simple print: 3 key values 
                     if(proList[i]['addr'] != 0){
                         console.log("provD = ", proList[i]['provID']);
                         console.log("addr = ", proList[i]['addr']);
