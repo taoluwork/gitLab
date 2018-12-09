@@ -87,8 +87,9 @@ contract TaskContract {
     event NotEnoughValidation(uint256 reqID);
     //event TaskCompleted         (address requestor, uint128 reqID);    // done
     /////////////////////////////////////////////////////////////////////////////////////
+    event SystemInfo        (uint256 ID, address payable addr , bytes info);
 
-    
+    /////////////////////////////////////////////////////////////////////////////////////
     // Function called to become a provider. New on List, Map and Pool. 
     // NOTE: cannot use to update. You must stop a previous one and start a new one.
     // TIPS: gas cost: don't create local copy and write back, modify the storage directly.
@@ -108,6 +109,7 @@ contract TaskContract {
         providerList[providerCount].available      = true;  //turn on the flag at LAST
         // ready for the next       
         emit ProviderAdded(providerCount, msg.sender);
+        emit SystemInfo(providerCount, msg.sender, 'ProviderAdded');
         providerCount++;
         //try assign and handle return value
         if(autoAssign) return assignProvider(providerCount-1);
@@ -124,7 +126,8 @@ contract TaskContract {
             flag = ArrayPop(providerMap[msg.sender], provID);      //delete form Map
             flag = ArrayPop(providerPool, provID) && flag;         //delete from Pool             
         }
-        if(flag) emit ProviderStopped(provID, msg.sender);
+        if(flag) {emit ProviderStopped(provID, msg.sender);
+            emit SystemInfo(providerCount, msg.sender, 'ProviderStopped');}
         return flag;
     }
     //update a provider, you must know the provID and must sent from right addr
@@ -141,6 +144,7 @@ contract TaskContract {
             providerPool.push(provID);                      // push in both case anyway
             //update map -- no need provID not changed.
             emit ProviderUpdated(provID, msg.sender);
+            emit SystemInfo(providerCount, msg.sender, 'ProviderUpdated');
             return flag;
         }
     }
