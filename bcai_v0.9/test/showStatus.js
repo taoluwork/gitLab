@@ -42,8 +42,8 @@ web3.eth.getAccounts().then(function(myAccounts){
 
 //	console.log(testAccounts);
 	showCurrentStatus(myAccounts);
-	var info = 'Hello';
-	console.log(info);
+}).then(function(){
+	//  event moniotring [important]
 	myContract.events.SystemInfo({
 		fromBLock: 0,
 		toBlock: 'latest'
@@ -59,8 +59,35 @@ web3.eth.getAccounts().then(function(myAccounts){
 			console.log(event.event, "  ==>  ", event.blockNumber);
 			console.log("info: ", web3.utils.hexToAscii(event.returnValues[2]));
 			console.log(event.returnValues);
-		}	
+		}
+		showCurrentStatus();		
 	})
+
+	myContract.events.PairingInfo({
+		fromBLock: 0,
+		toBlock: 'latest'
+	}, function(err, event){
+		if(err) console.log(err);
+	}).on('data', function(event){
+		if(argv['debug']){	
+			console.log("=================================================================");
+			console.log(event);
+			console.log("=================================================================");
+		} else { 
+			console.log("=================================================================");
+			console.log(event.event, "  ==>  ", event.blockNumber);
+			console.log("info: ", web3.utils.hexToAscii(event.returnValues[4]));
+			console.log(event.returnValues);
+		}
+		//showCurrentStatus();
+	})
+
+	//display current status every new block
+// 	web3.eth.subscribe('newBlockHeaders', function(err, result){
+// 		if(err) console.log("ERRRR", err, result);
+// 		showCurrentStatus();
+//    })
+
 	// .then(function(){
 	// 	showCurrentStatus();
 	// })
@@ -75,58 +102,33 @@ web3.eth.getAccounts().then(function(myAccounts){
 			showCurrentStatus();
 		})
 	*/
-	// web3.eth.subscribe('newBlockHeaders', function(err, result){
-	// 	if(err) console.log("ERRRR", err, result);
-	// 	showCurrentStatus();
-	// })
+	
 	
 })
 ////////////////////////////////////////////////
 
 
 function showCurrentStatus(myAccounts){
-	console.log("------------------------------------------------------------> updated: ");
 	if (myAccounts != undefined)
 		console.log(myAccounts);			//print accounts List //when updating , will be undefined
 	if (argv['acc'] || argv['a'] != undefined){
         process.exit();
-    }
-				
+    }	
 	//get # of providers and print
 	showProviders();
-
 	//get # of request and print
-	showRequest();
-
-		/*myContract.getPastEvents('allEvents',{
-			fromBlock: 0,
-			toBlock: 'latest'
-		}).then(function(eve){
-			console.log("All past events: ", eve, "<=======================@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-		})*/
-	/*
-		myContract.methods.getProvider(0).call().then(function(specificPro){
-			console.log(specificPro);
-		})
-		myContract.methods.getRequest(0).call().then(function(specificReq){
-			console.log(specificReq);
-		})
-	*/
-	/*return new Promise(function(res, rej){
-		if (myAccounts!=undefined) res();
-		else rej();
-	})*/
+	showRequests();
 }
 
 
 
-function showRequest(){
+function showRequests(){
 	myContract.methods.getRequestPoolSize().call().then(function(count){
 		console.log("Now active Requests:  ", count, "<<=======####");
 		myContract.methods.getRequestCount().call().then(function(totalCount){
 			console.log("Total Request since start: ", totalCount);
 		//}).then(function(){
-			if(argv['all'] || argv['debug'] || argv['list']){
+//			if(argv['all'] || argv['debug'] || argv['list']){
 				myContract.methods.getRequestPool().call().then(function(reqPool){
 					console.log("-----------------------------------------------------");
 					console.log("Active request pool: ");
@@ -173,18 +175,19 @@ function showRequest(){
 						})
 					}
 				})
-			}
+//			}
 		})		
 	})
 }
 
 function showProviders(){
 	myContract.methods.getProviderPoolSize().call().then(function(count){
+		console.log("------------------------------------------------------------> updated: ");
 		console.log("Now active Providers: ",count, "<<=======####");
 		myContract.methods.getProviderCount().call().then(function(totalCount){
 			console.log("Total provider since start: ", totalCount);
 		//}).then(function(){
-			if(argv['all'] || argv['debug'] || argv['list']){
+		//	if(argv['all'] || argv['debug'] || argv['list']){
 				myContract.methods.getProviderPool().call().then(function(provPool){
 					console.log("-----------------------------------------------------");
 					console.log("Active provider pool: ");
@@ -230,7 +233,7 @@ function showProviders(){
 						})
 					}
 				})
-			}	
+		//	}	
 		})
 	})
 }
