@@ -50,12 +50,13 @@ web3.eth.getAccounts().then(function(myAccounts){
 		if(err) console.log(err);
 	}).on('data', function(event){
 		if(argv['debug']){	
-			console.log("========================================================");
+			console.log("=================================================================");
 			console.log(event);
-			console.log("========================================================");
-		} else 
+			console.log("=================================================================");
+		} else { 
+			console.log("=================================================================");
 			console.log(event.returnValues);
-			
+		}	
 	}).then(function(){
 		showCurrentStatus();
 	})
