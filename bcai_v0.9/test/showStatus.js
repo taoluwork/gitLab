@@ -53,9 +53,9 @@ web3.eth.getAccounts().then(function(myAccounts){
 			console.log("========================================================");
 		} else 
 			console.log(event.returnValue);
-
+			showCurrentStatus();
 	}).on('data', function(){
-		showCurrentStatus();
+		
 	})
 	/*web3.eth.subscribe('events', 
 		{ fromBlock: 0,
