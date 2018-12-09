@@ -274,7 +274,7 @@ function workerFireMessage(){
             process.exit();
         })
     }  
-    else {                                                                     // call updateProviding
+    else {                                  // call updateProviding
         myContract.methods.updateProvider(maxTime, maxTarget, minPrice, argv['u'])
         .send({from: myAccount, gas: 200000})
         .then(function(ret){
@@ -296,8 +296,7 @@ function workerFireMessage(){
         })
     }
 
-    //waiting to be triggered:
-    //TODO: once or subscribe!
+    //waiting to be triggered: monitoring to the events
     myContract.once('TaskAssigned',{
         fromBlock: 0,
 	    toBlock: 'latest'
@@ -313,18 +312,6 @@ function workerFireMessage(){
             console.log("=================================================================")
         }
     })
-    //wait until to be assigned.
-    /*contract.events.TaskAssigned({
-    //contract.once('TaskAssigned', { 
-        fromBlock: 0,
-        toBlock: 'latest'
-    }, function(err, ret){
-        //console.log(err, ret.returnValue);
-    })
-    .on('data',function(event){
-        var eventList = event.returnValues;
-        console.log(eventList);
-    })*/
 }
 
 //list only active pool linked the current account , called by --my

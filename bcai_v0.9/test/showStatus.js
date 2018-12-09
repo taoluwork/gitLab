@@ -42,7 +42,8 @@ web3.eth.getAccounts().then(function(myAccounts){
 
 //	console.log(testAccounts);
 	showCurrentStatus(myAccounts);
-	
+	var info = 'Hello';
+	console.log(info);
 	myContract.events.SystemInfo({
 		fromBLock: 0,
 		toBlock: 'latest'
@@ -56,15 +57,13 @@ web3.eth.getAccounts().then(function(myAccounts){
 		} else { 
 			console.log("=================================================================");
 			console.log(event.event, "  ==>  ", event.blockNumber);
-			console.log("info: ", event.returnValues[2]);
-			//console.log("info: ", web3.utils.hexToAscii(web3.utils.bytesToHex(event.returnValues[2])));
-			
-
+			console.log("info: ", web3.utils.hexToAscii(event.returnValues[2]));
 			console.log(event.returnValues);
 		}	
-	}).then(function(){
-		showCurrentStatus();
 	})
+	// .then(function(){
+	// 	showCurrentStatus();
+	// })
 	/*web3.eth.subscribe('events', 
 		{ fromBlock: 0,
 			toBlock: 'latest'
@@ -135,25 +134,7 @@ function showRequest(){
 					return reqPool;
 				})			
 				.then(function(reqPool){
-					if(argv['list']){		//only list active
-						myContract.methods.listRequests(reqPool).call().then(function(reqList){
-							console.log("-----------------------------------------------------");
-							if(reqPool.length > 0) console.log("List all the Requests : ")
-							//NOTE: difference request list all history
-							for(var i = 0;i < reqPool.length;i++){
-								if(argv['debug']){
-									console.log(reqList[i]);
-								} else {
-									//simple print:
-									if(reqList[i]['addr'] != 0){
-										console.log("reqID = ", reqList[i]['reqID']);
-										console.log("addr = ", reqList[i]['addr']);
-										console.log("provider = ", reqList[i]['provider']);							
-									}
-								}
-							}
-						})
-					}else if (argv['all']){
+					if (argv['all']){		//list all info
 						myContract.methods.listAllRequests().call().then(function(allList){
 							if(totalCount > 0) 
 								console.log("-----------------------------------------------------");	
@@ -167,6 +148,25 @@ function showRequest(){
 										console.log("reqID = ", allList[i]['reqID']);
 										console.log("addr = ", allList[i]['addr']);
 										console.log("provider = ", allList[i]['provider']);							
+									}
+								}
+							}
+						})
+					}
+					else if(argv['list']) {		//only list active
+						myContract.methods.listRequests(reqPool).call().then(function(reqList){
+							console.log("-----------------------------------------------------");
+							if(reqPool.length > 0) console.log("List all the Requests : ")
+							//NOTE: difference request list all history
+							for(var i = 0;i < reqPool.length;i++){
+								if(argv['debug']){
+									console.log(reqList[i]);
+								} else {
+									//simple print:
+									if(reqList[i]['addr'] != 0){
+										console.log("reqID = ", reqList[i]['reqID']);
+										console.log("addr = ", reqList[i]['addr']);
+										console.log("provider = ", reqList[i]['provider']);							
 									}
 								}
 							}

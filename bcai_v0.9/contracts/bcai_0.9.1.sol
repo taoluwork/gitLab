@@ -1,4 +1,4 @@
-//version 0.9.1
+//version 0.9.3
 //Author: Taurus, Landry
 //Copyright: tlu4@lsu.edu
 
@@ -87,8 +87,9 @@ contract TaskContract {
     event NotEnoughValidation(uint256 reqID);
     //event TaskCompleted         (address requestor, uint128 reqID);    // done
     /////////////////////////////////////////////////////////////////////////////////////
-    event SystemInfo        (uint256 ID, address payable addr , bytes info);
-
+    event SystemInfo        (uint256 ID, address payable addr , bytes20 info);  //NOTE: bytes32 saves up to 32 charactors ONLY
+    event PairingInfo        (uint256 reqID, address payable reqAddr,
+                            uint256 provID, address payable provAddr, bytes info);
     /////////////////////////////////////////////////////////////////////////////////////
     // Function called to become a provider. New on List, Map and Pool. 
     // NOTE: cannot use to update. You must stop a previous one and start a new one.
@@ -108,8 +109,8 @@ contract TaskContract {
         providerPool.push(providerCount);
         providerList[providerCount].available      = true;  //turn on the flag at LAST
         // ready for the next       
-        emit ProviderAdded(providerCount, msg.sender);
-        emit SystemInfo(providerCount, msg.sender, 'ProviderAdded');
+        //emit ProviderAdded(providerCount, msg.sender);
+        emit SystemInfo(providerCount, msg.sender, 'Provider Added');
         providerCount++;
         //try assign and handle return value
         if(autoAssign) return assignProvider(providerCount-1);
@@ -126,8 +127,8 @@ contract TaskContract {
             flag = ArrayPop(providerMap[msg.sender], provID);      //delete form Map
             flag = ArrayPop(providerPool, provID) && flag;         //delete from Pool             
         }
-        if(flag) {emit ProviderStopped(provID, msg.sender);
-            emit SystemInfo(providerCount, msg.sender, 'ProviderStopped');}
+        if(flag) //{emit ProviderStopped(provID, msg.sender);
+            emit SystemInfo(providerCount, msg.sender, 'Provider Stopped');
         return flag;
     }
     //update a provider, you must know the provID and must sent from right addr
@@ -143,8 +144,8 @@ contract TaskContract {
             flag = ArrayPop(providerPool,provID);           // pop first                                      
             providerPool.push(provID);                      // push in both case anyway
             //update map -- no need provID not changed.
-            emit ProviderUpdated(provID, msg.sender);
-            emit SystemInfo(providerCount, msg.sender, 'ProviderUpdated');
+            //emit ProviderUpdated(provID, msg.sender);
+            emit SystemInfo(providerCount, msg.sender, 'Provider Updated');
             return flag;
         }
     }
@@ -172,7 +173,8 @@ contract TaskContract {
         //add new to requestPool
         pendingPool.push(requestCount);
         requestList[requestCount].status = '0' ;     //web3.toAscii([hex])
-        emit RequestAdded(requestCount, msg.sender);       
+        //emit RequestAdded(requestCount, msg.sender);       
+        emit SystemInfo(requestCount, msg.sender,'Request Added');
         requestCount++;
         //try assign and handle return value
         if (autoAssign) return assignTask(requestCount-1);
@@ -185,7 +187,9 @@ contract TaskContract {
             flag = ArrayPop(requestMap[msg.sender], reqID);        //delete form Map
             flag = ArrayPop(pendingPool, reqID) && flag;           //delete from Pool             
         }
-        if(flag) emit RequestCanceled(reqID, msg.sender);
+        if(flag) 
+        //emit RequestCanceled(reqID, msg.sender);
+            emit SystemInfo(reqID, msg.sender, 'Request Canceled');
         return flag;
     }
     function updateRequest(uint64 time, uint16 target, uint256 reqID) payable public returns (bool) {      
@@ -200,7 +204,8 @@ contract TaskContract {
             flag = ArrayPop(pendingPool,reqID);           // pop first                                      
             pendingPool.push(reqID);                      // push in both case anyway
             //update map -- no need provID not changed.
-            emit RequestUpdated(reqID, msg.sender);
+            //emit RequestUpdated(reqID, msg.sender);
+            emit SystemInfo(reqID, msg.sender, 'Request Updated');
             return flag;
         }
     }
@@ -272,8 +277,10 @@ contract TaskContract {
         
         //update balanceList            addr here is requester's
         balanceList[reqID] += requestList[reqID].price; 
-        emit TaskAssigned(reqID,requestList[reqID].addr,  
-                        provID, providerList[provID].addr);
+        //emit TaskAssigned(reqID,requestList[reqID].addr,  
+        //                provID, providerList[provID].addr);
+        emit PairingInfo (reqID,requestList[reqID].addr,  
+                provID, providerList[provID].addr, 'Request assigned to Provider');
         return '0';   
     }
 
