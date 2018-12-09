@@ -8,6 +8,10 @@ pragma solidity ^0.5.0;
 pragma experimental ABIEncoderV2;   //return self-defined type
 
 contract TaskContract {
+    //config
+    bool autoAssign = true;            //whether auto assign the task
+    
+    
     //list
     mapping (uint256 => Provider) public providerList;  //history
     mapping (uint256 => Request) public requestList;    //history
@@ -26,7 +30,7 @@ contract TaskContract {
     uint256[] providingPool;    //requests
     uint256[] validatingPool;   //requests
 
-    bool autoAssign;            //whether auto assign the task
+    
     
 
     constructor() public {      //sol 5.0 syntax

@@ -52,7 +52,7 @@ if(argv['user']) mode = 'user';
 else if(argv['worker']) mode = 'worker';
 else {
     console.log("-----------------------------------------------------------------")
-    console.log("You must specify worker or user mode.")
+    console.log("You must specify --worker or --user mode.")
     console.log("-----------------------------------------------------------------")
     process.exit();
 }
