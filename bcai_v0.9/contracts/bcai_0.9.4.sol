@@ -448,6 +448,8 @@ contract TaskContract {
 //////////////////////////////////////////////////////////////////////
 /*  function startRequest(uint64 dataID, uint16 target, uint64 time) payable public returns (bool) {
     //a legacy version of startRequest, using a local memory copy and write back
+    //NOTE: [important] this method may take most gas cost. Take this as an example
+    //Conclusion: only modify the necessary mapping item.
         bool[] memory emptyArray;
         Request memory req = Request(           //create a temp memory var
             msg.sender,             //addr
@@ -476,7 +478,6 @@ contract TaskContract {
         return assignRequest();
     }
 */
-
 /////////////////////////////////////////////////////////////////////
     // Used to dynamically remove elements from array of open provider spaces. 
     // Using a swap and delete method, search for the desired addr throughout the whole array
