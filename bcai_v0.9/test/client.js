@@ -284,16 +284,23 @@ function RequestOnlyMy(myAccount){
     myContract.methods.getRequestPool().call().then(function(pool){
         console.log("Active Request count = ",pool.length);
         console.log("Request Pool: ");
-        console.log(pool); 
+        console.log(pool);
+        return pool; 
     })
-    .then(function(){
+    .then(function(pool){
         myContract.methods.getRequestID(myAccount).call().then(function(IDList){
         console.log("-----------------------------------------------------------------");
         console.log("All my posted Request: ")
         console.log(IDList);
-        return IDList;           
+        return (IDList,pool);           
         })
-        .then(function(IDList){
+        .then(function(IDList, pool){
+            console.log("Among them still active:")
+            console.log("I got both list")
+            console.log(IDList, Pool)
+            for(var i = 0; i<IDList.length;i++){
+
+            }
             if(argv['debug']){
                 myContract.methods.listRequests(IDList).call().then(function(objList){                   
                     console.log("-----------------------------------------------------------------");
