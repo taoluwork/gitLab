@@ -193,6 +193,7 @@ function userFireMessage(){
             console.log("Request Submitted! Block: ",ret.blockNumber);
             console.log("-----------------------------------------------------------------")
             if(argv['recpt'])  console.log("Receipt:    <=====######", ret);
+            console.log(ret.events[0])
             if(ret.events[0] == undefined) throw 'Submit request failed!'
                     
         }).catch(function(err){
