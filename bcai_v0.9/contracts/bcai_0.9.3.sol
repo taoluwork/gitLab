@@ -59,7 +59,7 @@ contract TaskContract {
         uint64  numValidations;         //user defined the validation
         bool[]  validations;            //multisignature from validations
         bool    isValid;                //the final flag
-        byte    status;                 //0: 'pending', 1:'providing', 2: validating, 3: complete
+        byte    status;                 //0: 'pending', 1:'providing', 2: validating, 3: complete, 7: deleted
     }
 
     struct Provider {
@@ -125,9 +125,10 @@ contract TaskContract {
         bool flag = false;
         if (providerList[provID].available == true                 //can only stop available provider
                 && providerList[provID].addr == msg.sender) {      //you cannot delete other's provider            
-            delete providerList[provID];                           //delete from List
+            //delete providerList[provID];                         //do NOT delete from List, keep a record
             flag = ArrayPop(providerMap[msg.sender], provID);      //delete form Map
-            flag = ArrayPop(providerPool, provID) && flag;         //delete from Pool             
+            flag = ArrayPop(providerPool, provID) && flag;         //delete from Pool
+            providerList[provID].available == false;             
         }
         if(flag) //{emit ProviderStopped(provID, msg.sender);
             emit SystemInfo(providerCount, msg.sender, 'Provider Stopped');
@@ -185,9 +186,10 @@ contract TaskContract {
         bool flag = false;
         if (requestList[reqID].status == '0'                       //can only cancel pending request
                 && requestList[reqID].addr == msg.sender) {        //you cannot delete other's provider            
-            delete requestList[reqID];                             //delete from List
+            //delete requestList[reqID];                           //do NOT delete from List, keep a record
             flag = ArrayPop(requestMap[msg.sender], reqID);        //delete form Map
             flag = ArrayPop(pendingPool, reqID) && flag;           //delete from Pool             
+            requestList[reqID].status = '7';                       //'deleted'
         }
         if(flag) 
         //emit RequestCanceled(reqID, msg.sender);
