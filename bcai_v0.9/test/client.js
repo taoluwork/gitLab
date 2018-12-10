@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////////
 //client's js app, combined --user mode and --worker mode
-//version: 0.9.3
+//version: 0.9.4
 //author: taurus tlu4@lsu.edu
 //use: $ node client.js --help --version
 /////////////////////////////////////////////////////////////////
-const version = "bcai_client v0.9.3     ----  by Taurus"
+const version = "bcai_client v0.9.4     ----  by Taurus"
 const NetworkID = 512;
 //NOTE: combine user and worker client together switch using --user, --worker
 //Avoid using version earlier than 0.9.2
@@ -32,6 +32,8 @@ if(argv['help']) {
     console.log(" -t #    : time ");
     console.log(" -T #    : target ");
     console.log(" -p #    : price");
+    console.log(" -C #    : complete reqID");
+    console.log(" -R #    : resultID");
 
     console.log(" --view  : view all current requests / no change");
     console.log(" --my    : view all my requests");
@@ -209,7 +211,8 @@ function userFireMessage(){
             console.log("Check your reqID by --my");
             process.exit();
         })
-    }  
+    }
+    
     else {                              // call updateProviding
         //TODO: [Important] update request need refund 
         myContract.methods.updateRequest(time, target, argv['u'])
@@ -228,7 +231,7 @@ function userFireMessage(){
     }  
 }
 function workerFireMessage(){
-    if(!argv['stop'] && argv['s'] == undefined && argv['u'] == undefined){     //start new provider
+    if(!argv['stop'] && argv['s'] == undefined && argv['u'] == undefined){      //start new provider
         myContract.methods.startProviding(maxTime, maxTarget, minPrice)
         .send({from: myAccount, gas: 400000})
         .then(function(ret){
@@ -254,6 +257,21 @@ function workerFireMessage(){
         }).catch(function(err){
             console.log(err);
             console.log("You can only stop your provider. Check your provID by --my");
+            process.exit();
+        })
+    }
+    else if(argv['C'] != undefined) {           //complete computation, need validation  
+        if (argv['R'] == undefined) {
+            console.log("No Result ID specified, using default : 191345");
+            argv['R'] = 191345;
+        }
+        myContract.methods.completeRequest(argv['C'], argv['R']).send({from: myAccount, gas:200000})
+        .then(function(ret){
+            console.log("Complete Request: ReqID = ",argv['C'], " Block = ", ret.blockNumber);
+            if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
+            if(ret.events['SystemInfo'] == undefined) throw 'Complete Request failed! '
+        }).catch(function(err){
+            console.log(err);    
             process.exit();
         })
     }  
