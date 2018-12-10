@@ -191,22 +191,11 @@ function userFireMessage(){
             //console.log("-----------------------------------------------------------------")
             console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("Request Submitted! Block: ",ret.blockNumber);
-            
-            if(argv['recpt']) {
-                console.log("-----------------------------------------------------------------")
-                console.log("Receipt:    <=====######", ret);
-            }
-                // else if (argv['recpt'] !=0){
-            //     console.log("Receipt:    <=====######")
-            //     console.log("Event: ", ret.events.SystemInfo.event)
-            //     console.log(ret.events.SystemInfo.returnValues)
-            // }
-        //})
-        //.then(function(){
-            //this info is shown by the event catcher.
-            //showLatestRequest();          
+            console.log("-----------------------------------------------------------------")
+            if(ret.events == undefined) throw 'Submit request failed!'
+            if(argv['recpt'])  console.log("Receipt:    <=====######", ret);        
         }).catch(function(err){
-            console.log("Submit request failed! Check receipt by --recpt");
+            console.log("Check receipt by --recpt");
             process.exit();
         })
     }
@@ -217,18 +206,11 @@ function userFireMessage(){
         .then(function(ret){
             console.log("Cancel Request: Block = ", ret.blockNumber);
             console.log("-----------------------------------------------------------------");
-            if(argv['recpt']) 
-                console.log("Receipt :    <<====####  ", ret);
-           // else {
-            //     console.log("Receipt:    <=====######")
-                //console.log("Event: ", ret.events.SystemInfo.event)
-            //     console.log(ret.events.SystemInfo.returnValues)
-            //}
-        //}).then(function(){
-            //RequestOnlyMy(myAccount);
+            if(ret.evetns == undefined) throw 'Cancel Request failed! '
+            if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
-            console.log("Cancel Request failed! Check your reqID by --my");
-            console.log(err);
+            console.log(err);    
+            console.log("Check your reqID by --my");
             process.exit();
         })
     }  
@@ -240,41 +222,14 @@ function userFireMessage(){
             console.log("Update request: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("-----------------------------------------------------------------");
-            if(argv['recpt']) 
-                console.log("Receipt :    <<====####  ", ret);
-            //else {
-            //     console.log("Receipt:    <=====######")
-                //console.log("Event: ", ret.events.SystemInfo.event)
-            //     console.log(ret.events.SystemInfo.returnValues)
-            //}
-        //}).then(function(){
-            //showLatestRequest();
+            if(ret.events == undefined) throw 'Update Request failed!'
+            if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
         }).catch(function(err){         //this poped when edit other's config / fired using wrong account
-            console.log("Update Request failed! Check your reqID by --my");
-            //console.log(err);
+            console.log(err);
+            console.log("Check your reqID by --my");
             process.exit();
         })
     }  
-
-
-
-    //now catch the event TaskAssigned
-    //myContract.events.TaskAssigned({
-    // myContract.once('TaskAssigned',{
-    //     fromBlock: 0,
-	//     toBlock: 'latest'
-    // }, function(err, eve){
-    //     if(err!= null) console.log("ERROR!",err);
-    //     if(argv['debug']){
-    //         console.log("=================================================================")
-    //         console.log("Task Assigned to Provider", eve);
-    //         console.log("=================================================================")
-    //     }else{
-    //         console.log("=================================================================")
-    //         console.log("Task Assigned to Provider", eve.returnValues)
-    //         console.log("=================================================================")
-    //     }
-    // })
 }
 function workerFireMessage(){
     if(!argv['stop'] && argv['s'] == undefined && argv['u'] == undefined){     //start new provider
@@ -284,17 +239,11 @@ function workerFireMessage(){
             console.log("Start providing: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
             console.log("-----------------------------------------------------------------")
+            if (ret.events == undefined) throw 'Start provider failed!'
             if(argv['recpt']) console.log("Receipt:    <=====###### ", ret);
-            // else if (argv['recpt'] !=0){
-            //     console.log("Receipt:    <=====######")
-            //     console.log("Event: ", ret.events.SystemInfo.event)
-            //     console.log(ret.events.SystemInfo.returnValues)
-            // }          
-        //}).then(function(){
-            //showLatestProvider();
         }).catch(function(err){
-            console.log("Start provider failed! Check receipt by --recpt");
             console.log(err);
+            console.log("Check receipt by --recpt");          
             process.exit();
         })
     } 
@@ -305,18 +254,11 @@ function workerFireMessage(){
         .then(function(ret){
             console.log("Stop providing: Block = ", ret.blockNumber);
             console.log("-----------------------------------------------------------------");
-            if(argv['recpt']) 
-                console.log("Receipt :    <<====####  ", ret);
-            //else {
-                //console.log("Event: ", ret.events.SystemInfo.event)
-                //     console.log("Receipt:    <=====######")
-                //     console.log(ret.events.SystemInfo.returnValues)
-            //}
-        //}).then(function(){
-            //listProviderOnlyMy(myAccount);
+            if(ret.events == undefined) throw 'Stop provider failed!' 
+            if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
         }).catch(function(err){
-            console.log("Stop provider failed! Check your provID by --my");
-            //console.log(err);
+            console.log(err);
+            console.log("You can only stop your provider. Check your provID by --my");
             process.exit();
         })
     }  
@@ -327,55 +269,15 @@ function workerFireMessage(){
             console.log("Update providing: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
             console.log("-----------------------------------------------------------------");
+            if(ret.events == undefined) throw 'Update provider failed!'
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
-            //else {
-                //console.log("Event: ", ret.events.SystemInfo.event)
-            //     console.log("Receipt:    <=====######")    
-            //     console.log(ret.events.SystemInfo.returnValues)
-            //}
-        //}).then(function(){
-            //showLatestProvider();
         }).catch(function(err){
-            console.log("Update provider failed! Check your provID by --my");
-            //console.log(err);
+            console.log(err);
+            console.log("You can only update your provider. Check your provID by --my");
             process.exit();
         })
     }
-
-    //waiting to be triggered: monitoring to the events
-    // myContract.events.SystemInfo({
-    //     fromBlock: 0,
-	//     toBlock: 'latest'
-    // }, function(err, eve){
-	//     if(err!= null) console.log("ERROR!",err);
-    //     if(argv['debug']) {
-    //         console.log("=================================================================")
-    //         console.log(eve);
-    //         console.log("=================================================================")
-    //     } else {
-    //         console.log("=================================================================")
-    //         console.log("Info: ", web3.utils.toAscii(eve.returnValues[4]))
-    //         console.log(eve.returnValues);           
-    //         console.log("=================================================================")
-    //     }
-    // })
-    // myContract.once('TaskAssigned',{
-    //     fromBlock: 0,
-	//     toBlock: 'latest'
-    // }, function(err, eve){
-	//     if(err!= null) console.log("ERROR!",err);
-    //     if(argv['debug']) {
-    //         console.log("=================================================================")
-    //         console.log(eve);
-    //         console.log("=================================================================")
-    //     } else {
-    //         console.log("=================================================================")
-    //         console.log("")
-    //         console.log("Task Assigned to Provider", eve.returnValues);           
-    //         console.log("=================================================================")
-    //     }
-    // })
 }
 
 //list only active pool linked the current account , called by --my
