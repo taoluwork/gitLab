@@ -192,7 +192,7 @@ function userFireMessage(){
             console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("Request Submitted! Block: ",ret.blockNumber);
             console.log("-----------------------------------------------------------------")
-            if(ret.events == undefined) throw 'Submit request failed!'
+            if(ret.events[0] == undefined) throw 'Submit request failed!'
             if(argv['recpt'])  console.log("Receipt:    <=====######", ret);        
         }).catch(function(err){
             console.log("Check receipt by --recpt");
@@ -206,7 +206,7 @@ function userFireMessage(){
         .then(function(ret){
             console.log("Cancel Request: Block = ", ret.blockNumber);
             console.log("-----------------------------------------------------------------");
-            if(ret.events == undefined) throw 'Cancel Request failed! '
+            if(ret.events[0] == undefined) throw 'Cancel Request failed! '
             if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
             console.log(err);    
@@ -222,7 +222,7 @@ function userFireMessage(){
             console.log("Update request: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("-----------------------------------------------------------------");
-            if(ret.events == undefined) throw 'Update Request failed!'
+            if(ret.events[0] == undefined) throw 'Update Request failed!'
             if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
         }).catch(function(err){         //this poped when edit other's config / fired using wrong account
             console.log(err);
@@ -239,7 +239,7 @@ function workerFireMessage(){
             console.log("Start providing: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
             console.log("-----------------------------------------------------------------")
-            if (ret.events == undefined) throw 'Start provider failed!'
+            if (ret.events[0] == undefined) throw 'Start provider failed!'
             if(argv['recpt']) console.log("Receipt:    <=====###### ", ret);
         }).catch(function(err){
             console.log(err);
@@ -254,7 +254,7 @@ function workerFireMessage(){
         .then(function(ret){
             console.log("Stop providing: Block = ", ret.blockNumber);
             console.log("-----------------------------------------------------------------");
-            if(ret.events == undefined) throw 'Stop provider failed!' 
+            if(ret.events[0] == undefined) throw 'Stop provider failed!' 
             if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
         }).catch(function(err){
             console.log(err);
