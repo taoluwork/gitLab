@@ -162,13 +162,14 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
                 RequestOnlyMy(myAccount);
             else 
                 //if new added or updated
-                showLatestRequest();
+                LatestRequest();
         } else if (mode == 'worker'){
             //if new added or updated
             
             if(eve.returnValues[2] == web3.utils.asciiToHex('Provider Stopped'))
                 ProviderOnlyMy(myAccount);
-            else LatestProvider();
+            else 
+                LatestProvider();
         }
     })
 })
