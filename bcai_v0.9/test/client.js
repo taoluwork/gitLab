@@ -174,7 +174,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
 //the main 'state-changing' function. --user and --worker have their own func, in pairs.
 function userFireMessage(){
     if(!argv['cancel'] && argv['s'] == undefined && argv['u'] == undefined){        //submit a request
-        myContract.methods.requestTask(dataID, target, time)
+        myContract.methods.startRequest(dataID, target, time)
         .send({from: myAccount, gas: 80000000, value: money})
         .then(function(ret){                                                        //handle the receipt
             //console.log("-----------------------------------------------------------------")
@@ -191,7 +191,8 @@ function userFireMessage(){
             //     console.log(ret.events.SystemInfo.returnValues)
             // }
         }).then(function(){
-            showLatestRequest();          
+            //this info is shown by the event catcher.
+            //showLatestRequest();          
         }).catch(function(err){
             console.log("Submit request failed! Check receipt by --recpt");
             process.exit();
@@ -199,7 +200,7 @@ function userFireMessage(){
     }
     else if(argv['stop'] || argv['s'] != undefined) {                               //cancel a request 
         //TODO: [Important] cancel request need refund (not yet designed), use caution
-        myContract.methods.cancelTask(argv['s'])
+        myContract.methods.stopRequest(argv['s'])
         .send({from:myAccount, gas:200000})
         .then(function(ret){
             console.log("Cancel Request: Block = ", ret.blockNumber);
@@ -212,10 +213,10 @@ function userFireMessage(){
             //     console.log(ret.events.SystemInfo.returnValues)
             }
         }).then(function(){
-            listRequestOnlyMy();
+            listRequestOnlyMy(myAccount);
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
             console.log("Cancel Request failed! Check your reqID by --my");
-            //console.log(err);
+            console.log(err);
             process.exit();
         })
     }  
@@ -301,7 +302,7 @@ function workerFireMessage(){
                 //     console.log(ret.events.SystemInfo.returnValues)
             }
         }).then(function(){
-            listProviderOnlyMy();
+            listProviderOnlyMy(myAccount);
         }).catch(function(err){
             console.log("Stop provider failed! Check your provID by --my");
             //console.log(err);
