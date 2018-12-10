@@ -340,6 +340,7 @@ function ProviderOnlyMy(myAccount){
             for(var i = 0; i<pool.length;i++){
                 for(var j = 0; j<IDList.length;j++){
                     if(IDList[i] == pool[j]) common.push(pool[j])
+                    common.push(i)
                 }
             }
             console.log(common); 
