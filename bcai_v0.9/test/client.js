@@ -294,7 +294,7 @@ function RequestOnlyMy(myAccount){
         console.log(IDList);
         console.log("Among them still active:")
             console.log("I got both list")
-            console.log(IDList, Pool)
+            console.log(IDList, pool)
             for(var i = 0; i<IDList.length;i++){
 
             }
@@ -317,6 +317,7 @@ function RequestOnlyMy(myAccount){
         }, function(err){
             console.log(err);
             console.log("Error listing my own!")
+            process.exit();
         })
     })
 }
@@ -348,6 +349,7 @@ function ProviderOnlyMy(myAccount){
         }, function(err){
             console.log(err);
             console.log("Error listing my own!")
+            process.exit();
         })
     })
 }
