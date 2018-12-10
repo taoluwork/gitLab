@@ -192,7 +192,7 @@ function userFireMessage(){
             console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("Request Submitted! Block: ",ret.blockNumber);
             
-            if(argv['recpt']!= 0 && argv['recpt']!=undefined) {
+            if(argv['recpt']) {
                 console.log("-----------------------------------------------------------------")
                 console.log("Receipt:    <=====######", ret);
             }
@@ -219,11 +219,11 @@ function userFireMessage(){
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
-            else {
+           // else {
             //     console.log("Receipt:    <=====######")
-                console.log("Event: ", ret.events.SystemInfo.event)
+                //console.log("Event: ", ret.events.SystemInfo.event)
             //     console.log(ret.events.SystemInfo.returnValues)
-            }
+            //}
         //}).then(function(){
             //RequestOnlyMy(myAccount);
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
@@ -242,11 +242,11 @@ function userFireMessage(){
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
-            else {
+            //else {
             //     console.log("Receipt:    <=====######")
-                console.log("Event: ", ret.events.SystemInfo.event)
+                //console.log("Event: ", ret.events.SystemInfo.event)
             //     console.log(ret.events.SystemInfo.returnValues)
-            }
+            //}
         //}).then(function(){
             //showLatestRequest();
         }).catch(function(err){         //this poped when edit other's config / fired using wrong account
@@ -284,8 +284,7 @@ function workerFireMessage(){
             console.log("Start providing: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
             console.log("-----------------------------------------------------------------")
-            if(argv['recpt']!= 0 && argv['recpt']!=undefined)
-                console.log("Receipt:    <=====###### ", ret);
+            if(argv['recpt']) console.log("Receipt:    <=====###### ", ret);
             // else if (argv['recpt'] !=0){
             //     console.log("Receipt:    <=====######")
             //     console.log("Event: ", ret.events.SystemInfo.event)
@@ -308,11 +307,11 @@ function workerFireMessage(){
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
-            else {
-                console.log("Event: ", ret.events.SystemInfo.event)
+            //else {
+                //console.log("Event: ", ret.events.SystemInfo.event)
                 //     console.log("Receipt:    <=====######")
                 //     console.log(ret.events.SystemInfo.returnValues)
-            }
+            //}
         //}).then(function(){
             //listProviderOnlyMy(myAccount);
         }).catch(function(err){
@@ -330,11 +329,11 @@ function workerFireMessage(){
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
-            else {
-                console.log("Event: ", ret.events.SystemInfo.event)
+            //else {
+                //console.log("Event: ", ret.events.SystemInfo.event)
             //     console.log("Receipt:    <=====######")    
             //     console.log(ret.events.SystemInfo.returnValues)
-            }
+            //}
         //}).then(function(){
             //showLatestProvider();
         }).catch(function(err){
