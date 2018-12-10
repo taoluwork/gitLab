@@ -293,12 +293,17 @@ function RequestOnlyMy(myAccount){
         console.log("All my posted Request: ")
         console.log(IDList);
         console.log("Among them still active:")
-            console.log("I got both list")
+        //pick each one in active pool, see whether fired by me.
+        console.log("I got both list")
             console.log(IDList, pool)
-            for(var i = 0; i<IDList.length;i++){
-
+            var common = [];
+            for(var i = 0; i<pool.length;i++){
+                for(var j = 0; j<IDList.length;i++){
+                    if(IDList[i] == pool[j]) common.push(pool[j])
+                }
             }
-        return (IDList,pool);           
+            console.log("common", common);
+           
         })
         .then(function(IDList, pool){
             
