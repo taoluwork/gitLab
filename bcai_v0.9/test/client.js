@@ -116,51 +116,59 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     return accounts;
 })
 .then(function(accounts){                 //success: accounts got
-        if (argv['all']){               //display all info
-            console.log(accounts);
-            if      (mode == 'user')    listAllRequests();
-            else if(mode == 'worker')   listAllProviders();
+    if (argv['all']){               //display all info
+        console.log(accounts);
+        if      (mode == 'user')    listAllRequests();
+        else if(mode == 'worker')   listAllProviders();
+    }
+    else if (argv['my']){           //display my info
+        if(mode == 'user')  listRequestOnlyMy(myAccount);
+        else if(mode == 'worker') listProviderOnlyMy(myAccount);
+    }
+    else if (argv['view']){
+        console.log(accounts);      //only view, no change
+        if (mode == 'user') listPoolRequests();
+        if (mode == 'worker') listPoolProviders();
+    }
+    else {                          //real state change
+        if (mode == 'user') userFireMessage();
+        else if (mode =='worker') workerFireMessage();
+    }
+})
+.then(function(){
+    //subcribe and monitor the events
+    myContract.events.SystemInfo({
+        fromBlock: 'latest',
+        //toBlock: 'latest'
+    },function(err, eve){
+        if(err!= undefined) console.log(err);           
+    })
+    .on('data', function(eve){
+        if(argv['debug']) {
+            console.log("=================================================================")
+            console.log(eve);
+            console.log("=================================================================")
+        } else {
+            console.log("=================================================================")
+            console.log("Info: ", web3.utils.hexToAscii(eve.returnValues[2]), " ==> ", eve.blockNumber)
+            console.log(eve.returnValues);           
+            console.log("=================================================================")
         }
-        else if (argv['my']){           //display my info
-            if(mode == 'user')  listRequestOnlyMy(myAccount);
-            else if(mode == 'worker') listProviderOnlyMy(myAccount);
-        }
-        else if (argv['view']){
-            console.log(accounts);      //only view, no change
-            if (mode == 'user') listPoolRequests();
-            if (mode == 'worker') listPoolProviders();
-        }
-        else {                          //real state change
-            if (mode == 'user') userFireMessage();
-            else if (mode =='worker') workerFireMessage();
-        }
-    }).then(function(){
-        //subcribe and monitor the events
-        myContract.events.SystemInfo({
-            fromBlock: 'latest',
-            //toBlock: 'latest'
-        },function(err, eve){
-            if(err!= undefined) console.log(err);           
-        })
-        .on('data', function(eve){
-            if(argv['debug']) {
-                console.log("=================================================================")
-                console.log(eve);
-                console.log("=================================================================")
-            } else {
-                console.log("=================================================================")
-                console.log("Info: ", web3.utils.hexToAscii(eve.returnValues[2]), " ==> ", eve.blockNumber)
-                console.log(eve.returnValues);           
-                console.log("=================================================================")
-            }
 
-            //update the display
-            if(mode == 'user'){
+        //update the display
+        if(mode == 'user'){      
+            //if stoped
+            if(eve.returnValues[2] == web3.utils.asciiToHex('Request Stopped'))
+                RequestOnlyMy(myAccount);
+            else 
+                //if new added or updated
                 showLatestRequest();
-            } else if (mode == 'worker'){
-                showLatestProvider();
-            }
-        })
+        } else if (mode == 'worker'){
+            //if new added or updated
+            showLatestProvider();
+            listProviderOnlyMy(myAccount);
+        }
+    })
 })
 .catch(function(err){           //failure: no accounts
     console.log(err);
@@ -302,7 +310,7 @@ function workerFireMessage(){
                 //     console.log(ret.events.SystemInfo.returnValues)
             }
         }).then(function(){
-            listProviderOnlyMy(myAccount);
+            //listProviderOnlyMy(myAccount);
         }).catch(function(err){
             console.log("Stop provider failed! Check your provID by --my");
             //console.log(err);
@@ -324,7 +332,7 @@ function workerFireMessage(){
             //     console.log(ret.events.SystemInfo.returnValues)
             }
         }).then(function(){
-            showLatestProvider();
+            //showLatestProvider();
         }).catch(function(err){
             console.log("Update provider failed! Check your provID by --my");
             //console.log(err);

@@ -191,7 +191,7 @@ contract TaskContract {
         }
         if(flag) 
         //emit RequestCanceled(reqID, msg.sender);
-            emit SystemInfo(reqID, msg.sender, 'Request Canceled');
+            emit SystemInfo(reqID, msg.sender, 'Request Stopped');
         return flag;
     }
     function updateRequest(uint64 time, uint16 target, uint256 reqID) payable public returns (bool) {      
