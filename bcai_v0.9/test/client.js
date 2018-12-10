@@ -295,8 +295,9 @@ function RequestOnlyMy(myAccount){
         console.log("Still active:")
         //pick each one in active pool, see whether fired by me.
         var common = [];
+        console.log(common, pool, IDList);
         for(var i = 0; i<pool.length;i++){
-            for(var j = 0; j<IDList.length;i++){
+            for(var j = 0; j<IDList.length;j++){
                 if(IDList[i] == pool[j]) common.push(pool[j])
             }
         }
