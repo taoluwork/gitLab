@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////////
 //client's js app, combined --user mode and --worker mode
-//version: 0.9.2
+//version: 0.9.3
 //author: taurus tlu4@lsu.edu
 //use: $ node client.js --help --version
 /////////////////////////////////////////////////////////////////
-const version = "bcai_client v0.9.2     ----  by Taurus"
+const version = "bcai_client v0.9.3     ----  by Taurus"
 const NetworkID = 512;
 //NOTE: combine user and worker client together switch using --user, --worker
 //Avoid using version earlier than 0.9.2
@@ -243,7 +243,6 @@ function workerFireMessage(){
             process.exit();
         })
     } 
-    
     else if(argv['stop'] || argv['s'] != undefined) {                           // call stopProviding
         myContract.methods.stopProviding(argv['s'])
         .send({from:myAccount, gas:200000})
