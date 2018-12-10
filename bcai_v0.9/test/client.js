@@ -290,18 +290,17 @@ function RequestOnlyMy(myAccount){
     .then(function(pool){
         myContract.methods.getRequestID(myAccount).call().then(function(IDList){
         console.log("-----------------------------------------------------------------");
-        console.log("All my posted Request: ")
+        console.log("All my posted Requests: ")
         console.log(IDList);
         console.log("Still active:")
         //pick each one in active pool, see whether fired by me.
         var common = [];
-        console.log(common, pool, IDList);
         for(var i = 0; i<pool.length;i++){
             for(var j = 0; j<IDList.length;j++){
                 if(IDList[i] == pool[j]) common.push(pool[j])
             }
         }
-        console.log(common, pool, IDList); 
+        console.log(common); 
         return IDList;         
         })
         .then(function(IDList){   
@@ -339,7 +338,7 @@ function ProviderOnlyMy(myAccount){
             //pick each one in active pool, see whether fired by me.
             var common = [];
             for(var i = 0; i<pool.length;i++){
-                for(var j = 0; j<IDList.length;i++){
+                for(var j = 0; j<IDList.length;j++){
                     if(IDList[i] == pool[j]) common.push(pool[j])
                 }
             }
