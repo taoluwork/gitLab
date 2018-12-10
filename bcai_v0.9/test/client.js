@@ -292,15 +292,16 @@ function RequestOnlyMy(myAccount){
         console.log("-----------------------------------------------------------------");
         console.log("All my posted Request: ")
         console.log(IDList);
-        return (IDList,pool);           
-        })
-        .then(function(IDList, pool){
-            console.log("Among them still active:")
+        console.log("Among them still active:")
             console.log("I got both list")
             console.log(IDList, Pool)
             for(var i = 0; i<IDList.length;i++){
 
             }
+        return (IDList,pool);           
+        })
+        .then(function(IDList, pool){
+            
             if(argv['debug']){
                 myContract.methods.listRequests(IDList).call().then(function(objList){                   
                     console.log("-----------------------------------------------------------------");
