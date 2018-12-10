@@ -299,7 +299,7 @@ function RequestOnlyMy(myAccount){
         common.push(pool[0])
         for(var i = 0; i<pool.length;i++){
             for(var j = 0; j<IDList.length;j++){
-                if(IDList[i] == pool[j]) common.push(pool[j])
+                if(pool[i] == IDList[j]) common.push(pool[i])
             }
         }
         console.log(common); 
