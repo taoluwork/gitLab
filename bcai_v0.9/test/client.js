@@ -201,7 +201,8 @@ function userFireMessage(){
             //     console.log("Event: ", ret.events.SystemInfo.event)
             //     console.log(ret.events.SystemInfo.returnValues)
             // }
-        }).then(function(){
+        //})
+        //.then(function(){
             //this info is shown by the event catcher.
             //showLatestRequest();          
         }).catch(function(err){
@@ -224,7 +225,7 @@ function userFireMessage(){
             //     console.log(ret.events.SystemInfo.returnValues)
             }
         }).then(function(){
-            RequestOnlyMy(myAccount);
+            //RequestOnlyMy(myAccount);
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
             console.log("Cancel Request failed! Check your reqID by --my");
             console.log(err);
@@ -247,7 +248,7 @@ function userFireMessage(){
             //     console.log(ret.events.SystemInfo.returnValues)
             }
         }).then(function(){
-            showLatestRequest();
+            //showLatestRequest();
         }).catch(function(err){         //this poped when edit other's config / fired using wrong account
             console.log("Update Request failed! Check your reqID by --my");
             //console.log(err);
