@@ -182,22 +182,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
 //supporting functions below.
 //the main 'state-changing' function. --user and --worker have their own func, in pairs.
 function userFireMessage(){
-    if(!argv['cancel'] && argv['s'] == undefined && argv['u'] == undefined){        //submit a request
-        myContract.methods.startRequest(dataID, target, time)
-        .send({from: myAccount, gas: 80000000, value: money})
-        .then(function(ret){                                                        //handle the receipt
-            //console.log("-----------------------------------------------------------------")
-            console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
-            console.log("Request Submitted! Block: ",ret.blockNumber);
-            console.log("-----------------------------------------------------------------")
-            if(argv['recpt'])  console.log("Receipt:    <=====######", ret);
-            if(ret.events['SystemInfo'] == undefined) throw 'Submit request failed!'                  
-        }).catch(function(err){
-            console.log("Check receipt by --recpt");
-            process.exit();
-        })
-    }
-    else if(argv['stop'] || argv['s'] != undefined) {                               //cancel a request 
+    if(argv['stop'] || argv['s'] != undefined) {                               //cancel a request 
         //TODO: [Important] cancel request need refund (not yet designed), use caution
         myContract.methods.stopRequest(argv['s'])
         .send({from:myAccount, gas:200000})
@@ -212,8 +197,7 @@ function userFireMessage(){
             process.exit();
         })
     }
-    
-    else {                              // call updateProviding
+    else if(argv['u'] != undefined) {                              // call updateProviding
         //TODO: [Important] update request need refund 
         myContract.methods.updateRequest(time, target, argv['u'])
         .send({from: myAccount, gas: 200000, value: money})
@@ -228,39 +212,25 @@ function userFireMessage(){
             console.log("Check your reqID by --my");
             process.exit();
         })
+    }
+    else {        //submit a request
+        myContract.methods.startRequest(dataID, target, time)
+        .send({from: myAccount, gas: 80000000, value: money})
+        .then(function(ret){                                                        //handle the receipt
+            //console.log("-----------------------------------------------------------------")
+            console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
+            console.log("Request Submitted! Block: ",ret.blockNumber);
+            console.log("-----------------------------------------------------------------")
+            if(argv['recpt'])  console.log("Receipt:    <=====######", ret);
+            if(ret.events['SystemInfo'] == undefined) throw 'Submit request failed!'                  
+        }).catch(function(err){
+            console.log("Check receipt by --recpt");
+            process.exit();
+        })
     }  
 }
 function workerFireMessage(){
-    if(!argv['stop'] && argv['s'] == undefined && argv['u'] == undefined){      //start new provider
-        myContract.methods.startProviding(maxTime, maxTarget, minPrice)
-        .send({from: myAccount, gas: 400000})
-        .then(function(ret){
-            console.log("Start providing: Block = ", ret.blockNumber);
-            console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
-            console.log("-----------------------------------------------------------------")
-            if(argv['recpt']) console.log("Receipt:    <=====###### ", ret);
-            if(ret.events['SystemInfo'] == undefined) throw 'Start provider failed!'
-        }).catch(function(err){
-            console.log(err);
-            console.log("Check receipt by --recpt");          
-            process.exit();
-        })
-    } 
-    else if(argv['stop'] || argv['s'] != undefined) {                           // call stopProviding
-        myContract.methods.stopProviding(argv['s'])
-        .send({from:myAccount, gas:200000})
-        .then(function(ret){
-            console.log("Stop providing: Block = ", ret.blockNumber);
-            console.log("-----------------------------------------------------------------");
-            if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
-            if(ret.events['SystemInfo'] == undefined) throw 'Stop provider failed!' 
-        }).catch(function(err){
-            console.log(err);
-            console.log("You can only stop your provider. Check your provID by --my");
-            process.exit();
-        })
-    }
-    else if(argv['C'] != undefined) {           //complete computation, need validation  
+    if(argv['C'] != undefined) {                            //complete computation, need validation  
         if (argv['R'] == undefined) {
             console.log("No Result ID specified, using default : 191345");
             argv['R'] = 191345;
@@ -274,8 +244,22 @@ function workerFireMessage(){
             console.log(err);    
             process.exit();
         })
-    }  
-    else {                                  // call updateProviding
+    }   
+    else if(argv['stop'] || argv['s'] != undefined) {       // call stopProviding
+        myContract.methods.stopProviding(argv['s'])
+        .send({from:myAccount, gas:200000})
+        .then(function(ret){
+            console.log("Stop providing: Block = ", ret.blockNumber);
+            console.log("-----------------------------------------------------------------");
+            if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
+            if(ret.events['SystemInfo'] == undefined) throw 'Stop provider failed!' 
+        }).catch(function(err){
+            console.log(err);
+            console.log("You can only stop your provider. Check your provID by --my");
+            process.exit();
+        })
+    }
+    else if(argv['u'] != undefined) {                       // call updateProviding
         myContract.methods.updateProvider(maxTime, maxTarget, minPrice, argv['u'])
         .send({from: myAccount, gas: 200000})
         .then(function(ret){
@@ -290,6 +274,22 @@ function workerFireMessage(){
             process.exit();
         })
     }
+    else {             //default operation                  //start new provider
+        myContract.methods.startProviding(maxTime, maxTarget, minPrice)
+        .send({from: myAccount, gas: 400000})
+        .then(function(ret){
+            console.log("Start providing: Block = ", ret.blockNumber);
+            console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
+            console.log("-----------------------------------------------------------------")
+            if(argv['recpt']) console.log("Receipt:    <=====###### ", ret);
+            if(ret.events['SystemInfo'] == undefined) throw 'Start provider failed!'
+        }).catch(function(err){
+            console.log(err);
+            console.log("Check receipt by --recpt");          
+            process.exit();
+        })
+    }
+
 }
 
 //list only active pool linked the current account , called by --my
