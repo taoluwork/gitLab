@@ -192,8 +192,9 @@ function userFireMessage(){
             console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("Request Submitted! Block: ",ret.blockNumber);
             console.log("-----------------------------------------------------------------")
+            if(argv['recpt'])  console.log("Receipt:    <=====######", ret);
             if(ret.events[0] == undefined) throw 'Submit request failed!'
-            if(argv['recpt'])  console.log("Receipt:    <=====######", ret);        
+                    
         }).catch(function(err){
             console.log("Check receipt by --recpt");
             process.exit();
@@ -206,8 +207,9 @@ function userFireMessage(){
         .then(function(ret){
             console.log("Cancel Request: Block = ", ret.blockNumber);
             console.log("-----------------------------------------------------------------");
-            if(ret.events[0] == undefined) throw 'Cancel Request failed! '
             if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
+            if(ret.events[0] == undefined) throw 'Cancel Request failed! '
+            
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
             console.log(err);    
             console.log("Check your reqID by --my");
