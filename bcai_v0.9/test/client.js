@@ -206,7 +206,7 @@ function userFireMessage(){
         .then(function(ret){
             console.log("Cancel Request: Block = ", ret.blockNumber);
             console.log("-----------------------------------------------------------------");
-            if(ret.evetns == undefined) throw 'Cancel Request failed! '
+            if(ret.events == undefined) throw 'Cancel Request failed! '
             if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
             console.log(err);    
