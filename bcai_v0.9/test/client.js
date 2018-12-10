@@ -300,7 +300,7 @@ function RequestOnlyMy(myAccount){
                 if(IDList[i] == pool[j]) common.push(pool[j])
             }
         }
-        console.log(common); 
+        console.log(common, pool, IDList); 
         return IDList;         
         })
         .then(function(IDList){   
@@ -327,8 +327,9 @@ function ProviderOnlyMy(myAccount){
     myContract.methods.getProviderPool().call().then(function(pool){
         console.log("Active Provider count = ",pool.length);
         console.log("Active Provider Pool: ");
-        console.log(pool);  
-    }).then(function(){
+        console.log(pool);
+        return pool;  
+    }).then(function(pool){
         myContract.methods.getProviderID(myAccount).call().then(function(IDList){
             console.log("-----------------------------------------------------------------");
             console.log("All my posted provider: ")
