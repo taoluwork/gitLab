@@ -295,7 +295,7 @@ function workerFireMessage(){
     }
 
 }
-
+///////////////////////////////////////////////////////////////////////////////////////////
 //list only active pool linked the current account , called by --my
 function RequestOnlyMy(myAccount){
     myContract.methods.getRequestPool().call().then(function(pool){
@@ -382,7 +382,7 @@ function ProviderOnlyMy(myAccount){
         })
     })
 }
-
+///////////////////////////////////////////////////////////////////////////////////////////
 //call by --view [--debug]
 //list out  Active Count, Total Count, Active Pool, List out Pool item
 function PoolRequests (){
@@ -463,7 +463,7 @@ function PoolProviders (){
         })
     })
 }
-
+///////////////////////////////////////////////////////////////////////////////////////////
 //called after submit a new request
 //list out Total count, Active pool, last item
 function LatestRequest(){
@@ -577,7 +577,7 @@ function AllProviders(){
         })               
     })
 }
-
+///////////////////////////////////////////////////////////////////////////////////////////
 function DisplayRequest(reqID){
     myContract.methods.getRequest(reqID).call().then(function(result){
         console.log(result);

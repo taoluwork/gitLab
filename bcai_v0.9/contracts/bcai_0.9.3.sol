@@ -512,6 +512,12 @@ contract TaskContract {
     function getRequestPool() public view returns (uint256[] memory){
         return pendingPool;
     }
+    function getProvidingPool() public view returns (uint256[] memory){
+        return providingPool;
+    }
+    function getValidatingPool() public view returns (uint256[] memory){
+        return validatingPool;
+    }
     function getProviderPoolSize() public view returns (uint256){
         return providerPool.length;
     }
