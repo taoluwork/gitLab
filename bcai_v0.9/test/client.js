@@ -115,20 +115,20 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
     console.log("Client Mode: ", mode);
     return accounts;
 })
-.then(function(accounts){                 //success: accounts got
+.then(function(accounts){           //success: accounts got
     if (argv['all']){               //display all info
         console.log(accounts);
-        if      (mode == 'user')    listAllRequests();
-        else if(mode == 'worker')   listAllProviders();
+        if      (mode == 'user')    AllRequests();
+        else if(mode == 'worker')   AllProviders();
     }
     else if (argv['my']){           //display my info
-        if(mode == 'user')  listRequestOnlyMy(myAccount);
-        else if(mode == 'worker') listProviderOnlyMy(myAccount);
+        if(mode == 'user')  RequestOnlyMy(myAccount);
+        else if(mode == 'worker') ProviderOnlyMy(myAccount);
     }
     else if (argv['view']){
         console.log(accounts);      //only view, no change
-        if (mode == 'user') listPoolRequests();
-        if (mode == 'worker') listPoolProviders();
+        if (mode == 'user') PoolRequests();
+        if (mode == 'worker') PoolProviders();
     }
     else {                          //real state change
         if (mode == 'user') userFireMessage();
@@ -165,8 +165,10 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
                 showLatestRequest();
         } else if (mode == 'worker'){
             //if new added or updated
-            showLatestProvider();
-            listProviderOnlyMy(myAccount);
+            
+            if(eve.returnValues[2] == web3.utils.asciiToHex('Provider Stopped'))
+                ProviderOnlyMy(myAccount);
+            else LatestProvider();
         }
     })
 })
@@ -376,7 +378,7 @@ function workerFireMessage(){
 }
 
 //list only active pool linked the current account , called by --my
-function listRequestOnlyMy(myAccount){
+function RequestOnlyMy(myAccount){
     myContract.methods.getRequestID(myAccount).call().then(function(IDList){
         console.log("-----------------------------------------------------------------");
         console.log("All my posted Request: ")
@@ -401,7 +403,7 @@ function listRequestOnlyMy(myAccount){
         console.log("Error listing my own!")
     })
 }
-function listProviderOnlyMy(myAccount){
+function ProviderOnlyMy(myAccount){
     myContract.methods.getProviderID(myAccount).call().then(function(IDList){
         console.log("-----------------------------------------------------------------");
         console.log("All my posted provider: ")
@@ -429,7 +431,7 @@ function listProviderOnlyMy(myAccount){
 
 //call by --view [--debug]
 //list out  Active Count, Total Count, Active Pool, List out Pool item
-function listPoolRequests (){
+function PoolRequests (){
     myContract.methods.getRequestPoolSize().call().then(function(actCount){
         console.log("-----------------------------------------------------");
         console.log("Total active Request = ", actCount);
@@ -468,7 +470,7 @@ function listPoolRequests (){
         })
     })
 }
-function listPoolProviders (){
+function PoolProviders (){
     myContract.methods.getProviderPoolSize().call().then(function(actCount){
         console.log("-----------------------------------------------------");
         console.log("Total active provider = ", actCount);
@@ -510,7 +512,7 @@ function listPoolProviders (){
 
 //called after submit a new request
 //list out Total count, Active pool, last item
-function showLatestRequest(){
+function LatestRequest(){
     myContract.methods.getRequestCount().call().then(function(totalCount){
         console.log("-----------------------------------------------------------------");
         console.log("Total Request count = ",totalCount);
@@ -538,7 +540,7 @@ function showLatestRequest(){
         })
     })
 }
-function showLatestProvider(){
+function LatestProvider(){
     myContract.methods.getProviderCount().call().then(function(totalCount){
         console.log("-----------------------------------------------------------------");
         console.log("Total provider count = ",totalCount);
@@ -567,7 +569,7 @@ function showLatestProvider(){
     })
 }
 //the most heavy duty, --all
-function listAllRequests(){
+function AllRequests(){
     myContract.methods.getRequestCount().call().then(function(totalCount){
         console.log("-----------------------------------------------------");
         console.log("Total Request since start = ", totalCount);
@@ -594,7 +596,7 @@ function listAllRequests(){
         })               
     })
 }
-function listAllProviders(){
+function AllProviders(){
     myContract.methods.getProviderCount().call().then(function(totalCount){
         console.log("-----------------------------------------------------");
         console.log("Total provider since start = ", totalCount);
