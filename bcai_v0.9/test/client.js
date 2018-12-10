@@ -224,7 +224,7 @@ function userFireMessage(){
             //     console.log(ret.events.SystemInfo.returnValues)
             }
         }).then(function(){
-            listRequestOnlyMy(myAccount);
+            RequestOnlyMy(myAccount);
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
             console.log("Cancel Request failed! Check your reqID by --my");
             console.log(err);
