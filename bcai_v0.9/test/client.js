@@ -283,7 +283,7 @@ function workerFireMessage(){
 function RequestOnlyMy(myAccount){
     myContract.methods.getRequestPool().call().then(function(pool){
         console.log("Active Request count = ",pool.length);
-        console.log("Request Pool: ");
+        console.log("Active Request Pool: ");
         console.log(pool);
         return pool; 
     })
@@ -292,21 +292,18 @@ function RequestOnlyMy(myAccount){
         console.log("-----------------------------------------------------------------");
         console.log("All my posted Request: ")
         console.log(IDList);
-        console.log("Among them still active:")
+        console.log("Still active:")
         //pick each one in active pool, see whether fired by me.
-        console.log("I got both list")
-            console.log(IDList, pool)
-            var common = [];
-            for(var i = 0; i<pool.length;i++){
-                for(var j = 0; j<IDList.length;i++){
-                    if(IDList[i] == pool[j]) common.push(pool[j])
-                }
+        var common = [];
+        for(var i = 0; i<pool.length;i++){
+            for(var j = 0; j<IDList.length;i++){
+                if(IDList[i] == pool[j]) common.push(pool[j])
             }
-            console.log("common", common);
-           
+        }
+        console.log(common); 
+        return IDList;         
         })
-        .then(function(IDList, pool){
-            
+        .then(function(IDList){   
             if(argv['debug']){
                 myContract.methods.listRequests(IDList).call().then(function(objList){                   
                     console.log("-----------------------------------------------------------------");
@@ -329,13 +326,22 @@ function RequestOnlyMy(myAccount){
 function ProviderOnlyMy(myAccount){
     myContract.methods.getProviderPool().call().then(function(pool){
         console.log("Active Provider count = ",pool.length);
-        console.log("Provider Pool: ");
+        console.log("Active Provider Pool: ");
         console.log(pool);  
     }).then(function(){
         myContract.methods.getProviderID(myAccount).call().then(function(IDList){
             console.log("-----------------------------------------------------------------");
             console.log("All my posted provider: ")
             console.log(IDList);
+            console.log("Still active:")
+            //pick each one in active pool, see whether fired by me.
+            var common = [];
+            for(var i = 0; i<pool.length;i++){
+                for(var j = 0; j<IDList.length;i++){
+                    if(IDList[i] == pool[j]) common.push(pool[j])
+                }
+            }
+            console.log(common); 
             return IDList;           
         })
         .then(function(IDList){
