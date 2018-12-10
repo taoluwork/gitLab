@@ -193,9 +193,7 @@ function userFireMessage(){
             console.log("Request Submitted! Block: ",ret.blockNumber);
             console.log("-----------------------------------------------------------------")
             if(argv['recpt'])  console.log("Receipt:    <=====######", ret);
-            console.log(ret.events['SystemInfo'])
-            if(ret.events['SystemInfo'] == undefined) throw 'Submit request failed!'
-                    
+            if(ret.events['SystemInfo'] == undefined) throw 'Submit request failed!'                  
         }).catch(function(err){
             console.log("Check receipt by --recpt");
             process.exit();
@@ -209,8 +207,7 @@ function userFireMessage(){
             console.log("Cancel Request: Block = ", ret.blockNumber);
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
-            if(ret.events[0] == undefined) throw 'Cancel Request failed! '
-            
+            if(ret.events['SystemInfo'] == undefined) throw 'Cancel Request failed! ' 
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
             console.log(err);    
             console.log("Check your reqID by --my");
@@ -225,8 +222,8 @@ function userFireMessage(){
             console.log("Update request: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
             console.log("-----------------------------------------------------------------");
-            if(ret.events[0] == undefined) throw 'Update Request failed!'
             if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
+            if(ret.events['SystemInfo'] == undefined) throw 'Update Request failed!'
         }).catch(function(err){         //this poped when edit other's config / fired using wrong account
             console.log(err);
             console.log("Check your reqID by --my");
@@ -242,8 +239,8 @@ function workerFireMessage(){
             console.log("Start providing: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
             console.log("-----------------------------------------------------------------")
-            if (ret.events[0] == undefined) throw 'Start provider failed!'
             if(argv['recpt']) console.log("Receipt:    <=====###### ", ret);
+            if(ret.events['SystemInfo'] == undefined) throw 'Start provider failed!'
         }).catch(function(err){
             console.log(err);
             console.log("Check receipt by --recpt");          
@@ -257,8 +254,8 @@ function workerFireMessage(){
         .then(function(ret){
             console.log("Stop providing: Block = ", ret.blockNumber);
             console.log("-----------------------------------------------------------------");
-            if(ret.events[0] == undefined) throw 'Stop provider failed!' 
             if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
+            if(ret.events['SystemInfo'] == undefined) throw 'Stop provider failed!' 
         }).catch(function(err){
             console.log(err);
             console.log("You can only stop your provider. Check your provID by --my");
@@ -272,10 +269,8 @@ function workerFireMessage(){
             console.log("Update providing: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
             console.log("-----------------------------------------------------------------");
-            if(ret.events[0] == undefined) throw 'Update provider failed!'
-            console.log(ret.events);
-            if(argv['recpt']) 
-                console.log("Receipt :    <<====####  ", ret);
+            if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
+            if(ret.events['SystemInfo'] == undefined) throw 'Update provider failed!'
         }).catch(function(err){
             console.log(err);
             console.log("You can only update your provider. Check your provID by --my");
