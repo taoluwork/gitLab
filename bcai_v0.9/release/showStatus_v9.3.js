@@ -31,7 +31,6 @@ var myAccounts;
 function init() {
 	Web3 = require('web3');
 	web3 = new Web3('ws://localhost:8545');
-
 	MyContract = require('../build/contracts/TaskContract.json');
 	myContract = new web3.eth.Contract(MyContract.abi, MyContract.networks[512].address);
 }

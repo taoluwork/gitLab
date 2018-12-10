@@ -1,6 +1,9 @@
-//version 0.9.4
+//BCAI main solidity contract
 //Author: Taurus, Landry
 //Copyright: tlu4@lsu.edu
+
+//version 0.9.5
+//support validation;
 
 //NOTE: functions sending TX cannot retrieve returnValues, only possible way is event
 // Instead function calls can return value directly.
@@ -12,6 +15,8 @@ contract TaskContract {
     //config
     bool autoAssign = true;            //whether auto assign the task
     bool autoValidate = false;         //whether auto pair validation
+    bool autoFinalization = false;
+    //uint8 validates = 8;
     
     
     //list
@@ -23,14 +28,16 @@ contract TaskContract {
     mapping (address => uint256[])  public requestMap;
  
     mapping (uint256 => uint256) public balanceList;    //reqID => balance
+    
     //ID - counter
     uint256 private providerCount;     //+1 each time
     uint256 private requestCount;
-    //Pool
+    //Pool: providers can be removed from the pool but requests must be in one of the pool
     uint256[] providerPool;     //providers
     uint256[] pendingPool;      //requests
     uint256[] providingPool;    //requests
     uint256[] validatingPool;   //requests
+    uint256[] donePool;         //requests  //NOTE: [Important] this array could increase unlimitedly -- only for testing
 
     
     
@@ -57,7 +64,9 @@ contract TaskContract {
         uint64  dataID;                 //dataID used to fetch the off-chain data
         uint64  resultID;               //dataID to fetch the result
         uint64  numValidations;         //user defined the validation
-        bool[]  validations;            //multisignature from validations
+        //mapping (uint256 => bool) validationList;
+        bool[] signatures;
+        uint256 [] validators; //multisignature from validations
         bool    isValid;                //the final flag
         byte    status;                 //0: 'pending', 1:'providing', 2: validating, 3: complete, 7: deleted
     }
@@ -92,6 +101,7 @@ contract TaskContract {
     event SystemInfo        (uint256 ID, address payable addr , bytes info);  //NOTE: bytes32 saves up to 32 charactors ONLY
     event PairingInfo        (uint256 reqID, address payable reqAddr,
                             uint256 provID, address payable provAddr, bytes info);
+    event UpdateInfo        (uint256 reqID, bytes info);
     /////////////////////////////////////////////////////////////////////////////////////
     // Function called to become a provider. New on List, Map and Pool. 
     // NOTE: cannot use to update. You must stop a previous one and start a new one.
@@ -214,7 +224,7 @@ contract TaskContract {
         }
     }
 
-    
+    /////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Search in the pendingPool, find a job for current provider. Triggered by startProviding
     // Input: uint256 provider ID
@@ -322,7 +332,7 @@ contract TaskContract {
             //release provider (not necessarily depend on provider)
             //providerList[providerID[msg.sender]].available = true;
             //emit assignRequest(reqID, msg.sender);
-            emit SystemInfo(reqID, msg.sender, 'Request Computation Completed');
+            emit UpdateInfo(reqID, 'Request Computation Completed');
             //start validation process
             if(autoValidate){
                 return validateRequest(reqID);
@@ -368,49 +378,73 @@ contract TaskContract {
         }   
         //exit loop without enough validators
         //emit NotEnoughValidation(reqID);    
-        emit SystemInfo(reqID, requestList[reqID].addr, 'Request got insufficient validation');
+        emit UpdateInfo(reqID, 'Request got insufficient validation');
     }
+    //////////////////////////////////////////////////////////////
+    // some cases here:
+    //  1. req is actually false
+    //      a. claim true   : cheating
+    //      b. claim false  : honest
+    //  2. req is actually true
+    //      a. claim true   : honest
+    //      b. claim false  : not likely
+    //////////////////////////////////////////////////////////////
 
-
-/*
 
     // needs to be more secure by ensuring the submission is coming from someone legit 
-    function submitValidation(uint128 reqID, bool result) public returns (bool) {
+    // similar to completeTask but this will sign the validation list of the target Task
+    //TODO: the money part is ommited for now
+    function submitValidation(uint256 reqID, uint256 provID, bool result) public returns (bool) {
         // Pay the validator 
-        uint partialPayment = requestList[reqID].price / 100; // amount each validator is paid
-        msg.sender.transfer(partialPayment);
-        balanceList[requestList[reqID].addr] -= partialPayment;
-        // Put the result in the request struct
-        requestList[reqID].validations.push(result);
+        // uint partialPayment = requestList[reqID].price / 100; // amount each validator is paid
+        // msg.sender.transfer(partialPayment);
+        // balanceList[requestList[reqID].addr] -= partialPayment;
+        if(
+            //requestList[reqID].addr != providerList[provID]    //validator can be requester
+            providerList[provID].addr != requestList[reqID].provider) //validator cannot be provider
+        {
+            requestList[reqID].validators.push(provID);             //push array
+            requestList[reqID].signatures.push(result);     //edit mapping
+        }
+        //emit ValidationInfo(reqID, provID, 'Validator Signed');
+        //check if valid
+        
+        emit PairingInfo(reqID, requestList[reqID].addr, 
+                    provID, providerList[provID].addr, 'Validator Signed');
+       
         // If enough validations have been submitted
-        if (requestList[reqID].validations.length == requestList[reqID].numValidationsNeeded) {
-            return checkValidation(reqID, requestList[reqID].price - requestList[reqID].numValidationsNeeded * partialPayment);
+        if (requestList[reqID].validators.length == requestList[reqID].numValidations) {
+            //return checkValidation(reqID, requestList[reqID].price - requestList[reqID].numValidationsNeeded * partialPayment);
+            if(autoFinalization) return checkValidation(reqID);
         }
     }
     
-    function checkValidation(uint128 reqID, uint payment) private returns (bool) {
+    function checkValidation(uint256 reqID) private returns (bool) {
         // Add up successful validations
         uint64 successCount = 0;
-        for (uint64 i=0; i<requestList[reqID].validations.length; i++) {
-            if (requestList[reqID].validations[i]) successCount++;
+        for (uint64 i=0; i<requestList[reqID].validators.length; i++) {
+            if (requestList[reqID].signatures[i] == true) successCount++;
         }
         // if 2/3 of validation attempts were successful
-        if (successCount  >= requestList[reqID].numValidationsNeeded * 2 / 3  ) { 
+        // TODO: determine the fraction
+        if (successCount  >= requestList[reqID].numValidations) { 
             // if 2/3 of validations were valid then provider gets remainder of money
-            requestList[reqID].provider.transfer(payment); 
-            balanceList[requestList[reqID].addr] -= payment;
+            //requestList[reqID].provider.transfer(payment); 
+            //balanceList[requestList[reqID].addr] -= payment;
+            //TODO: [important] leave out the payment part for now.
             requestList[reqID].isValid = true; // Task was successfully completed! 
         }
         // otherwise, work was invalid, the providers payment goes back to requester
         else {
-            requestList[reqID].addr.transfer(payment);
-            balanceList[requestList[reqID].addr] -= payment;
+            //requestList[reqID].addr.transfer(payment);
+            //balanceList[requestList[reqID].addr] -= payment;
         }
         // EVENT: task is done whether successful or not
-        emit TaskCompleted(requestList[reqID].addr, reqID);
+        //emit TaskCompleted(requestList[reqID].addr, reqID);
+        emit UpdateInfo(reqID, 'Validation Complete');
         return requestList[reqID].isValid;
     }
-*/
+
 //////////////////////////////////////////////////////////////////////
 /*  function startRequest(uint64 dataID, uint16 target, uint64 time) payable public returns (bool) {
     //a legacy version of startRequest, using a local memory copy and write back
@@ -444,24 +478,9 @@ contract TaskContract {
 */
 
 /////////////////////////////////////////////////////////////////////
- // Used to dynamically remove elements from array of open provider spaces. 
+    // Used to dynamically remove elements from array of open provider spaces. 
     // Using a swap and delete method, search for the desired addr throughout the whole array
     // delete the desired and swap the whole with last element
-    /*function AddrArrayPop(address payable [] storage addrArray, uint256 target) private returns(bool) {
-        for(uint64 i = 0; i < addrArray.length; i++){
-            if (addrArray[i] == target) {
-                //swap last element with hole
-                addrArray[i] = addrArray[addrArray.length-1];
-                //delete last item
-                delete addrArray[addrArray.length-1];
-                 //decrease size
-                addrArray.length--;
-                return true;
-            }
-        }
-        return false; //fail to search: no matching in pool
-    }*/
-
     function ArrayPop(uint256[] storage array, uint256 target) private returns (bool) {
         for(uint64 i = 0; i < array.length; i++){
             if (array[i] == target) {
