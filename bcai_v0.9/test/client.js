@@ -381,53 +381,66 @@ function workerFireMessage(){
 
 //list only active pool linked the current account , called by --my
 function RequestOnlyMy(myAccount){
-    myContract.methods.getRequestID(myAccount).call().then(function(IDList){
+    myContract.methods.getRequestPool().call().then(function(pool){
+        console.log("Active Request count = ",pool.length);
+        console.log("Request Pool: ");
+        console.log(pool); 
+    })
+    .then(function(){
+        myContract.methods.getRequestID(myAccount).call().then(function(IDList){
         console.log("-----------------------------------------------------------------");
         console.log("All my posted Request: ")
         console.log(IDList);
         return IDList;           
-    })
-    .then(function(IDList){
-        if(argv['debug']){
-            myContract.methods.listRequests(IDList).call().then(function(objList){                   
-                console.log("-----------------------------------------------------------------");
-                console.log("Debug details: ");
-                for(var i = 0; i < IDList.length; i++){
-                    console.log(objList[i]);
-                }                                  
-            }).then(function(){
-                    process.exit()
-            })  
-        }
-        else process.exit();
-    }, function(err){
-        console.log(err);
-        console.log("Error listing my own!")
+        })
+        .then(function(IDList){
+            if(argv['debug']){
+                myContract.methods.listRequests(IDList).call().then(function(objList){                   
+                    console.log("-----------------------------------------------------------------");
+                    console.log("Debug details: ");
+                    for(var i = 0; i < IDList.length; i++){
+                        console.log(objList[i]);
+                    }                                  
+                }).then(function(){
+                        process.exit()
+                })  
+            }
+            else process.exit();
+        }, function(err){
+            console.log(err);
+            console.log("Error listing my own!")
+        })
     })
 }
 function ProviderOnlyMy(myAccount){
-    myContract.methods.getProviderID(myAccount).call().then(function(IDList){
-        console.log("-----------------------------------------------------------------");
-        console.log("All my posted provider: ")
-        console.log(IDList);
-        return IDList;           
-    })
-    .then(function(IDList){
-        if(argv['debug']){
-            myContract.methods.listProviders(IDList).call().then(function(objList){                   
-                console.log("-----------------------------------------------------------------");
-                console.log("Debug details: ");
-                for(var i = 0; i < IDList.length; i++){
-                    console.log(objList[i]);
-                }                                  
-            }).then(function(){
-                 process.exit()
-            })  
-        }
-        else process.exit();
-    }, function(err){
-        console.log(err);
-        console.log("Error listing my own!")
+    myContract.methods.getProviderPool().call().then(function(pool){
+        console.log("Active Provider count = ",pool.length);
+        console.log("Provider Pool: ");
+        console.log(pool);  
+    }).then(function(){
+        myContract.methods.getProviderID(myAccount).call().then(function(IDList){
+            console.log("-----------------------------------------------------------------");
+            console.log("All my posted provider: ")
+            console.log(IDList);
+            return IDList;           
+        })
+        .then(function(IDList){
+            if(argv['debug']){
+                myContract.methods.listProviders(IDList).call().then(function(objList){                   
+                    console.log("-----------------------------------------------------------------");
+                    console.log("Debug details: ");
+                    for(var i = 0; i < IDList.length; i++){
+                        console.log(objList[i]);
+                    }                                  
+                }).then(function(){
+                    process.exit()
+                })  
+            }
+            else process.exit();
+        }, function(err){
+            console.log(err);
+            console.log("Error listing my own!")
+        })
     })
 }
 
