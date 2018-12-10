@@ -224,7 +224,7 @@ function userFireMessage(){
                 console.log("Event: ", ret.events.SystemInfo.event)
             //     console.log(ret.events.SystemInfo.returnValues)
             }
-        }).then(function(){
+        //}).then(function(){
             //RequestOnlyMy(myAccount);
         }).catch(function(err){         //this poped when trying edit other's config / fired using wrong account
             console.log("Cancel Request failed! Check your reqID by --my");
@@ -247,7 +247,7 @@ function userFireMessage(){
                 console.log("Event: ", ret.events.SystemInfo.event)
             //     console.log(ret.events.SystemInfo.returnValues)
             }
-        }).then(function(){
+        //}).then(function(){
             //showLatestRequest();
         }).catch(function(err){         //this poped when edit other's config / fired using wrong account
             console.log("Update Request failed! Check your reqID by --my");
@@ -291,7 +291,7 @@ function workerFireMessage(){
             //     console.log("Event: ", ret.events.SystemInfo.event)
             //     console.log(ret.events.SystemInfo.returnValues)
             // }          
-        }).then(function(){
+        //}).then(function(){
             //showLatestProvider();
         }).catch(function(err){
             console.log("Start provider failed! Check receipt by --recpt");
@@ -313,7 +313,7 @@ function workerFireMessage(){
                 //     console.log("Receipt:    <=====######")
                 //     console.log(ret.events.SystemInfo.returnValues)
             }
-        }).then(function(){
+        //}).then(function(){
             //listProviderOnlyMy(myAccount);
         }).catch(function(err){
             console.log("Stop provider failed! Check your provID by --my");
@@ -335,7 +335,7 @@ function workerFireMessage(){
             //     console.log("Receipt:    <=====######")    
             //     console.log(ret.events.SystemInfo.returnValues)
             }
-        }).then(function(){
+        //}).then(function(){
             //showLatestProvider();
         }).catch(function(err){
             console.log("Update provider failed! Check your provID by --my");
