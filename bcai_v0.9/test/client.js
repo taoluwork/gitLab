@@ -151,7 +151,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
             console.log("=================================================================")
         } else {
             console.log("=================================================================")
-            console.log("Info: ", web3.utils.hexToAscii(eve.returnValues[2]), " ==> ", eve.blockNumber)
+            console.log("Event: ", web3.utils.hexToAscii(eve.returnValues[2]), " ==> ", eve.blockNumber)
             console.log(eve.returnValues);           
             console.log("=================================================================")
         }
@@ -160,14 +160,18 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         if(mode == 'user'){      
             if(eve.returnValues[2] == web3.utils.asciiToHex('Request Stopped'))
                 RequestOnlyMy(myAccount);
-            else 
+            else (eve.returnValues[2] == web3.utils.asciiToHex('Request Stopped'))
                 LatestRequest();
         } 
         else if (mode == 'worker'){
             if(eve.returnValues[2] == web3.utils.asciiToHex('Provider Stopped'))
                 ProviderOnlyMy(myAccount);
-            else 
+            else if (eve.returnValues[2] == web3.utils.asciiToHex('Provider Added') || 
+            eve.returnValues[2] == web3.utils.asciiToHex('Provider Updated'))
                 LatestProvider();
+            else if (eve.returnValues[2] == web3.utils.asciiToHex('Request Computation Completed'))
+                DisplayRequest(eve.returnValues[0]);
+                console.log("Display: Request Completed!")
         }
     })
 })
@@ -571,6 +575,12 @@ function AllProviders(){
             console.log(err);
             process.exit();
         })               
+    })
+}
+
+function DisplayRequest(reqID){
+    myContract.methods.getRequest(reqID).call().then(function(result){
+        console.log(result);
     })
 }
 ///////////////////////////////////////////////////////////////////////////////
