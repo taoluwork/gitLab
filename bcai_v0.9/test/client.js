@@ -135,8 +135,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         else if (mode =='worker') workerFireMessage();
     }
 })
-.then(function(){
-    //subcribe and monitor the events
+.then(function(){                   //subcribe and monitor the events  
     myContract.events.SystemInfo({
         fromBlock: 'latest',
         //toBlock: 'latest'
@@ -157,15 +156,12 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
 
         //update the display
         if(mode == 'user'){      
-            //if stoped
             if(eve.returnValues[2] == web3.utils.asciiToHex('Request Stopped'))
                 RequestOnlyMy(myAccount);
             else 
-                //if new added or updated
                 LatestRequest();
-        } else if (mode == 'worker'){
-            //if new added or updated
-            
+        } 
+        else if (mode == 'worker'){
             if(eve.returnValues[2] == web3.utils.asciiToHex('Provider Stopped'))
                 ProviderOnlyMy(myAccount);
             else 
@@ -173,7 +169,7 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         }
     })
 })
-.catch(function(err){           //failure: no accounts
+.catch(function(err){               //failure: no accounts
     console.log(err);
     console.log("Getting accounts failed!");
     console.log("Check your depolyment! ");
