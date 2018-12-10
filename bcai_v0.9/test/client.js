@@ -270,6 +270,7 @@ function workerFireMessage(){
             console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
             console.log("-----------------------------------------------------------------");
             if(ret.events == undefined) throw 'Update provider failed!'
+            console.log(ret.events);
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
         }).catch(function(err){
