@@ -269,7 +269,7 @@ function workerFireMessage(){
             console.log("Update providing: Block = ", ret.blockNumber);
             console.log("Using parameters: time = ",maxTime,", target = ",maxTarget,", price = ",minPrice);
             console.log("-----------------------------------------------------------------");
-            if(ret.events == {}) throw 'Update provider failed!'
+            if(ret.events[0] == undefined) throw 'Update provider failed!'
             console.log(ret.events);
             if(argv['recpt']) 
                 console.log("Receipt :    <<====####  ", ret);
