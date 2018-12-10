@@ -295,8 +295,6 @@ function RequestOnlyMy(myAccount){
         console.log("Still active:")
         //pick each one in active pool, see whether fired by me.
         var common = [];
-        common.push(IDList[0]);
-        common.push(pool[0])
         for(var i = 0; i<pool.length;i++){
             for(var j = 0; j<IDList.length;j++){
                 if(pool[i] == IDList[j]) common.push(pool[i])
@@ -339,13 +337,9 @@ function ProviderOnlyMy(myAccount){
             console.log("Still active:")
             //pick each one in active pool, see whether fired by me.
             var common = [];
-            common.push(IDList[0]);
-            common.push(pool[0])
             for(var i = 0; i<pool.length;i++){
-                common.push(pool[i])
                 for(var j = 0; j<IDList.length;j++){
-                    if(IDList[i] == pool[j]) common.push(pool[j])
-                    common.push(i)
+                    if(pool[i] == IDList[j]) common.push(pool[i]);
                 }
             }
             console.log(common); 
