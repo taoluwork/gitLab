@@ -338,6 +338,7 @@ function ProviderOnlyMy(myAccount){
             //pick each one in active pool, see whether fired by me.
             var common = [];
             common.push(IDList[0]);
+            common.push(pool[0])
             for(var i = 0; i<pool.length;i++){
                 common.push(pool[i])
                 for(var j = 0; j<IDList.length;j++){
