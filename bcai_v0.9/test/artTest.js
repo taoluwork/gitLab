@@ -17,11 +17,23 @@ contract("BCAI", function(accounts) {
         return BCAI.deployed().then(function(instance) {
             myContract = instance;
             return myContract.startProviding(100,100,100,   //time target price
-                {from: accounts[2]}).then(function(ret){
-                console.log("info:", ret.receipt.logs[0].event);
-            });
+                {from: accounts[2]})
+                .then(function(ret){
+                    console.log("info:", ret.receipt.logs[0].event);
+                }).then(function(){
+                    myContract.events.TaskAssigned({
+                        fromBlock: 0,
+                        toBlock: 'latest'
+                    }, function(error, result){
+                        if (error) {
+                            console.log(error);
+                        }
+                        console.log("TaskAssigned!", result.returnValue);
+                    });
+                });
         })
     })
+    
     it("Test StartRequest", function(){
 
     
