@@ -47,13 +47,13 @@ return web3.eth.getAccounts().then(function(accounts){
     return myContract.methods.startProviding(9000, 20, 800000) //time, target , money
 	.send({
 		from: testAccounts[1],
-		gas: 12000000
+		gas: 3000000
 	})
     .then(function(ret){
         console.log("------------------------------------------------------------")
         console.log("Send transaction from [0]: startProviding")
         console.log(ret);
-        showPools();
+        return showPools();
     }).catch(console.log)
 })
 //updateProviding
@@ -64,7 +64,7 @@ return web3.eth.getAccounts().then(function(accounts){
     return myContract.methods.startRequest(12151231, 30 , 8000) //dataID target time
     .send({
         from:testAccounts[8],
-        gas:12000000,
+        gas:300000,
         value: 12000 //money
     })
     .then(function(ret){
@@ -72,7 +72,7 @@ return web3.eth.getAccounts().then(function(accounts){
         console.log("Send transaction from [9]: startRequest")
         console.log(ret);
         console.log("This should be an auto assignment")
-        showPools();
+        return showPools();
     }).catch(console.log)
 }).catch(function(err){
 	console.log(err);
