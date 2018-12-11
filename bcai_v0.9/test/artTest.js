@@ -1,96 +1,418 @@
+//////////////////////////////////////////////////////////////////////////
+// Unit test in truffle environment                                     //
+// version 0.9.4                                                        //  
+// Align with sol 0.9.4, independent with client version                //
+// Author: Taurus tlu4@lsu.edu                                          //  
+//////////////////////////////////////////////////////////////////////////
+
+
 //need a truffle environment to run this
 //use: truffle test uintTest.js
 var BCAI = artifacts.require("TaskContract");
+//npm install -g truffle-assertions
+const truffleAssert = require('truffle-assertions');
+//npm install -g bignumber.js
+var BigNumber = require('bignumber.js') //not used use web3.utils.BN [important]
+//handle the BN is essential
+var BN = web3.utils.toBN;
+var pendingPool = [];
+var providingPool = [];
+var validationPool = [];
+
+
 
 contract("BCAI", function(accounts) {
-    
+
     it("Contract Deploymnet", function(){
-        //console.log(accounts);
+        console.log(accounts);
         if(accounts != undefined) return true;
         else return false;
     })
-
-    it("Test StartProviding", function() {
-        var myContract;
-        var eventData;
-
-        return BCAI.deployed().then(function(instance) {
-            myContract = instance;
-            return myContract.startProviding(100,100,100,   //time target price
-                {from: accounts[2]})
-                .then(function(ret){
-                    console.log("info:", ret.receipt.logs[0].event);
-                }).then(function(){
-                    myContract.SystemInfo({
-                        fromBlock: 0,
-                        toBlock: 'latest'
-                    }).watch( function(error, result){
-                        if (error) {
-                            console.log(error);
-                        }
-                        console.log("TaskAssigned!", result.returnValue);
-                    });
-                });
+    ///////////////////////////////////////////////////////////////////////////////
+    it("Test Providing", function(){
+        return BCAI.deployed().then(function(myContract) {
+            return myContract.startProviding(100,100,100,{from: accounts[0]})  //time target price  
+            .then(function(ret){
+                //check the event using receipt
+                //truffleAssert.prettyPrintEmittedEvents(ret);
+                truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
+                     return ev.ID == 0 && ev.info == web3.utils.asciiToHex('Provider Added');
+                 },'Provider event mismatch');
+                //console.log(ret.receipt.logs[0].event);
+                //console.log(web3.utils.toAscii(ret.receipt.logs[0].args[2]));
+                //console.log("ID = ", ret.receipt.logs[0].args[0]);
+                //check pool update
+                return checkingPool(myContract,
+                    [BN(0)],
+                    [],
+                    [],
+                    [])
+                //check List update
+                //...
+            });
         })
     })
 
-    // it("Test StartRequest", function(){
+    /////////////////////////////////////////////////////////////////////////////////
+    // send a request which will not be matched, thus appear in pool
+    // test stop and update on this and send a new for next stage test.
+    ////////////////////////////////////////////////////////////////////////////
+    it("Test Request", function(){
+        return BCAI.deployed().then(function(myContract) {
+            //first send a no matching request, value == 0
+            return myContract.startRequest(1215125,200,100,{from: accounts[9]})  //ID target time  
+            .then(function(ret){
+                //check the event using receipt
+                //truffleAssert.prettyPrintEmittedEvents(ret);
+                truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
+                    return ev.ID == 0 && ev.info == web3.utils.asciiToHex('Request Added');
+                },'Request event mismatch');
+                //console.log(ret.receipt.logs[0].event);
+                //console.log(web3.utils.toAscii(ret.receipt.logs[0].args[2]));
+                //console.log("ID = ", ret.receipt.logs[0].args[0]);
+                //check pool update
+                return checkingPool(myContract,
+                    [BN(0)],
+                    [BN(0)],
+                    [],
+                    [])
+                
+                //check List update
+                //...
 
-    
-    //         myContract.events.TaskAssigned({
-    //             fromBlock: 0,
-    //             toBlock: 'latest'
-    //         }, function(error, result){
-    //             if (error) {
-    //                 console.log(error);
-    //             }
-    //             console.log("TaskAssigned!", result.returnValue);
-    //         });
-        
-    //     // }).then(function() {
-    //     //     //Begins after startProviding tx has been mined
-    //     //     return bcaiContract.getProvider.call(0,{from: accounts[1]});
-    //     // }).then(function(result) {
-    //     //     assert.equal(result, accounts[2], "provider start fail!");
-    //     // })
-        
-    // })
+                //there should be no match
+            })
 
-    
+        })
+        
+        // }).then(function() {
+        //     //Begins after startProviding tx has been mined
+        //     return bcaiContract.getProvider.call(0,{from: accounts[1]});
+        // }).then(function(result) {
+        //     assert.equal(result, accounts[2], "provider start fail!");
+        // })  
+    })
+    ////////////////////////////////////////////////////////////////////////////////
+    //send a new request which should be matched automaticly
+    //
+    ////////////////////////////////////////////////////////////////////////////////
+    it("Test Task Assignment", function(){
+        return BCAI.deployed().then(function(myContract) {
+            //send a matching request
+            return myContract.startRequest(1215125,20,90,{from: accounts[9], value: 12000})  //ID target time  
+            .then(function(ret){
+                truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
+                    //console.log(ev[0])
+                    return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Request Added');
+                },'Request 1 submit fail');
+                
+                truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
+                    //console.log(ev[0])
+                    return ev.reqID == 1 && ev.provID == 0;
+                },"Pairing req1 => prov0 fail!");
+
+                //checking pool
+                return checkingPool(myContract,
+                    [],
+                    [BN(0)],
+                    [BN(1)],
+                    [])
+                .catch(console.log)
+
+                //checking List
+                //...
+            })
+        })
+    })
+
+    ////////////////////////////////////////////////////////////////////////////////
+    //send a new request which should be matched automaticly
+    //
+    ////////////////////////////////////////////////////////////////////////////////
+    it("Test Complete Computation", function(){
+        return BCAI.deployed().then(function(myContract) {
+            //submit a complete computation result
+            return myContract.completeRequest(1,12516136,{from: accounts[0]})  //reqID resultID  
+            .then(function(ret){
+                truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                    //console.log(ev[0])
+                    return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Request Computation Completed');
+                },'Submit computation result fail');
+                // no autoValidation for now
+
+                // truffleAssert.eventEmitted(ret,'PairingInfo', (ev)=>{
+                //     //console.log(ev[0])
+                //     return ev.reqID == 1 && ev.provID == 0;
+                // },"Pairing req1 => prov0 fail!");
+
+                //checking pool
+                //var x = new BigNumber("0");
+                return checkingPool(myContract,
+                    [],
+                    [BN(0)],
+                    [],
+                    [BN(1)])
+                .catch(console.log);
+                
+                //checking List
+                //...
+            })
+        })
+    })
+    ////////////////////////////////////////////////////////////////////////////////
+    //send a computation complete
+    //1. not enough provider  -> add provider
+    //2. not enough validator -> fail
+    //3. enough true sig    -> success
+    ////////////////////////////////////////////////////////////////////////////////
+    it("Test Validation Assignment", function(){
+        return BCAI.deployed().then(function(myContract) {
+            //submit a complete computation result
+            //1. not enough provider  -> add provider
+            return myContract.validateRequest(1,{from: accounts[0]})  //reqID resultID  
+            .then(function(ret){
+                truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                    //console.log(ev)
+                    return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Not enough validators');
+                },'Submit validation fail');
+                // no autoValidation for now
+
+                // truffleAssert.eventEmitted(ret,'PairingInfo', (ev)=>{
+                //     //console.log(ev[0])
+                //     return ev.reqID == 1 && ev.provID == 0;
+                // },"Pairing req1 => prov0 fail!");
+
+                //checking pool
+                return checkingPool(myContract,
+                    [],
+                    [BN(0)],
+                    [],
+                    [BN(1)])
+                .catch(console.log)
+                //checking List
+                //...
+            })
+            // add a new provider #1
+            .then(function(){
+                return myContract.startProviding(100,100,1000,{from: accounts[1]})  //time target price  
+                .then(function(ret){
+                    truffleAssert.eventEmitted(ret,'SystemInfo', (ev)=>{
+                        //console.log(ev[0])
+                        return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Provider Added');
+                    },"Add new provider fail");
+                    //checking pool
+                    return checkingPool(myContract,
+                        [BN(1)],
+                        [BN(0)],
+                        [],
+                        [BN(1)])
+                    .catch(console.log)
+                })
+            })
+            // add a new provider #2
+            .then(function(){
+                return myContract.startProviding(100,100,1000,{from: accounts[2]})  //time target price  
+                .then(function(ret){
+                    truffleAssert.eventEmitted(ret,'SystemInfo', (ev)=>{
+                        //console.log(ev[0])
+                        return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Provider Added');
+                    },"Add new provider fail");
+                    //checking pool
+                    return checkingPool(myContract,
+                        [BN(1), BN(2)],
+                        [BN(0)],
+                        [],
+                        [BN(1)])
+                    .catch(console.log)
+                })
+            })
+            // add a new request#2, assigned to prov#1
+            .then(function(){
+                return myContract.startRequest(1215125,20,90,{from: accounts[9], value: 80000})  //ID target time  
+                .then(function(ret){
+                    truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
+                        return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Request Added');
+                    },'Request event mismatch');
+                    truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
+                        return ev.reqID == 2 && ev.provID == 1 &&
+                            ev.info == web3.utils.asciiToHex("Request assigned to Provider");
+                    },"Pairing req#2 => prov#1 fail!");
+
+                    //check pool update
+                    return checkingPool(myContract,
+                        [BN(2)],
+                        [BN(0)],
+                        [BN(2)],
+                        [BN(1)])
+                    
+                    //check List update
+                    //...
+                })
+            })
+            // prov#1 submit computation finished and assgin prov#2 to validate
+            .then(function(){
+                return myContract.completeRequest(2,1225135,{from: accounts[1]})  //reqID resultID  
+                .then(function(ret){
+                    truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                        //console.log(ev)
+                        return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Request Computation Completed');
+                    },'Submit Complete computation req#2 fail');
+                    truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
+                        //console.log(ev)
+                        return ev.reqID == 2 && ev.provID == 2 
+                        && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
+                    },'validator assignment fail');
+                    truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                        //console.log(ev)
+                        return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Enough validators');
+                    },'get enough validator fail');
+                    //checking pool
+                    return checkingPool(myContract,
+                        [],
+                        [BN(0)],
+                        [],
+                        [BN(1),BN(2)])
+                    .catch(console.log)
+                    //checking List
+                    //...
+                })
+            })
+        })
+    })  
+    ////////////////////////////////////////////////////////////////////////////////
+    //validator send back result and sign the List
+    //reqID = 2, provID = 1, validatorID = 2
+    ////////////////////////////////////////////////////////////////////////////////
+    it("Test Submit Validation", function(){
+        return BCAI.deployed().then(function(myContract) {
+            //submit a complete computation result
+            return myContract.submitValidation(2,1,true,{from: accounts[2]})  //reqID resultID  
+            .then(function(ret){
+                truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
+                    //console.log(ev[0])
+                    return ev.reqID == 2 && ev.provID == 1
+                        && ev.info == web3.utils.asciiToHex('Validator Signed');
+                },'Validator submit signature fail');
+                // no autoValidation for now
+
+                // truffleAssert.eventEmitted(ret,'PairingInfo', (ev)=>{
+                //     //console.log(ev[0])
+                //     return ev.reqID == 1 && ev.provID == 0;
+                // },"Pairing req1 => prov0 fail!");
+
+                //checking pool
+                //var x = new BigNumber("0");
+                return checkingPool(myContract,
+                    [],
+                    [BN(0)],
+                    [],
+                    [BN(1),BN(2)])
+                //checking List
+                .then(function(){
+                    return myContract.getRequest.call(2).then(function(ret){
+                        //console.log(ret);
+                        assert(ret.reqID == 2);
+                        assert(ret.validators[0] == 2)
+                        assert(ret.signatures[0] == true);
+                    })
+                })
+            })
+        })
+    })
+    it("Test Check Validation", function(){
+        return BCAI.deployed().then(function(myContract) {
+            //submit a complete computation result
+            return myContract.checkValidation(2,{from: accounts[0]})  //reqID resultID  
+            .then(function(ret){
+                truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                    //console.log(ev[0])
+                    return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Validation Complete');
+                },'Validator final check fail');
+                // no autoValidation for now
+
+                // truffleAssert.eventEmitted(ret,'PairingInfo', (ev)=>{
+                //     //console.log(ev[0])
+                //     return ev.reqID == 1 && ev.provID == 0;
+                // },"Pairing req1 => prov0 fail!");
+
+                //checking pool
+                //req#2 should be popped out from pool
+                return checkingPool(myContract,
+                    [],
+                    [BN(0)],
+                    [],
+                    [BN(1)])
+                //checking List
+                .then(function(){
+                    return myContract.getRequest.call(2).then(function(ret){
+                        //console.log(ret);
+                        assert(ret.isValid == true);
+                    })
+                })
+            })
+        })
+    })
+
+
+    //end of it
 })
-            /*   
-            
-            //Begins after getCount tx has been mined and we have the data
-            var [reqCount, provCount, numProv] = result;
-            
-            // Now we have all the data we need to begin the tests.
-            assert.equal(reqCount, 0, "Requests made should be 0");
-            assert.equal(provCount, 0, "Requests made should be 0");
-            assert.equal(numProv, 1, "Requests made should be 1");
-            bcaiContract.stopProviding();
-        }).then(function() {
-            return bcaiContract.getCount().call();
-        }).then(function(result) {
-            var [reqCount, provCount, numProv] = result;
-            assert.equal(numProv, 0, "Requests made should be 00000");
-        }).then(function() {
-            return bcaiContract.startProviding(1,1,1, {from: accounts[1]});
-        }).then(function() {
-            return bcaiContract.getProv.call(0);
-        }).then(function(result) {
-            var prov = result;
-            console.log(prov);
-            outcome = bcaiContract.requestTask(100,1,1, {from: accounts[2], value: web3.toWei(10, "ether")});
-            return outcome;
-        }).then(function(result) {
-            console.log('here is the result ;alskjdf;alsdkfj ');
-            console.log(result);
-            return bcaiContract.getCount.call();
-        }).then(function(result) {
-            var [reqCount, provCount, numProv] = result;
-            assert.equal(numProv, 1, "there shud b 1 prov");
-            assert.equal(reqCount, 1, "Requests made should be 1");
-        });
-    });
-});
-*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+// useful tool to check pool
+// use:
+// return checkingPool(myContract,
+//          [],             //provider
+//          [BN(0)],        //pending
+//          [],             //providing
+//          [BN(1)])        //validating
+// .catch(console.log)
+//////////////////////////////////////////////////////////////////////////
+function checkingPool(myContract, providers, pendPool, provPool, valiPool){
+    return myContract.getProviderPool.call().then(function(pool){
+        //console.log(pool);
+        //expect(pool).deep.equal(pendPool);
+        assert.deepEqual(pool,providers);
+    })
+    .then(function(){    
+        return myContract.getRequestPool.call().then(function(pool){
+        //console.log(pool);
+        //expect(pool).deep.equal(pendPool);
+        assert.deepEqual(pool,pendPool);
+        })
+    })
+    .then(function(){
+        return myContract.getProvidingPool.call().then(function(pool){
+            //console.log(pool);
+            assert.deepEqual(pool ,provPool);
+        })
+    }).then(function(){
+        return myContract.getValidatingPool.call().then(function(pool){
+            //console.log(pool);
+            assert.deepEqual(pool ,valiPool);
+        })
+    })
+}

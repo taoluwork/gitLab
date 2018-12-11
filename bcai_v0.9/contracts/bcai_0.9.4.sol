@@ -14,7 +14,7 @@ pragma experimental ABIEncoderV2;   //return self-defined type
 contract TaskContract {
     //config
     bool autoAssign = true;            //whether auto assign the task
-    bool autoValidate = false;         //whether auto pair validation
+    bool autoValidate = true;         //whether auto pair validation
     bool autoFinalization = false;
     //uint8 validates = 8;
     
@@ -101,7 +101,7 @@ contract TaskContract {
     event SystemInfo        (uint256 ID, address payable addr , bytes info);  //NOTE: bytes32 saves up to 32 charactors ONLY
     event PairingInfo        (uint256 reqID, address payable reqAddr,
                             uint256 provID, address payable provAddr, bytes info);
-    event UpdateInfo        (uint256 reqID, bytes info);
+    event UpdateInfo        (uint256 ID, bytes info);
     /////////////////////////////////////////////////////////////////////////////////////
     // Function called to become a provider. New on List, Map and Pool. 
     // NOTE: cannot use to update. You must stop a previous one and start a new one.
@@ -346,7 +346,7 @@ contract TaskContract {
     // Called by assignRequest before finalizing stuff. Contract checks with validators
     // Returns false if there wasnt enough free providers to send out the required number of validation requests
     // need validation from 1/10 of nodes -- could change
-    function validateRequest(uint256 reqID) private returns (bool) {
+    function validateRequest(uint256 reqID) public returns (bool) {
         uint64 numValidatorsNeeded = requestList[reqID].numValidations; 
         //uint numValidators = providerCount / 10; 
         uint64 validatorsFound = 0;
@@ -355,22 +355,22 @@ contract TaskContract {
         for (uint64 i = 0; i < providerPool.length; i++) {
             //get provider ID
             uint256 provID = providerPool[i];
-            //validator and computer cannot be same
+            if(providerList[provID].addr != requestList[reqID].provider){   //validator and computer cannot be same
+                //EVENT: informs validator that they were selected and need to validate
+                emit PairingInfo(reqID, requestList[reqID].addr, 
+                        provID, providerList[provID].addr, 'Validation Assigned to Provider');
+                validatorsFound++;
+                //remove the providers availablity and pop from pool
+                providerList[provID].available = false;
+                bool flag = ArrayPop(providerPool, provID);
+                if (!flag) return false;
+            } else continue;
+            //check whether got enough validator
             if(validatorsFound < numValidatorsNeeded){
-                if(providerList[provID].addr != requestList[reqID].provider){
-                    //qualified validator
-                    //EVENT: informs validator that they were selected and need to validate
-                    //emit ValidationAssigned(reqID, provID, providerList[provID].addr);
-                    emit PairingInfo(reqID, requestList[reqID].addr, 
-                            provID, providerList[provID].addr, 'Validation Assigned to Provider');
-                    validatorsFound++;
-                    //remove the providers availablity and pop from pool
-                    providerList[provID].available = false;
-                    bool flag = ArrayPop(providerPool, provID);
-                    if (!flag) return false;
-                }       //else continue
+                continue;
             }
             else{       //enough validator
+                emit UpdateInfo(reqID, 'Enough validators');
                 return true;
                 break;
             }
@@ -378,7 +378,7 @@ contract TaskContract {
         }   
         //exit loop without enough validators
         //emit NotEnoughValidation(reqID);    
-        emit UpdateInfo(reqID, 'Request got insufficient validation');
+        emit UpdateInfo(reqID, 'Not enough validators');
     }
     //////////////////////////////////////////////////////////////
     // some cases here:
@@ -399,11 +399,8 @@ contract TaskContract {
         // uint partialPayment = requestList[reqID].price / 100; // amount each validator is paid
         // msg.sender.transfer(partialPayment);
         // balanceList[requestList[reqID].addr] -= partialPayment;
-        if(
-            //requestList[reqID].addr != providerList[provID]    //validator can be requester
-            providerList[provID].addr != requestList[reqID].provider) //validator cannot be provider
-        {
-            requestList[reqID].validators.push(provID);             //push array
+        if(msg.sender != requestList[reqID].provider) {     //validator cannot be provider
+            requestList[reqID].validators.push(providerMap[msg.sender][0]);     //push array
             requestList[reqID].signatures.push(result);     //edit mapping
         }
         //emit ValidationInfo(reqID, provID, 'Validator Signed');
@@ -419,8 +416,9 @@ contract TaskContract {
         }
     }
     
-    function checkValidation(uint256 reqID) private returns (bool) {
+    function checkValidation(uint256 reqID) public returns (bool) {
         // Add up successful validations
+        bool flag = false;
         uint64 successCount = 0;
         for (uint64 i=0; i<requestList[reqID].validators.length; i++) {
             if (requestList[reqID].signatures[i] == true) successCount++;
@@ -433,6 +431,7 @@ contract TaskContract {
             //balanceList[requestList[reqID].addr] -= payment;
             //TODO: [important] leave out the payment part for now.
             requestList[reqID].isValid = true; // Task was successfully completed! 
+            flag = true;
         }
         // otherwise, work was invalid, the providers payment goes back to requester
         else {
@@ -442,7 +441,10 @@ contract TaskContract {
         // EVENT: task is done whether successful or not
         //emit TaskCompleted(requestList[reqID].addr, reqID);
         emit UpdateInfo(reqID, 'Validation Complete');
-        return requestList[reqID].isValid;
+        //popout from pool
+        flag = flag && ArrayPop(validatingPool, reqID);
+
+        return flag;
     }
 
 //////////////////////////////////////////////////////////////////////
