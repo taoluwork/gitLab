@@ -70,19 +70,41 @@ return web3.eth.getAccounts().then(function(accounts){
     .then(function(ret){
         console.log("------------------------------------------------------------")
         console.log("Send transaction from [9]: startRequest")
-        console.log(ret);
-        console.log("This should be an auto assignment")
-        return showPools();
+		console.log(ret);
+		console.log("------------------------------------------------------------")
+        console.log("This should be an auto assignment, but they cannot match")
+		console.log("------------------------------------------------------------")
+		return showPools();
     }).catch(console.log)
-}).catch(function(err){
-	console.log(err);
 })
+
 
 //updateRequest
 //stopRequest
+//assignRequest
+.then(function(){
+	return myContract.methods.startRequest(12151231, 15 , 8000) //dataID target time
+    .send({
+        from:testAccounts[8],
+        gas:300000,
+        value: 12000 //money
+    })
+    .then(function(ret){
+        console.log("------------------------------------------------------------")
+        console.log("Send transaction from [9]: new Request")
+		console.log(ret);
+		console.log("------------------------------------------------------------")
+        console.log("This should be an auto assignment")
+		console.log("------------------------------------------------------------")
+		return showPools();
+    }).catch(console.log)
+})
+
+
 
 //assignProvider
-//assignRequest
+
+
 
 //completeRequest
 
