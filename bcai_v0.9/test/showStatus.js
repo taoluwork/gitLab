@@ -91,7 +91,7 @@ function showCurrentStatus(myAccounts){
 	//get # of request and print
 	//showRequests();
 	return showStatics().then(function(){
-	 	return showPools();
+	 	//return showPools();
 	})
 }
 function showStatics(){		//called yb showCurrentStatus
