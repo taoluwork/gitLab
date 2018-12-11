@@ -33,15 +33,19 @@ var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
 var TaskContract = require('../build/contracts/TaskContract.json');
 var abi = TaskContract.abi;
 var addr = TaskContract.networks[NetworkID].address;        //align to const ID defination on top
+
 const myContract = new web3.eth.Contract(abi, addr);
+//console.log(myContract);
 web3.eth.getAccounts().then(function(accounts){
-    testAccounts = accounts;
+    console.log(accounts);
+	testAccounts = accounts;
     console.log(accounts);
 })
 //////////////////////////////////////////////////////////////////////////
 //main
 //startProviding
-return myContract.methods.startProviding(
+.then(function(){
+    return myContract.methods.startProviding(
     9000, //time
     20, //target
     800000 //money
