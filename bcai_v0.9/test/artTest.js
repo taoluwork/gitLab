@@ -1,20 +1,31 @@
 //need a truffle environment to run this
-
+//use: truffle test uintTest.js
 var BCAI = artifacts.require("TaskContract");
 
 contract("BCAI", function(accounts) {
-    console.log(accounts);
-    it("should have one provider", function() {
+    
+    it("Contract Deploymnet", function(){
+        console.log(accounts);
+        if(accounts != undefined) return true;
+        else return false;
+    })
+
+    it("Test StartProviding", function() {
         var myContract;
         var eventData;
 
         return BCAI.deployed().then(function(instance) {
             myContract = instance;
-            return myContract.startProviding(100,100,100, {from: accounts[2]}).then(function(ret){
-                console.log(ret);
+            return myContract.startProviding(100,100,100,   //time target price
+                {from: accounts[2]}).then(function(ret){
+                console.log("info:", ret.receipt.event);
             });
+        })
+    })
+    it("Test StartRequest", function(){
 
-            bcaiContract.events.TaskAssigned({
+    
+            myContract.events.TaskAssigned({
                 fromBlock: 0,
                 toBlock: 'latest'
             }, function(error, result){
@@ -30,7 +41,7 @@ contract("BCAI", function(accounts) {
         // }).then(function(result) {
         //     assert.equal(result, accounts[2], "provider start fail!");
         // })
-        })
+        
     })
 
     
