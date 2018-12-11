@@ -53,7 +53,7 @@ return web3.eth.getAccounts().then(function(accounts){
         console.log("------------------------------------------------------------")
         console.log("Send transaction from [0]: startProviding")
         console.log(ret);
-        return showPools();
+       // return showPools();
     })
 })
 //updateProviding
