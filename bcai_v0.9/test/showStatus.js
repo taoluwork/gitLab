@@ -42,7 +42,7 @@ web3.eth.getAccounts()
 	showCurrentStatus(myAccounts);
 	}
 , function(err){				//reject
-	console.log("Error, ",err);
+	console.log("Error: getting accounts, check your testnet",err);
 })	
 .then(function(){
 	//  event moniotring [important]
@@ -102,6 +102,8 @@ function showStatics(){		//called yb showCurrentStatus
 		return myContract.methods.getProviderCount().call().then(function(totalCount){
 			console.log("Total provider since start: ", totalCount);
 		})
+	}).catch(function(){
+		console.log("Error: Show status, check your deployment. ")
 	})
 }
 function showPools(){		//optional [--list] 
