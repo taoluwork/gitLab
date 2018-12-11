@@ -37,7 +37,6 @@ var addr = TaskContract.networks[NetworkID].address;        //align to const ID 
 const myContract = new web3.eth.Contract(abi, addr);
 //console.log(myContract);
 return web3.eth.getAccounts().then(function(accounts){
-    console.log(accounts);
 	testAccounts = accounts;
     console.log(accounts);
 })
@@ -48,7 +47,7 @@ return web3.eth.getAccounts().then(function(accounts){
     return myContract.methods.startProviding(9000, 20, 800000) //time, target , money
 	.send({
 		from: testAccounts[0],
-		gas: 12000000000
+		gas: 12000000
 	})
     .then(function(ret){
         console.log("------------------------------------------------------------")
