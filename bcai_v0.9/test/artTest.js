@@ -5,7 +5,7 @@ var BCAI = artifacts.require("TaskContract");
 contract("BCAI", function(accounts) {
     
     it("Contract Deploymnet", function(){
-        console.log(accounts);
+        //console.log(accounts);
         if(accounts != undefined) return true;
         else return false;
     })
@@ -18,7 +18,7 @@ contract("BCAI", function(accounts) {
             myContract = instance;
             return myContract.startProviding(100,100,100,   //time target price
                 {from: accounts[2]}).then(function(ret){
-                console.log("info:", ret.receipt.event);
+                console.log("info:", ret.receipt);
             });
         })
     })
