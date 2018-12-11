@@ -5,12 +5,12 @@ var BCAI = artifacts.require("TaskContract");
 contract("BCAI", function(accounts) {
     console.log(accounts);
     it("should have one provider", function() {
-        var bcaiContract;
+        var myContract;
         var eventData;
 
         return BCAI.deployed().then(function(instance) {
-            bcaiContract = instance;
-            return bcaiContract.startProviding(100,100,100,{from: accounts[2]});
+            myContract = instance;
+            return myContract.startProviding(100,100,100).send({from: accounts[2]});
 
             bcaiContract.events.TaskAssigned({
                 fromBlock: 0,
@@ -22,12 +22,12 @@ contract("BCAI", function(accounts) {
                 console.log("TaskAssigned!", result.returnValue);
             });
         
-        }).then(function() {
-            //Begins after startProviding tx has been mined
-            return bcaiContract.getProvider.call(0,{from: accounts[1]});
-        }).then(function(result) {
-            assert.equal(result, accounts[2], "provider start fail!");
-        })
+        // }).then(function() {
+        //     //Begins after startProviding tx has been mined
+        //     return bcaiContract.getProvider.call(0,{from: accounts[1]});
+        // }).then(function(result) {
+        //     assert.equal(result, accounts[2], "provider start fail!");
+        // })
     })
 
     
