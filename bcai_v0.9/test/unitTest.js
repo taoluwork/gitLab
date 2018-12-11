@@ -47,7 +47,7 @@ return web3.eth.getAccounts().then(function(accounts){
     return myContract.methods.startProviding(9000, 90, 10000) //time, target , money
 	.send({
 		from: testAccounts[1],
-		gas: 3000000
+		gas: 5000000
 	})
     .then(function(ret){
         console.log("------------------------------------------------------------")
@@ -64,7 +64,7 @@ return web3.eth.getAccounts().then(function(accounts){
     return myContract.methods.startRequest(12151231, 30 , 8000) //dataID target time
     .send({
         from:testAccounts[8],
-        gas:300000,
+        gas:500000,
         value: 12000 //money
     })
     .then(function(ret){

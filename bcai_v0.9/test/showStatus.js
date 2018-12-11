@@ -76,6 +76,7 @@ web3.eth.getAccounts()
 	//display current status every new block
 	web3.eth.subscribe('newBlockHeaders', function(err, result){
 		if(err) console.log("ERRRR", err, result);
+		console.log("=======================================================   <- updated!", result);
 		showCurrentStatus();
    })
 })
