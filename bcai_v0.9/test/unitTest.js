@@ -53,7 +53,7 @@ return web3.eth.getAccounts().then(function(accounts){
         console.log("------------------------------------------------------------")
         console.log("Send transaction from [0]: startProviding")
         console.log(ret);
-       // return showPools();
+        showPools();
     })
 })
 //updateProviding
@@ -72,7 +72,7 @@ return web3.eth.getAccounts().then(function(accounts){
         console.log("Send transaction from [9]: startRequest")
         console.log(ret);
         console.log("This should be an auto assignment")
-        return showPools();
+        showPools();
     })
 }).catch(function(err){
 	console.log(err);
