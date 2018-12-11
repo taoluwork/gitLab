@@ -10,7 +10,7 @@ contract("BCAI", function(accounts) {
 
         return BCAI.deployed().then(function(instance) {
             myContract = instance;
-            return myContract.startProviding(100,100,100).send({from: accounts[2]});
+            return myContract.methods.startProviding(100,100,100).send({from: accounts[2]});
 
             bcaiContract.events.TaskAssigned({
                 fromBlock: 0,
