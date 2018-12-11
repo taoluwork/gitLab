@@ -36,6 +36,7 @@ var addr = TaskContract.networks[NetworkID].address;        //align to const ID 
 const myContract = new web3.eth.Contract(abi, addr);
 web3.eth.getAccounts().then(function(accounts){
     testAccounts = accounts;
+    console.log(accounts);
 })
 //////////////////////////////////////////////////////////////////////////
 //main
