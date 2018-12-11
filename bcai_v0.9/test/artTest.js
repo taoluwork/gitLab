@@ -28,6 +28,7 @@ contract("BCAI", function(accounts) {
         // }).then(function(result) {
         //     assert.equal(result, accounts[2], "provider start fail!");
         // })
+        })
     })
 
     
