@@ -44,7 +44,7 @@ return web3.eth.getAccounts().then(function(accounts){
 //main
 //startProviding
 .then(function(){
-    return myContract.methods.startProviding(9000, 20, 800000) //time, target , money
+    return myContract.methods.startProviding(9000, 90, 10000) //time, target , money
 	.send({
 		from: testAccounts[1],
 		gas: 3000000
