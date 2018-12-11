@@ -91,7 +91,7 @@ function showCurrentStatus(myAccounts){
 	//get # of request and print
 	//showRequests();
 	return showStatics().then(function(){
-	 	//return showPools();
+	 	showPools();
 	})
 }
 function showStatics(){		//called yb showCurrentStatus
@@ -104,6 +104,7 @@ function showStatics(){		//called yb showCurrentStatus
 		})
 	}).catch(function(){
 		console.log("Error: Show status, check your deployment. ")
+		process.exit();
 	})
 }
 function showPools(){		//optional [--list] 
@@ -143,6 +144,8 @@ function showPools(){		//optional [--list]
 			})
 	}).then(function(valiPool){
 		if(argv['list'] && valiPool.length>0) return ListoutPool(valiPoolPool, 'request');
+	}).catch(function(err){
+		console.log("Error: show pool error! ", err);
 	})
 	
 }
