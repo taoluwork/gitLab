@@ -24,7 +24,7 @@ contract("BCAI", function(accounts) {
                     myContract.SystemInfo({
                         fromBlock: 0,
                         toBlock: 'latest'
-                    }, function(error, result){
+                    }).watch( function(error, result){
                         if (error) {
                             console.log(error);
                         }
