@@ -21,7 +21,7 @@ contract("BCAI", function(accounts) {
                 .then(function(ret){
                     console.log("info:", ret.receipt.logs[0].event);
                 }).then(function(){
-                    myContract.events.TaskAssigned({
+                    myContract.SystemInfo({
                         fromBlock: 0,
                         toBlock: 'latest'
                     }, function(error, result){
@@ -33,28 +33,28 @@ contract("BCAI", function(accounts) {
                 });
         })
     })
-    
-    it("Test StartRequest", function(){
+
+    // it("Test StartRequest", function(){
 
     
-            myContract.events.TaskAssigned({
-                fromBlock: 0,
-                toBlock: 'latest'
-            }, function(error, result){
-                if (error) {
-                    console.log(error);
-                }
-                console.log("TaskAssigned!", result.returnValue);
-            });
+    //         myContract.events.TaskAssigned({
+    //             fromBlock: 0,
+    //             toBlock: 'latest'
+    //         }, function(error, result){
+    //             if (error) {
+    //                 console.log(error);
+    //             }
+    //             console.log("TaskAssigned!", result.returnValue);
+    //         });
         
-        // }).then(function() {
-        //     //Begins after startProviding tx has been mined
-        //     return bcaiContract.getProvider.call(0,{from: accounts[1]});
-        // }).then(function(result) {
-        //     assert.equal(result, accounts[2], "provider start fail!");
-        // })
+    //     // }).then(function() {
+    //     //     //Begins after startProviding tx has been mined
+    //     //     return bcaiContract.getProvider.call(0,{from: accounts[1]});
+    //     // }).then(function(result) {
+    //     //     assert.equal(result, accounts[2], "provider start fail!");
+    //     // })
         
-    })
+    // })
 
     
 })
