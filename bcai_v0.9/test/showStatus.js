@@ -76,7 +76,7 @@ web3.eth.getAccounts()
 	//display current status every new block
 	web3.eth.subscribe('newBlockHeaders', function(err, result){
 		if(err) console.log("ERRRR", err, result);
-		console.log("=======================================================   <- updated!", result);
+		console.log("================================================   <- updated! #", result.number);
 		showCurrentStatus();
    })
 })
@@ -97,7 +97,7 @@ function showCurrentStatus(myAccounts){
 }
 function showStatics(){		//called yb showCurrentStatus
 	return myContract.methods.getRequestCount().call().then(function(totalCount){
-		console.log("=======================================================   <- updated!");
+		//console.log("=======================================================   <- updated!");
 		console.log("Total Request since start: ", totalCount);
 	}).then(function(){
 		return myContract.methods.getProviderCount().call().then(function(totalCount){
