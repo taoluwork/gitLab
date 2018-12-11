@@ -18,7 +18,7 @@ contract("BCAI", function(accounts) {
             myContract = instance;
             return myContract.startProviding(100,100,100,   //time target price
                 {from: accounts[2]}).then(function(ret){
-                console.log("info:", ret.receipt);
+                console.log("info:", ret.receipt.logs[0].event);
             });
         })
     })
