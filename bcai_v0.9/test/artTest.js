@@ -18,6 +18,7 @@ var BN = web3.utils.toBN;
 var pendingPool = [];
 var providingPool = [];
 var validationPool = [];
+var totalGas = 0;
 
 
 
@@ -33,6 +34,8 @@ contract("BCAI", function(accounts) {
         return BCAI.deployed().then(function(myContract) {
             return myContract.startProviding(100,100,100,{from: accounts[0]})  //time target price  
             .then(function(ret){
+                totalGas += ret.receipt.gasUsed;
+                console.log("Gas = ", totalGas);
                 //check the event using receipt
                 //truffleAssert.prettyPrintEmittedEvents(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
@@ -62,6 +65,8 @@ contract("BCAI", function(accounts) {
             //first send a no matching request, value == 0
             return myContract.startRequest(1215125,200,100,{from: accounts[9]})  //ID target time  
             .then(function(ret){
+                totalGas += ret.receipt.gasUsed;
+                console.log("Gas = ", totalGas);
                 //check the event using receipt
                 //truffleAssert.prettyPrintEmittedEvents(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
@@ -101,6 +106,8 @@ contract("BCAI", function(accounts) {
             //send a matching request
             return myContract.startRequest(1215125,20,90,{from: accounts[9], value: 12000})  //ID target time  
             .then(function(ret){
+                totalGas += ret.receipt.gasUsed;
+                console.log("Gas = ", totalGas);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
                     //console.log(ev[0])
                     return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Request Added');
@@ -134,6 +141,8 @@ contract("BCAI", function(accounts) {
             //submit a complete computation result
             return myContract.completeRequest(1,12516136,{from: accounts[0]})  //reqID resultID  
             .then(function(ret){
+                totalGas += ret.receipt.gasUsed;
+                console.log("Gas = ", totalGas);
                 truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
                     //console.log(ev[0])
                     return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Request Computation Completed');
@@ -171,6 +180,8 @@ contract("BCAI", function(accounts) {
             //1. not enough provider  -> add provider
             return myContract.validateRequest(1,{from: accounts[0]})  //reqID resultID  
             .then(function(ret){
+                totalGas += ret.receipt.gasUsed;
+                console.log("Gas = ", totalGas);
                 truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
                     //console.log(ev)
                     return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Not enough validators');
@@ -196,6 +207,8 @@ contract("BCAI", function(accounts) {
             .then(function(){
                 return myContract.startProviding(100,100,1000,{from: accounts[1]})  //time target price  
                 .then(function(ret){
+                    totalGas += ret.receipt.gasUsed;
+                    console.log("Gas = ", totalGas);
                     truffleAssert.eventEmitted(ret,'SystemInfo', (ev)=>{
                         //console.log(ev[0])
                         return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Provider Added');
@@ -213,6 +226,8 @@ contract("BCAI", function(accounts) {
             .then(function(){
                 return myContract.startProviding(100,100,1000,{from: accounts[2]})  //time target price  
                 .then(function(ret){
+                    totalGas += ret.receipt.gasUsed;
+                    console.log("Gas = ", totalGas);
                     truffleAssert.eventEmitted(ret,'SystemInfo', (ev)=>{
                         //console.log(ev[0])
                         return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Provider Added');
@@ -230,6 +245,8 @@ contract("BCAI", function(accounts) {
             .then(function(){
                 return myContract.startRequest(1215125,20,90,{from: accounts[9], value: 80000})  //ID target time  
                 .then(function(ret){
+                    totalGas += ret.receipt.gasUsed;
+                    console.log("Gas = ", totalGas);
                     truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
                         return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Request Added');
                     },'Request event mismatch');
@@ -253,6 +270,8 @@ contract("BCAI", function(accounts) {
             .then(function(){
                 return myContract.completeRequest(2,1225135,{from: accounts[1]})  //reqID resultID  
                 .then(function(ret){
+                    totalGas += ret.receipt.gasUsed;
+                    console.log("Gas = ", totalGas);
                     truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
                         //console.log(ev)
                         return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Request Computation Completed');
@@ -288,6 +307,8 @@ contract("BCAI", function(accounts) {
             //submit a complete computation result
             return myContract.submitValidation(2,1,true,{from: accounts[2]})  //reqID resultID  
             .then(function(ret){
+                totalGas += ret.receipt.gasUsed;
+                console.log("Gas = ", totalGas);
                 truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
                     //console.log(ev[0])
                     return ev.reqID == 2 && ev.provID == 1
@@ -324,6 +345,8 @@ contract("BCAI", function(accounts) {
             //submit a complete computation result
             return myContract.checkValidation(2,{from: accounts[0]})  //reqID resultID  
             .then(function(ret){
+                totalGas += ret.receipt.gasUsed;
+                console.log("Gas = ", totalGas);
                 truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
                     //console.log(ev[0])
                     return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Validation Complete');
