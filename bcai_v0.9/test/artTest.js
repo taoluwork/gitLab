@@ -364,9 +364,12 @@ contract("BCAI", function(accounts) {
             })
         })
     })
-
-
     //end of it
+    
+    
+    it("Performance and cost Analysis", function(){
+        console.log("Total cost = ", totalGas);
+    })
 })
 
 
@@ -432,5 +435,5 @@ function checkingPool(myContract, providers, pendPool, provPool, valiPool){
 function checkGas(ret){
     totalGas += ret.receipt.gasUsed;
     console.log("Gas used here = ", ret.receipt.gasUsed)
-    console.log("Total Gas = ", totalGas);
+    ///console.log("Total Gas = ", totalGas);
 }
