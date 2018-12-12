@@ -62,6 +62,7 @@ contract TaskContract {
 
     address payable [] providerPool;
     address payable [] pendingPool;
+    address payable [] providingPool;
     address payable [] validatingPool;
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -432,6 +433,9 @@ contract TaskContract {
     }
     function getValidatingPool() public view returns (address payable [] memory){
         return validatingPool;
+    }
+    function getProvidingPool() public view returns (address payable [] memory){
+        return providingPool;
     }
 
     function getProviderPoolSize() public view returns (uint256){
