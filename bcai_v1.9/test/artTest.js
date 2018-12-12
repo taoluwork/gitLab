@@ -268,7 +268,7 @@ contract("BCAI", function(accounts) {
                     },'Submit Complete computation req#2 fail');
                     truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
                         //console.log(ev)
-                        return ev.reqID == accounts[7] && ev.provID == accouts[2] 
+                        return ev.req == accounts[7] && ev.prov == accouts[2] 
                         && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
                     },'validator assignment fail');
                     truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
@@ -319,7 +319,7 @@ contract("BCAI", function(accounts) {
                     [accounts[8],accounts[7]]
                 //checking List
                 ).then(function(){
-                    return myContract.getRequest.call(2).then(function(ret){
+                    return myContract.getRequest.call(accounts[7]).then(function(ret){
                         //console.log(ret);
                         //assert(ret.reqID == 2);
                         assert(ret.validators[0] == accounts[2])
