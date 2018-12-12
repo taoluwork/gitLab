@@ -15,7 +15,7 @@ const truffleAssert = require('truffle-assertions');
 var BigNumber = require('bignumber.js') //not used use web3.utils.BN [important]
 //handle the BN is essential
 var BN = web3.utils.toBN;
-var totalGas;
+var totalGas = 0;
 
 
 contract("BCAI", function(accounts) {
