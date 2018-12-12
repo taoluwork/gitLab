@@ -15,7 +15,7 @@ const truffleAssert = require('truffle-assertions');
 var BigNumber = require('bignumber.js') //not used use web3.utils.BN [important]
 //handle the BN is essential
 var BN = web3.utils.toBN;
-
+var totalGas;
 
 
 contract("BCAI", function(accounts) {
@@ -29,6 +29,8 @@ contract("BCAI", function(accounts) {
         return BCAI.deployed().then(function(myContract) {
             return myContract.startProviding(3000,100,8000,{from: accounts[0]})  //time target price  
             .then(function(ret){
+                totalGas += ret.receipt.gasUsed;
+                console.log("Gas = ", totalGas);
                 //check the event using receipt
                 //truffleAssert.prettyPrintEmittedEvents(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
@@ -45,6 +47,7 @@ contract("BCAI", function(accounts) {
                 )
                 //check List update
                 //...
+                
             });
         })
     })
@@ -58,6 +61,8 @@ contract("BCAI", function(accounts) {
             //first send a no matching request, value == 0
             return myContract.startRequest(200,90,19,121515,{from: accounts[9]})  //time target price dataID  
             .then(function(ret){
+                totalGas += ret.receipt.gasUsed;
+                console.log("Gas = ", totalGas);
                 //check the event using receipt
                 //truffleAssert.prettyPrintEmittedEvents(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
@@ -97,7 +102,9 @@ contract("BCAI", function(accounts) {
             //send a matching request
             return myContract.startRequest(2300,80,10000,31312,{from: accounts[8], value: 120000})  //ID target time  
             .then(function(ret){
-                console.log(ret);
+                totalGas += ret.receipt.gasUsed;
+                console.log("Gas = ", totalGas);
+                
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
                     //console.log(ev[0])
                     return ev.addr == accounts[8] && ev.info == web3.utils.asciiToHex('Request Added');
