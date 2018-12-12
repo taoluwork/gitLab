@@ -268,7 +268,7 @@ contract("BCAI", function(accounts) {
                     },'Submit Complete computation req#2 fail');
                     truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
                         //console.log(ev)
-                        return ev.req == accounts[7] && ev.prov == accouts[2] 
+                        return ev.req == accounts[7] && ev.prov == accounts[2] 
                         && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
                     },'validator assignment fail');
                     truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
