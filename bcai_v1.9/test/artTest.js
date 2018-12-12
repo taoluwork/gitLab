@@ -359,7 +359,7 @@ contract("BCAI", function(accounts) {
                         //console.log(ret);
                         assert(ret.isValid == true);
                     })
-                }).then(console.log)
+                }).catch(console.log)
             })
         })
     })
