@@ -243,7 +243,7 @@ contract("BCAI", function(accounts) {
                     },'Request event mismatch');
                     truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
                         return ev.reqID == accounts[7] && ev.provID == accounts[1] &&
-                            ev.info == web3.utils.asciiToHex("Request assigned to Provider");
+                            ev.info == web3.utils.asciiToHex("Request Assigned");
                     },"Pairing req#2 => prov#1 fail!");
 
                     //check pool update
@@ -300,7 +300,7 @@ contract("BCAI", function(accounts) {
                 checkGas(ret);
                 truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
                     //console.log(ev[0])
-                    return ev.reqID == accounts[7] && ev.provID == accounts[2]
+                    return ev.req == accounts[7] && ev.prov == accounts[2]
                         && ev.info == web3.utils.asciiToHex('Validator Signed');
                 },'Validator submit signature fail');
                 // no autoValidation for now
