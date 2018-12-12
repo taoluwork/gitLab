@@ -105,7 +105,7 @@ contract("BCAI", function(accounts) {
                 truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
                     //console.log(ev[0])
                     return ev.req == accounts[8] && ev.prov == accounts[0]
-                        && ev.info == web3.utils.asciiToHe("Request Assigned");
+                        && ev.info == web3.utils.asciiToHex("Request Assigned");
                 },"Pairing req1 => prov0 fail!");
 
                 //checking pool
