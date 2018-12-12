@@ -349,7 +349,7 @@ contract("BCAI", function(accounts) {
                 //checking pool
                 //req#2 should be popped out from pool
                 return checkingPool(myContract,
-                    [],
+                    [13415],
                     [accounts[9]],
                     [],
                     [accounts[8]]
