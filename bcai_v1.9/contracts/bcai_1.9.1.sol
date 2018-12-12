@@ -40,8 +40,9 @@ contract TaskContract {
         uint256 price;              //the max amount he can pay
         uint64  dataID;             //dataID used to fetch the off-chain data
         uint64  resultID;           //dataID to fetch the result
-        uint64  numValidationsNeeded;   //user defined the validation
-        bool[]  validations;        //multisignature from validations
+        uint64  numValidations;   //user defined the validation
+        address payable []  validators;        //multisignature from validations
+        bool[] signatures;
         bool    isValid;            //the final flag
         byte    status;              //0: 'pending', 1:'providing', 2: validating, 3: complete
     }
@@ -131,7 +132,7 @@ contract TaskContract {
         requestList[msg.sender].target        = target;
         requestList[msg.sender].price         = price;
         requestList[msg.sender].dataID        = dataID;
-        requestList[msg.sender].numValidationsNeeded = 1;
+        requestList[msg.sender].numValidations = 1;
         requestList[msg.sender].status = '0' ;     //pending 0x30, not 0
         pendingPool.push(msg.sender);
         emit SystemInfo (msg.sender, "Request Added");
@@ -282,44 +283,67 @@ contract TaskContract {
 
 
 
-/*
+
 
     // Provider will call this when they are done and the data is available.
-    // This will invoke the validation stage
-    function completeTask(uint128 reqID, uint64 resultID) public returns (bool) {
+    // This will invoke the validation stage but only when the request got enough validators
+    // that req could be moved from pool and marked,
+    // Or that req stays providing
+    function completeRequest(address payable reqID, uint64 resultID) public returns (bool) {
         // Confirm msg.sender is actually the provider of the task he claims
         if (msg.sender == requestList[reqID].provider) {
-            requestList[reqID].isCompleted = true;
+            //change request obj
+            requestList[reqID].status = '2';    //validating
             requestList[reqID].resultID = resultID;
-            providerList[providerID[msg.sender]].available = true;
-            return validateTask(reqID);
+            //move from providing pool to validating Pool.
+            ArrayPop(providingPool, reqID);
+            validatingPool.push(reqID);
+            //release provider (not necessarily depend on provider)
+            //providerList[providerID[msg.sender]].available = true;
+            //emit assignRequest(reqID, msg.sender);
+            emit SystemInfo(reqID, 'Request Computation Completed');
+            //start validation process
+            validateRequest(reqID);
         }
         else {
             return false;
         }
     }
-/*
-    // Called by completeTask before finalizing stuff. Contract checks with validators
+
+    // Called by assignRequest before finalizing stuff. Contract checks with validators
     // Returns false if there wasnt enough free providers to send out the required number of validation requests
-    function validateTask(uint128 reqID) private returns (bool) {
-        uint64 numValidators = 3; // need validation from 1/10 of nodes -- could change
+    // need validation from 1/10 of nodes -- could change
+    function validateRequest(address payable reqID) public returns (bool) {
+        uint64 numValidatorsNeeded = requestList[reqID].numValidations; 
         //uint numValidators = providerCount / 10; 
-        uint validatorsFound = 0;
-        requestList[reqID].numValidationsNeeded = numValidators;
-        for (uint64 i=0; i<providerCount + spaces.length && validatorsFound<numValidators; i++) {
-            if (providerList[i].addr == address(0)) {
+        uint64 validatorsFound = 0;
+        //requestList[reqID].numValidationsNeeded = numValidators;
+        //select # of available provider from the pool and force em to do the validation
+        for (uint64 i = 0; i < providerPool.length; i++) {
+            //get provider ID
+            address payable provID = providerPool[i];
+            if(provID != requestList[reqID].provider){   //validator and computer cannot be same
+                //EVENT: informs validator that they were selected and need to validate
+                emit PairingInfo(reqID, provID, 'Validation Assigned to Provider');
+                validatorsFound++;
+                //remove the providers availablity and pop from pool
+                providerList[provID].available = false;
+                ArrayPop(providerPool, provID);
+            } else continue;
+            //check whether got enough validator
+            if(validatorsFound < numValidatorsNeeded){
                 continue;
             }
-            if (providerList[i].available) {
-                // EVENT: informs validator that they were selected and need to validate
-                emit ValidationRequested(providerList[i].addr, reqID);
-                validatorsFound++;
+            else{       //enough validator
+                emit SystemInfo(reqID, 'Enough validators');
+                return true;
+                break;
             }
-        }
-        if (validatorsFound == numValidators) {
-            return true;
-        }
-        return false;
+            //loop until certain # of validators selected
+        }   
+        //exit loop without enough validators
+        //emit NotEnoughValidation(reqID);    
+        emit SystemInfo(reqID, 'Not enough validators');
     }
 
 
@@ -327,42 +351,60 @@ contract TaskContract {
 
 
     // needs to be more secure by ensuring the submission is coming from someone legit 
-    function submitValidation(uint128 reqID, bool result) public returns (bool) {
+    // similar to completeTask but this will sign the validation list of the target Task
+    //TODO: the money part is ommited for now
+    function submitValidation(address payable reqID, bool result) public returns (bool) {
         // Pay the validator 
-        uint partialPayment = requestList[reqID].price / 100; // amount each validator is paid
-        msg.sender.transfer(partialPayment);
-        balanceList[requestList[reqID].addr] -= partialPayment;
-        // Put the result in the request struct
-        requestList[reqID].validations.push(result);
+        // uint partialPayment = requestList[reqID].price / 100; // amount each validator is paid
+        // msg.sender.transfer(partialPayment);
+        // balanceList[requestList[reqID].addr] -= partialPayment;
+        if(msg.sender != requestList[reqID].provider) {     //validator cannot be provider
+            requestList[reqID].validators.push(msg.sender);     //push array
+            requestList[reqID].signatures.push(result);     //edit mapping
+        }
+        //emit ValidationInfo(reqID, provID, 'Validator Signed');
+        //check if valid
+        
+        emit PairingInfo(reqID, msg.sender, 'Validator Signed');
+       
         // If enough validations have been submitted
-        if (requestList[reqID].validations.length == requestList[reqID].numValidationsNeeded) {
-            return checkValidation(reqID, requestList[reqID].price - requestList[reqID].numValidationsNeeded * partialPayment);
+        if (requestList[reqID].validators.length == requestList[reqID].numValidations) {
+            //return checkValidation(reqID, requestList[reqID].price - requestList[reqID].numValidationsNeeded * partialPayment);
+            //checkValidation(reqID);
         }
     }
     
-    function checkValidation(uint128 reqID, uint payment) private returns (bool) {
+    function checkValidation(address payable reqID) public returns (bool) {
         // Add up successful validations
+        bool flag = false;
         uint64 successCount = 0;
-        for (uint64 i=0; i<requestList[reqID].validations.length; i++) {
-            if (requestList[reqID].validations[i]) successCount++;
+        for (uint64 i=0; i<requestList[reqID].validators.length; i++) {
+            if (requestList[reqID].signatures[i] == true) successCount++;
         }
         // if 2/3 of validation attempts were successful
-        if (successCount  >= requestList[reqID].numValidationsNeeded * 2 / 3  ) { 
+        // TODO: determine the fraction
+        if (successCount  >= requestList[reqID].numValidations) { 
             // if 2/3 of validations were valid then provider gets remainder of money
-            requestList[reqID].provider.transfer(payment); 
-            balanceList[requestList[reqID].addr] -= payment;
+            //requestList[reqID].provider.transfer(payment); 
+            //balanceList[requestList[reqID].addr] -= payment;
+            //TODO: [important] leave out the payment part for now.
             requestList[reqID].isValid = true; // Task was successfully completed! 
+            flag = true;
         }
         // otherwise, work was invalid, the providers payment goes back to requester
         else {
-            requestList[reqID].addr.transfer(payment);
-            balanceList[requestList[reqID].addr] -= payment;
+            //requestList[reqID].addr.transfer(payment);
+            //balanceList[requestList[reqID].addr] -= payment;
         }
         // EVENT: task is done whether successful or not
-        emit TaskCompleted(requestList[reqID].addr, reqID);
-        return requestList[reqID].isValid;
+        //emit TaskCompleted(requestList[reqID].addr, reqID);
+        emit SystemInfo(reqID, 'Validation Complete');
+        //popout from pool
+        flag = flag && ArrayPop(validatingPool, reqID);
+
+        return flag;
     }
-*/
+
 /////////////////////////////////////////////////////////////////////
  // Used to dynamically remove elements from array of open provider spaces. 
     // Using a swap and delete method, search for the desired addr throughout the whole array
@@ -411,13 +453,11 @@ contract TaskContract {
 
     /////////////////////////////////////////////////////////////////////////////////
     //some helpers defined here
-/*    function testTask() public {
-        emit TaskAssigned(msg.sender, 11, 22);
-    }
-    function getProvider(uint256 ID) public view returns(Provider memory){
+
+    function getProvider(address payable ID) public view returns(Provider memory){
         return providerList[ID];
     }
-    function getRequest(uint256 ID) public view returns (Request memory){
+    function getRequest(address payable ID) public view returns (Request memory){
 	    return requestList[ID];
     }
     function getProviderCount() public view returns (uint256){
@@ -426,7 +466,7 @@ contract TaskContract {
     function getRequestCount() public view returns (uint256){
         return requestCount;
     }
-*/
+
     function getProviderPool() public view returns (address payable [] memory){
         return providerPool;
     }

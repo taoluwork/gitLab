@@ -44,7 +44,7 @@ contract("BCAI", function(accounts) {
                     [accounts[0]],
                     [],
                     [],
-                )
+                    [] )
                 //check List update
                 //...
                 
@@ -75,7 +75,7 @@ contract("BCAI", function(accounts) {
                     [accounts[0]],
                     [accounts[9]],
                     [],
-                    )
+                    [])
                 
                 //check List update
                 //...
@@ -119,7 +119,7 @@ contract("BCAI", function(accounts) {
                     [],
                     [accounts[9]],
                     [accounts[8]],
-                    )
+                    [])
                 .catch(console.log)
 
                 //checking List
@@ -127,7 +127,7 @@ contract("BCAI", function(accounts) {
             })
         })
     })
-    /*
+    
     ////////////////////////////////////////////////////////////////////////////////
     //send a new request which should be matched automaticly
     //
@@ -135,11 +135,12 @@ contract("BCAI", function(accounts) {
     it("Test Complete Computation", function(){
         return BCAI.deployed().then(function(myContract) {
             //submit a complete computation result
-            return myContract.completeRequest(1,12516136,{from: accounts[0]})  //reqID resultID  
+            return myContract.completeRequest(accounts[8],12516136,{from: accounts[0]})  //reqID resultID  
             .then(function(ret){
-                truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                checkGas(ret);
+                truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                     //console.log(ev[0])
-                    return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Request Computation Completed');
+                    return ev.addr == accounts[8] && ev.info == web3.utils.asciiToHex('Request Computation Completed');
                 },'Submit computation result fail');
                 // no autoValidation for now
 
@@ -152,10 +153,10 @@ contract("BCAI", function(accounts) {
                 //var x = new BigNumber("0");
                 return checkingPool(myContract,
                     [],
-                    [BN(0)],
+                    [accounts[9]],
                     [],
-                    [BN(1)])
-                .catch(console.log);
+                    [accounts[8]]
+                ).catch(console.log);
                 
                 //checking List
                 //...
@@ -172,11 +173,12 @@ contract("BCAI", function(accounts) {
         return BCAI.deployed().then(function(myContract) {
             //submit a complete computation result
             //1. not enough provider  -> add provider
-            return myContract.validateRequest(1,{from: accounts[0]})  //reqID resultID  
+            return myContract.validateRequest(accouts[8],{from: accounts[0]})  //reqID resultID  
             .then(function(ret){
-                truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                checkGas(ret);
+                truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                     //console.log(ev)
-                    return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Not enough validators');
+                    return ev.addr == accounts[8] && ev.info == web3.utils.asciiToHex('Not enough validators');
                 },'Submit validation fail');
                 // no autoValidation for now
 
@@ -188,94 +190,98 @@ contract("BCAI", function(accounts) {
                 //checking pool
                 return checkingPool(myContract,
                     [],
-                    [BN(0)],
+                    [accounts[9]],
                     [],
-                    [BN(1)])
-                .catch(console.log)
+                    [accounts[8]]
+                ).catch(console.log)
                 //checking List
                 //...
             })
             // add a new provider #1
             .then(function(){
-                return myContract.startProviding(100,100,1000,{from: accounts[1]})  //time target price  
+                return myContract.startProviding(3000,100,8000,{from: accounts[1]})  //time target price  
                 .then(function(ret){
+                    checkGas(ret);
                     truffleAssert.eventEmitted(ret,'SystemInfo', (ev)=>{
                         //console.log(ev[0])
-                        return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Provider Added');
+                        return ev.addr == accounts[1] && ev.info == web3.utils.asciiToHex('Provider Added');
                     },"Add new provider fail");
                     //checking pool
                     return checkingPool(myContract,
-                        [BN(1)],
-                        [BN(0)],
+                        [accounts[1]],
+                        [accounts[9]],
                         [],
-                        [BN(1)])
-                    .catch(console.log)
+                        [accounts[8]]
+                    ).catch(console.log)
                 })
             })
             // add a new provider #2
             .then(function(){
-                return myContract.startProviding(100,100,1000,{from: accounts[2]})  //time target price  
+                return myContract.startProviding(3000,100,8000,{from: accounts[2]})  //time target price  
                 .then(function(ret){
+                    checkGas(ret);
                     truffleAssert.eventEmitted(ret,'SystemInfo', (ev)=>{
                         //console.log(ev[0])
-                        return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Provider Added');
+                        return ev.addr == accounts[2] && ev.info == web3.utils.asciiToHex('Provider Added');
                     },"Add new provider fail");
                     //checking pool
                     return checkingPool(myContract,
-                        [BN(1), BN(2)],
-                        [BN(0)],
+                        [accounts[1], accounts[2]],
+                        [accounts[9]],
                         [],
-                        [BN(1)])
-                    .catch(console.log)
+                        [accounts[8]]
+                    ).catch(console.log)
                 })
             })
             // add a new request#2, assigned to prov#1
             .then(function(){
-                return myContract.startRequest(1215125,20,90,{from: accounts[9], value: 80000})  //ID target time  
+                return myContract.startRequest(2400,80,20000,{from: accounts[7], value: 80000})  //ID target time  
                 .then(function(ret){
+                    checkGas(ret);
                     truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
-                        return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Request Added');
+                        return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Request Added');
                     },'Request event mismatch');
                     truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
-                        return ev.reqID == 2 && ev.provID == 1 &&
+                        return ev.reqID == accounts[7] && ev.provID == accounts[1] &&
                             ev.info == web3.utils.asciiToHex("Request assigned to Provider");
                     },"Pairing req#2 => prov#1 fail!");
 
                     //check pool update
                     return checkingPool(myContract,
-                        [BN(2)],
-                        [BN(0)],
-                        [BN(2)],
-                        [BN(1)])
-                    
+                        [accounts[2]],
+                        [accounts[9]],
+                        [accounts[7]],
+                        [accounts[8]]
+                    ).catch(console.log)
                     //check List update
                     //...
                 })
             })
             // prov#1 submit computation finished and assgin prov#2 to validate
             .then(function(){
-                return myContract.completeRequest(2,1225135,{from: accounts[1]})  //reqID resultID  
+                return myContract.completeRequest(accounts[7],1225135,{from: accounts[1]})  //reqID resultID  
                 .then(function(ret){
-                    truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                    checkGas(ret);
+                    truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                         //console.log(ev)
-                        return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Request Computation Completed');
+                        return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Request Computation Completed');
                     },'Submit Complete computation req#2 fail');
                     truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
                         //console.log(ev)
-                        return ev.reqID == 2 && ev.provID == 2 
+                        return ev.reqID == accounts[7] && ev.provID == accouts[2] 
                         && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
                     },'validator assignment fail');
-                    truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                    truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                         //console.log(ev)
-                        return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Enough validators');
+                        return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Enough validators');
                     },'get enough validator fail');
                     //checking pool
                     return checkingPool(myContract,
                         [],
-                        [BN(0)],
+                        [accounts[9]],
                         [],
-                        [BN(1),BN(2)])
-                    .catch(console.log)
+                        [accounts[8],accounts[7]]
+                    ).catch(console.log)
                     //checking List
                     //...
                 })
@@ -289,11 +295,12 @@ contract("BCAI", function(accounts) {
     it("Test Submit Validation", function(){
         return BCAI.deployed().then(function(myContract) {
             //submit a complete computation result
-            return myContract.submitValidation(2,1,true,{from: accounts[2]})  //reqID resultID  
+            return myContract.submitValidation(accounts[7],true,{from: accounts[2]})  //reqID resultID  
             .then(function(ret){
+                checkGas(ret);
                 truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
                     //console.log(ev[0])
-                    return ev.reqID == 2 && ev.provID == 1
+                    return ev.reqID == accounts[7] && ev.provID == accounts[2]
                         && ev.info == web3.utils.asciiToHex('Validator Signed');
                 },'Validator submit signature fail');
                 // no autoValidation for now
@@ -307,15 +314,15 @@ contract("BCAI", function(accounts) {
                 //var x = new BigNumber("0");
                 return checkingPool(myContract,
                     [],
-                    [BN(0)],
+                    [accounts[9]],
                     [],
-                    [BN(1),BN(2)])
+                    [accounts[8],accounts[7]]
                 //checking List
-                .then(function(){
+                ).then(function(){
                     return myContract.getRequest.call(2).then(function(ret){
                         //console.log(ret);
-                        assert(ret.reqID == 2);
-                        assert(ret.validators[0] == 2)
+                        //assert(ret.reqID == 2);
+                        assert(ret.validators[0] == accounts[2])
                         assert(ret.signatures[0] == true);
                     })
                 })
@@ -325,11 +332,12 @@ contract("BCAI", function(accounts) {
     it("Test Check Validation", function(){
         return BCAI.deployed().then(function(myContract) {
             //submit a complete computation result
-            return myContract.checkValidation(2,{from: accounts[0]})  //reqID resultID  
+            return myContract.checkValidation(accounts[7],{from: accounts[2]})  //reqID resultID  
             .then(function(ret){
-                truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                checkGas(ret);
+                truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                     //console.log(ev[0])
-                    return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Validation Complete');
+                    return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Validation Complete');
                 },'Validator final check fail');
                 // no autoValidation for now
 
@@ -342,12 +350,12 @@ contract("BCAI", function(accounts) {
                 //req#2 should be popped out from pool
                 return checkingPool(myContract,
                     [],
-                    [BN(0)],
+                    [accounts[9]],
                     [],
-                    [BN(1)])
+                    [accounts[8]]
                 //checking List
-                .then(function(){
-                    return myContract.getRequest.call(2).then(function(ret){
+                ).then(function(){
+                    return myContract.getRequest.call(accounts[7]).then(function(ret){
                         //console.log(ret);
                         assert(ret.isValid == true);
                     })
@@ -356,7 +364,7 @@ contract("BCAI", function(accounts) {
         })
     })
 
-    */
+    
     it("Performance and cost Analysis", function(){
         console.log("Total cost = ", totalGas);
     })
@@ -415,13 +423,13 @@ function checkingPool(myContract, providers, pendPool, provPool, valiPool){
             //console.log(pool);
             assert.deepEqual(pool ,provPool);
         })
+    
+    }).then(function(){
+        return myContract.getValidatingPool.call().then(function(pool){
+            //console.log(pool);
+            assert.deepEqual(pool ,valiPool);
+        })
     })
-    // }).then(function(){
-    //     return myContract.getValidatingPool.call().then(function(pool){
-    //         //console.log(pool);
-    //         assert.deepEqual(pool ,valiPool);
-    //     })
-    // })
 }
 
 
