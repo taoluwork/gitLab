@@ -32,7 +32,7 @@ contract("BCAI", function(accounts) {
                 //check the event using receipt
                 //truffleAssert.prettyPrintEmittedEvents(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
-                     return ev.ID == accounts[0] && ev.info == web3.utils.asciiToHex('Provider Added');
+                     return ev.addr == accounts[0] && ev.info == web3.utils.asciiToHex('Provider Added');
                  },'Provider event mismatch');
                 //console.log(ret.receipt.logs[0].event);
                 //console.log(web3.utils.toAscii(ret.receipt.logs[0].args[2]));
@@ -61,7 +61,7 @@ contract("BCAI", function(accounts) {
                 //check the event using receipt
                 //truffleAssert.prettyPrintEmittedEvents(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
-                    return ev.ID == accounts[9] && ev.info == web3.utils.asciiToHex('Request Added');
+                    return ev.addr == accounts[9] && ev.info == web3.utils.asciiToHex('Request Added');
                 },'Request event mismatch');
                 //console.log(ret.receipt.logs[0].event);
                 //console.log(web3.utils.toAscii(ret.receipt.logs[0].args[2]));
@@ -99,7 +99,7 @@ contract("BCAI", function(accounts) {
             .then(function(ret){
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
                     //console.log(ev[0])
-                    return ev.ID == accounts[8] && ev.info == web3.utils.asciiToHex('Request Added');
+                    return ev.addr == accounts[8] && ev.info == web3.utils.asciiToHex('Request Added');
                 },'Request 1 submit fail');
                 
                 truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
