@@ -242,7 +242,7 @@ contract("BCAI", function(accounts) {
                         return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Request Added');
                     },'Request event mismatch');
                     truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
-                        return ev.reqID == accounts[7] && ev.provID == accounts[1] &&
+                        return ev.req == accounts[7] && ev.prov == accounts[1] &&
                             ev.info == web3.utils.asciiToHex("Request Assigned");
                     },"Pairing req#2 => prov#1 fail!");
 

@@ -303,7 +303,7 @@ contract TaskContract {
             //emit assignRequest(reqID, msg.sender);
             emit SystemInfo(reqID, 'Request Computation Completed');
             //start validation process
-            validateRequest(reqID);
+                return validateRequest(reqID);
         }
         else {
             return false;
