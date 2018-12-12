@@ -18,7 +18,8 @@ var BN = web3.utils.toBN;
 var pendingPool = [];
 var providingPool = [];
 var validationPool = [];
-var totalGas = 0;
+var totalGas = 0; 
+var showGas = true;
 
 
 
@@ -434,6 +435,6 @@ function checkingPool(myContract, providers, pendPool, provPool, valiPool){
 
 function checkGas(ret){
     totalGas += ret.receipt.gasUsed;
-    console.log("Gas used here = ", ret.receipt.gasUsed)
+    if(showGas) console.log("Gas used here = ", ret.receipt.gasUsed)
     ///console.log("Total Gas = ", totalGas);
 }

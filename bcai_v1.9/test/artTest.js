@@ -16,6 +16,7 @@ var BigNumber = require('bignumber.js') //not used use web3.utils.BN [important]
 //handle the BN is essential
 var BN = web3.utils.toBN;
 var totalGas = 0;
+var showGas = true;
 
 
 contract("BCAI", function(accounts) {
@@ -426,6 +427,6 @@ function checkingPool(myContract, providers, pendPool, provPool, valiPool){
 
 function checkGas(ret){
     totalGas += ret.receipt.gasUsed;
-    console.log("Gas used here = ", ret.receipt.gasUsed)
+    if(showGas) console.log("Gas used here = ", ret.receipt.gasUsed)
     //console.log("Total Gas = ", totalGas);
 }
