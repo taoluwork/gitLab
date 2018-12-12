@@ -411,7 +411,7 @@ function checkingPool(myContract, providers, pendPool, provPool, valiPool){
     return myContract.getProviderPool.call().then(function(pool){
         //console.log(pool);
         //expect(pool).deep.equal(pendPool);
-        assert.deepEqual(pool,providers);
+        assert.deepEqual(providers, pool);
     })
     .then(function(){    
         return myContract.getPendingPool.call().then(function(pool){
