@@ -173,7 +173,7 @@ contract("BCAI", function(accounts) {
         return BCAI.deployed().then(function(myContract) {
             //submit a complete computation result
             //1. not enough provider  -> add provider
-            return myContract.validateRequest(accouts[8],{from: accounts[0]})  //reqID resultID  
+            return myContract.validateRequest(accounts[8],{from: accounts[0]})  //reqID resultID  
             .then(function(ret){
                 checkGas(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
