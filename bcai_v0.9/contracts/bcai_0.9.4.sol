@@ -21,7 +21,7 @@ contract TaskContract {
     
     //list
     mapping (uint256 => Provider) public providerList;  //history
-    mapping (uint256 => Request) public requestList;    //history
+    mapping (uint256 => Request)  public requestList;   //history
     
     //mapping address with ID       //editing these mapping cost a lot
     mapping (address => uint256[])  public providerMap;
@@ -34,8 +34,8 @@ contract TaskContract {
     uint256 private requestCount;
     //Pool: providers can be removed from the pool but requests must be in one of the pool
     uint256[] providerPool;     //providers
-    uint256[] pendingPool;      //requests
-    uint256[] providingPool;    //requests
+    uint256[] pendingPool;      //requests  //wait to match 
+    uint256[] providingPool;    //requests  //wati to find validators
     uint256[] validatingPool;   //requests
     uint256[] donePool;         //requests  //NOTE: [Important] this array could increase unlimitedly -- only for testing
 
@@ -317,14 +317,16 @@ contract TaskContract {
 
 
     // Provider will call this when they are done and the data is available.
-    // This will invoke the validation stage
+    // This will invoke the validation stage but only when the request got enough validators
+    // that req could be moved from pool and marked,
+    // Or that req stays providing
     function completeRequest(uint256 reqID, uint64 resultID) public returns (bool) {
         // Confirm msg.sender is actually the provider of the task he claims
         if (msg.sender == requestList[reqID].provider) {
             //change request obj
             requestList[reqID].status = '2';    //validating
             requestList[reqID].resultID = resultID;
-            //move in pool
+            //move from providing pool to validating Pool.
             bool flag = false;
             flag = ArrayPop(providingPool, reqID);
             if(!flag) return false;
