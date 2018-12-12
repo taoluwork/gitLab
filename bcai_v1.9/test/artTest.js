@@ -71,7 +71,7 @@ contract("BCAI", function(accounts) {
                     [accounts[0]],
                     [accounts[9]],
                     [],
-                    [])
+                    )
                 
                 //check List update
                 //...
@@ -111,8 +111,8 @@ contract("BCAI", function(accounts) {
                 //checking pool
                 return checkingPool(myContract,
                     [],
-                    [],
-                    [],
+                    [accounts[9]],
+                    [accounts[8]],
                     )
                 .catch(console.log)
 

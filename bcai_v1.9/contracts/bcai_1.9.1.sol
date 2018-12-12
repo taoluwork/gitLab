@@ -185,7 +185,8 @@ contract TaskContract {
 
                         //update balanceList            addr here is requester's
                         balanceList[reqAddr] += requestList[reqAddr].price; 
-                                               
+
+                        providingPool.push(addr);                       
                         //status move from pending to providing
                         emit PairingInfo(reqAddr, addr, "Request Assigned");
                         return '0';                   
@@ -266,6 +267,7 @@ contract TaskContract {
                         //update balanceList              
                         balanceList[reqID] += requestList[reqID].price; 
 
+                        providingPool.push(reqID);
                         //EVENT
                         emit PairingInfo(reqID, addr, "Request Assigned"); // Let provider listen for this event to see he was selected
                         return '0';
