@@ -97,6 +97,7 @@ contract("BCAI", function(accounts) {
             //send a matching request
             return myContract.startRequest(2300,80,10000,31312,{from: accounts[8], value: 120000})  //ID target time  
             .then(function(ret){
+                console.log(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
                     //console.log(ev[0])
                     return ev.addr == accounts[8] && ev.info == web3.utils.asciiToHex('Request Added');
