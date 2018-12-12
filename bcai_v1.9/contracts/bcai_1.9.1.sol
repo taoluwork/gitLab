@@ -424,13 +424,13 @@ contract TaskContract {
         return requestCount;
     }
 */
-    function getProviderPool() public view returns (uint256[] memory){
+    function getProviderPool() public view returns (address payable [] memory){
         return providerPool;
     }
-    function getPendingPool() public view returns (uint256[] memory){
+    function getPendingPool() public view returns (address payable [] memory){
         return pendingPool;
     }
-    function getValidatingPool() public view returns (uint256[] memory){
+    function getValidatingPool() public view returns (address payable [] memory){
         return validatingPool;
     }
 
@@ -440,7 +440,8 @@ contract TaskContract {
     function getRequestPoolSize() public view returns (uint256){
         return pendingPool.length;
     }
-*/
+
+/*
     //function getBalance(address addr) public view returns (uint256){
     //    return balanceList[addr];
     //}
