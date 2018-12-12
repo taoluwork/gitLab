@@ -29,8 +29,7 @@ contract("BCAI", function(accounts) {
         return BCAI.deployed().then(function(myContract) {
             return myContract.startProviding(3000,100,8000,{from: accounts[0]})  //time target price  
             .then(function(ret){
-                totalGas += ret.receipt.gasUsed;
-                console.log("Gas = ", totalGas);
+                checkGas(ret);
                 //check the event using receipt
                 //truffleAssert.prettyPrintEmittedEvents(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
@@ -61,8 +60,7 @@ contract("BCAI", function(accounts) {
             //first send a no matching request, value == 0
             return myContract.startRequest(200,90,19,121515,{from: accounts[9]})  //time target price dataID  
             .then(function(ret){
-                totalGas += ret.receipt.gasUsed;
-                console.log("Gas = ", totalGas);
+                checkGas(ret);
                 //check the event using receipt
                 //truffleAssert.prettyPrintEmittedEvents(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
@@ -102,8 +100,7 @@ contract("BCAI", function(accounts) {
             //send a matching request
             return myContract.startRequest(2300,80,10000,31312,{from: accounts[8], value: 120000})  //ID target time  
             .then(function(ret){
-                totalGas += ret.receipt.gasUsed;
-                console.log("Gas = ", totalGas);
+                checkGas(ret);
                 
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
                     //console.log(ev[0])
@@ -421,4 +418,11 @@ function checkingPool(myContract, providers, pendPool, provPool, valiPool){
     //         assert.deepEqual(pool ,valiPool);
     //     })
     // })
+}
+
+
+function checkGas(ret){
+    totalGas += ret.receipt.gasUsed;
+    console.log("Gas used here = ", ret.receipt.gasUsed)
+    console.log("Total Gas = ", totalGas);
 }
