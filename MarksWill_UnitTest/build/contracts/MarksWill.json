@@ -63,14 +63,14 @@
       "type": "function"
     }
   ],
-  "bytecode": "0x606060405260405160608061021783398101604052808051906020019091908051906020019091908051906020019091905050826000819055508160018190555080600281905550346003819055505050506101b7806100606000396000f30060606040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680639f01f7ba14610051578063d8b6e79a1461008c575b600080fd5b341561005c57600080fd5b61007260048080359060200190919050506100d0565b604051808215151515815260200191505060405180910390f35b341561009757600080fd5b6100b6600480803590602001909190803590602001909190505061010a565b604051808215151515815260200191505060405180910390f35b60008054421180156100e3575060025482145b15610101573373ffffffffffffffffffffffffffffffffffffffff16ff5b60009050919050565b60008033905060015484148015610122575060025483145b801561012f575060005442105b1561017f578073ffffffffffffffffffffffffffffffffffffffff166108fc6003549081150290604051600060405180830381858888f19350505050151561017657600080fd5b60019150610184565b600091505b50929150505600a165627a7a72305820db2f9a50df8b490fcf1ee41ed406d1cdc842f012eb042e33c61a70c7179297f40029",
-  "deployedBytecode": "0x60606040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680639f01f7ba14610051578063d8b6e79a1461008c575b600080fd5b341561005c57600080fd5b61007260048080359060200190919050506100d0565b604051808215151515815260200191505060405180910390f35b341561009757600080fd5b6100b6600480803590602001909190803590602001909190505061010a565b604051808215151515815260200191505060405180910390f35b60008054421180156100e3575060025482145b15610101573373ffffffffffffffffffffffffffffffffffffffff16ff5b60009050919050565b60008033905060015484148015610122575060025483145b801561012f575060005442105b1561017f578073ffffffffffffffffffffffffffffffffffffffff166108fc6003549081150290604051600060405180830381858888f19350505050151561017657600080fd5b60019150610184565b600091505b50929150505600a165627a7a72305820db2f9a50df8b490fcf1ee41ed406d1cdc842f012eb042e33c61a70c7179297f40029",
-  "sourceMap": "205:1076:0:-;;;521:215;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;632:3;621:8;:14;;;;656:11;645:5;:22;;;;688:11;677:5;:22;;;;720:9;709:6;:20;;;;521:215;;;205:1076;;;;;;",
-  "deployedSourceMap": "205:1076:0:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1060:219;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;743:311;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1060:219;1115:4;1141:8;;1135:3;:14;:35;;;;;1165:5;;1153:8;:17;1135:35;1131:141;;;1199:10;1186:24;;;1131:141;1267:5;1260:12;;1060:219;;;:::o;743:311::-;820:4;836:18;857:10;836:31;;895:5;;880:11;:20;:44;;;;;919:5;;904:11;:20;880:44;:62;;;;;934:8;;928:3;:14;880:62;877:170;;;958:10;:19;;:27;978:6;;958:27;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1006:4;999:11;;;;877:170;1042:5;1035:12;;743:311;;;;;;:::o",
+  "bytecode": "0x608060405260405160608061023b833981018060405281019080805190602001909291908051906020019092919080519060200190929190505050826000819055508160018190555080600281905550346003819055505050506101d3806100686000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680639f01f7ba14610051578063d8b6e79a14610096575b600080fd5b34801561005d57600080fd5b5061007c600480360381019080803590602001909291905050506100e5565b604051808215151515815260200191505060405180910390f35b3480156100a257600080fd5b506100cb600480360381019080803590602001909291908035906020019092919050505061011f565b604051808215151515815260200191505060405180910390f35b60008054421180156100f8575060025482145b15610116573373ffffffffffffffffffffffffffffffffffffffff16ff5b60009050919050565b60008033905060015484148015610137575060025483145b8015610144575060005442105b1561019b578073ffffffffffffffffffffffffffffffffffffffff166108fc6003549081150290604051600060405180830381858888f19350505050158015610191573d6000803e3d6000fd5b50600191506101a0565b600091505b50929150505600a165627a7a7230582006fb0d82134b7fbb366d5e27395b8a5ebb759cf906b7e9d1bba9e96e1dd886f40029",
+  "deployedBytecode": "0x60806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680639f01f7ba14610051578063d8b6e79a14610096575b600080fd5b34801561005d57600080fd5b5061007c600480360381019080803590602001909291905050506100e5565b604051808215151515815260200191505060405180910390f35b3480156100a257600080fd5b506100cb600480360381019080803590602001909291908035906020019092919050505061011f565b604051808215151515815260200191505060405180910390f35b60008054421180156100f8575060025482145b15610116573373ffffffffffffffffffffffffffffffffffffffff16ff5b60009050919050565b60008033905060015484148015610137575060025483145b8015610144575060005442105b1561019b578073ffffffffffffffffffffffffffffffffffffffff166108fc6003549081150290604051600060405180830381858888f19350505050158015610191573d6000803e3d6000fd5b50600191506101a0565b600091505b50929150505600a165627a7a7230582006fb0d82134b7fbb366d5e27395b8a5ebb759cf906b7e9d1bba9e96e1dd886f40029",
+  "sourceMap": "205:1076:0:-;;;521:215;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;632:3;621:8;:14;;;;656:11;645:5;:22;;;;688:11;677:5;:22;;;;720:9;709:6;:20;;;;521:215;;;205:1076;;;;;;",
+  "deployedSourceMap": "205:1076:0:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1060:219;;8:9:-1;5:2;;;30:1;27;20:12;5:2;1060:219:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;743:311;;8:9:-1;5:2;;;30:1;27;20:12;5:2;743:311:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1060:219;1115:4;1141:8;;1135:3;:14;:35;;;;;1165:5;;1153:8;:17;1135:35;1131:141;;;1199:10;1186:24;;;1131:141;1267:5;1260:12;;1060:219;;;:::o;743:311::-;820:4;836:18;857:10;836:31;;895:5;;880:11;:20;:44;;;;;919:5;;904:11;:20;880:44;:62;;;;;934:8;;928:3;:14;880:62;877:170;;;958:10;:19;;:27;978:6;;958:27;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;958:27:0;1006:4;999:11;;;;877:170;1042:5;1035:12;;743:311;;;;;;:::o",
   "source": "/**************************************\nProject p1 for CS4700 Blockchain\nversion 2.0\nauthor list:\tTao Lu \tLandry Mathews\tMiles Vesper\n***************************************/\n\n\n\n\npragma solidity ^0.4.14;\n\ncontract MarksWill {\n    uint256 private deadline; //NOTE: this time is UNIX time, not human-readable. Mr.Mark, please use some online simple tools to generate the UNIX deadline timestamp.\n    uint256 private pwdp1;\n    uint256 private pwdp2;    //first and second part of password\n    uint256 private amount;\n\n\n    function MarksWill (uint256 ddl, uint256 password_p1, uint256 password_p2) public payable {\n        deadline = ddl;\n        pwdp1    = password_p1;\n        pwdp2    = password_p2;\n        amount   = msg.value;\n    }\n\n\n    function withDraw (uint256 password_p1, uint256 password_p2) public returns (bool) {\n        address withdrawer = msg.sender;\n        if(password_p1 == pwdp1 && password_p2 == pwdp2 && now < deadline) {\n            withdrawer.transfer(amount);\n            return true;\n        }\n        else return false;\n    }\n\n    function cancelWithdraw(uint password) public returns (bool) {\n        if (now > deadline && password == pwdp2) {\n            selfdestruct(msg.sender);\n            return true;\n        }\n        else return false;\n    }\n}\n",
-  "sourcePath": "/home/taurus/blockchain/will/contracts/MarksWill.sol",
+  "sourcePath": "/home/taurus/blockchain/gitLab/MarksWill_UnitTest/contracts/MarksWill.sol",
   "ast": {
-    "absolutePath": "/home/taurus/blockchain/will/contracts/MarksWill.sol",
+    "absolutePath": "/home/taurus/blockchain/gitLab/MarksWill_UnitTest/contracts/MarksWill.sol",
     "exportedSymbols": {
       "MarksWill": [
         101
@@ -382,7 +382,7 @@
                         "name": "msg",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 114,
+                        "referencedDeclaration": 173,
                         "src": "720:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
@@ -568,7 +568,7 @@
                       "name": "msg",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 114,
+                      "referencedDeclaration": 173,
                       "src": "857:3:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_magic_message",
@@ -732,7 +732,7 @@
                         "name": "now",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 116,
+                        "referencedDeclaration": 175,
                         "src": "928:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -1039,7 +1039,7 @@
                         "name": "now",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 116,
+                        "referencedDeclaration": 175,
                         "src": "1135:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -1164,7 +1164,7 @@
                                 "name": "msg",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 114,
+                                "referencedDeclaration": 173,
                                 "src": "1199:3:0",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_magic_message",
@@ -1197,7 +1197,7 @@
                             "name": "selfdestruct",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 120,
+                            "referencedDeclaration": 181,
                             "src": "1186:12:0",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_selfdestruct_nonpayable$_t_address_$returns$__$",
@@ -1340,7 +1340,7 @@
     "src": "179:1103:0"
   },
   "legacyAST": {
-    "absolutePath": "/home/taurus/blockchain/will/contracts/MarksWill.sol",
+    "absolutePath": "/home/taurus/blockchain/gitLab/MarksWill_UnitTest/contracts/MarksWill.sol",
     "exportedSymbols": {
       "MarksWill": [
         101
@@ -1652,7 +1652,7 @@
                         "name": "msg",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 114,
+                        "referencedDeclaration": 173,
                         "src": "720:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
@@ -1838,7 +1838,7 @@
                       "name": "msg",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 114,
+                      "referencedDeclaration": 173,
                       "src": "857:3:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_magic_message",
@@ -2002,7 +2002,7 @@
                         "name": "now",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 116,
+                        "referencedDeclaration": 175,
                         "src": "928:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -2309,7 +2309,7 @@
                         "name": "now",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 116,
+                        "referencedDeclaration": 175,
                         "src": "1135:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -2434,7 +2434,7 @@
                                 "name": "msg",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 114,
+                                "referencedDeclaration": 173,
                                 "src": "1199:3:0",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_magic_message",
@@ -2467,7 +2467,7 @@
                             "name": "selfdestruct",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 120,
+                            "referencedDeclaration": 181,
                             "src": "1186:12:0",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_selfdestruct_nonpayable$_t_address_$returns$__$",
@@ -2611,9 +2611,15 @@
   },
   "compiler": {
     "name": "solc",
-    "version": "0.4.21+commit.dfe3193c.Emscripten.clang"
+    "version": "0.4.24+commit.e67f0147.Emscripten.clang"
   },
   "networks": {
+    "512": {
+      "events": {},
+      "links": {},
+      "address": "0x8a35c4fbf1c0b90dfe26cc97085998a1e31b567c",
+      "transactionHash": "0x9a9633c273255a5a541fa744cef16100b8628971f4ae0bf555b94c84fadd81a9"
+    },
     "1523858970693": {
       "events": {},
       "links": {},
@@ -2633,6 +2639,6 @@
       "transactionHash": "0xbd4c267c6d84b3866aac92291f1d24286f430e176a9d2fa89d8698db1b50977f"
     }
   },
-  "schemaVersion": "2.0.0",
-  "updatedAt": "2018-09-26T19:25:57.344Z"
+  "schemaVersion": "2.0.1",
+  "updatedAt": "2018-12-12T16:51:10.274Z"
 }
