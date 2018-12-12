@@ -104,7 +104,7 @@ contract("BCAI", function(accounts) {
                 
                 truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
                     //console.log(ev[0])
-                    return ev.reqID == accounts[8] && ev.provID == accounts[0]
+                    return ev.req == accounts[8] && ev.prov == accounts[0]
                         && ev.info == "Request Assigned";
                 },"Pairing req1 => prov0 fail!");
 
