@@ -122,7 +122,7 @@ contract TaskContract {
 
     // Send a request from user to blockchain.
     // Assumes price is including the cost for verification
-    function requestTask(uint64 time, uint16 target, uint64 price, uint64 dataID) payable public returns (bool) {
+    function startRequest(uint64 time, uint16 target, uint64 price, uint64 dataID) payable public returns (bool) {
         //register on List
         requestList[msg.sender].reqID         = requestCount;
         requestList[msg.sender].blockNumber   = block.number;  
