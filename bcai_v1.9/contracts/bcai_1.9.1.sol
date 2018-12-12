@@ -267,7 +267,7 @@ contract TaskContract {
                         balanceList[reqID] += requestList[reqID].price; 
 
                         //EVENT
-                        emit PairingInfo(reqID, addr, "Request assigned"); // Let provider listen for this event to see he was selected
+                        emit PairingInfo(reqID, addr, "Request Assigned"); // Let provider listen for this event to see he was selected
                         return '0';
                     }
                 }
