@@ -27,7 +27,7 @@ contract("BCAI", function(accounts) {
     ///////////////////////////////////////////////////////////////////////////////
     it("Test Providing", function(){
         return BCAI.deployed().then(function(myContract) {
-            return myContract.startProviding(1000,100,8000,{from: accounts[0]})  //time target price  
+            return myContract.startProviding(3000,100,8000,{from: accounts[0]})  //time target price  
             .then(function(ret){
                 //check the event using receipt
                 //truffleAssert.prettyPrintEmittedEvents(ret);

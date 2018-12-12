@@ -139,7 +139,7 @@ contract TaskContract {
         //update count
         requestCount++;     
         
-        assignTask(msg.sender);
+        assignRequest(msg.sender);
         return true;
     }
 
@@ -241,7 +241,7 @@ contract TaskContract {
     //          1: searched all providers but find no match
     //          2: no available provider right now
     //          3: failure during poping pool
-    function assignTask(address payable reqID) private returns (byte) {
+    function assignRequest(address payable reqID) private returns (byte) {
         //provider availability is checked in pool not in list
         if (providerPool.length == 0)   return '2';
         else {            //if any provider in pool
