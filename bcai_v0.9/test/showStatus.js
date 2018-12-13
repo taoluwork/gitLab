@@ -144,7 +144,7 @@ function showPools(){		//optional [--list]
 			return valiPool;
 			})
 	}).then(function(valiPool){
-		if(argv['list'] && valiPool.length>0) return ListoutPool(valiPoolPool, 'request');
+		if(argv['list'] && valiPool.length>0) return ListoutPool(valiPool, 'request');
 	}).catch(function(err){
 		console.log("Error: show pool error! ", err);
 	})

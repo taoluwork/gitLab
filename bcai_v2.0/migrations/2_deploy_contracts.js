@@ -1,5 +1,8 @@
-var SimpleStorage = artifacts.require("./SimpleStorage.sol");
+var BCAI = artifacts.require("TaskContract");
+//cannot use .sol name
 
 module.exports = function(deployer) {
-  deployer.deploy(SimpleStorage);
-};
+    // deployment steps
+    deployer.deploy(BCAI);
+    
+}
