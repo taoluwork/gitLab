@@ -1,10 +1,11 @@
 ////////////////////////////////////////////////////////////////
 //user's js script
-//version: 1.9.1, compatable with sol v1.9.1
+//version: 1.9.2, compatable with sol v1.9.2
 //author: taurus tlu4@lsu.edu
 //use: $ node user.js --help
 /////////////////////////////////////////////////////////////////
-var version = "bcai_client v1.9.1     ----  by Taurus"
+var version = "bcai_client v1.9.2     ----  by Taurus"
+var networkID = 512;
 //get arguments from console
 var argv = require('minimist')(process.argv.slice(2));
 //argument example:
@@ -32,7 +33,7 @@ function init() {
 	Web3 = require('web3');
 	web3 = new Web3('ws://localhost:8545');
 	MyContract = require('../build/contracts/TaskContract.json');
-	myContract = new web3.eth.Contract(MyContract.abi, MyContract.networks[512].address);
+	myContract = new web3.eth.Contract(MyContract.abi, MyContract.networks[networkID].address);
 }
 
 ///////////////////////////////////////////////main
@@ -140,7 +141,8 @@ function showPools(){		//optional [--list]
 	})
 	
 }
-//[developed] [tested]
+/*
+//[developed] [tested] [deprecated]
 function ListAllProvidersInHistory(){
 	return myContract.methods.getProviderCount().call().then(function(totalCount){
 		//console.log("Total Request since start: ", totalCount);
@@ -150,30 +152,15 @@ function ListAllProvidersInHistory(){
 		return myContract.methods.listAllProviders().call().then(function(allproList){
 			if(allproList.length > 0) {
 				console.log("=====================================================");
-				//console.log("-----------------------------------------------------");
 				console.log("List all the Providers : <++     ", totalCount, " total in history")
 				DisplayNonZeroInList(allproList,'provider');
-				// for(var i = 0;i < allproList.length;i++){
-				// 	if(allproList[i]['addr'] != 0){
-				// 		if(argv['debug']){
-				// 			console.log("-----------------------------------------------------");
-				// 			console.log("##############: ", i,  allproList[i]);
-				// 		} else {
-				// 			//simple print:	
-				// 			console.log("-----------------------------------------------------");
-				// 			console.log("provID = ", allproList[i]['provID']);
-				// 			console.log("addr = ", allproList[i]['addr']);
-				// 			console.log("available = ", allproList[i]['available']);							
-				// 		}
-				// 	}
-				// }
+
 			}
 			else throw 'Get history provider list failed!'		
 		})
 	})
 }
 function ListAllRequestsInHistory(){
-	
 	return myContract.methods.getRequestCount().call().then(function(totalCount){
 		//console.log("Total Request since start: ", totalCount);
 		return totalCount;
@@ -182,7 +169,6 @@ function ListAllRequestsInHistory(){
 		return myContract.methods.listAllRequests().call().then(function(allReqList){
 			if(allReqList.length > 0) {
 				console.log("=====================================================");
-				//console.log("-----------------------------------------------------");	
 				console.log("List all the Requests : <++     ", totalCount, " total in history")
 				DisplayNonZeroInList(allReqList,'request');
 				// for(var i = 0;i < allReqList.length;i++){
@@ -205,6 +191,7 @@ function ListAllRequestsInHistory(){
 		})
 	})
 }
+*/
 /////////// Display helpers / format ////////////////////////////////////////////////////
 function PrintEvent(event){
 	if(argv['debug']){	
@@ -246,7 +233,7 @@ function DisplayNonZeroInList(List, type){
 					console.log("-----------------------------------------------------")
 				} else{
 					console.log("provD = ", List[i]['provID']);
-					console.log("addr = ", List[i]['addr']);
+					//console.log("addr = ", List[i]['addr']);
 					console.log("available = ", List[i]['available']);
 					console.log("-----------------------------------------------------")
 				}
@@ -268,7 +255,6 @@ function ListoutPool(Pool,type){		//--list [--debug]
 		return myContract.methods.listRequests(Pool).call()
 		.then(function(List){
 			console.log("-----------------------------------------------------")
-			console.log("listing request")
 			DisplayNonZeroInList(List,'request');
 		})
 	}

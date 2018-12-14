@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////
 // Unit test in truffle environment                                     //
-// version 1.9.1                                                        //  
-// Align with sol 1.9.1, independent with client version                //
+// version 1.9.2                                                        //  
+// Align with sol 1.9.2, independent with client version                //
 // Author: Taurus tlu4@lsu.edu                                          //  
 //////////////////////////////////////////////////////////////////////////
 
@@ -12,9 +12,9 @@ var BCAI = artifacts.require("TaskContract");
 //npm install -g truffle-assertions
 const truffleAssert = require('truffle-assertions');
 //npm install -g bignumber.js
-var BigNumber = require('bignumber.js') //not used use web3.utils.BN [important]
+//var BigNumber = require('bignumber.js') //not used use web3.utils.BN [important]
 //handle the BN is essential
-var BN = web3.utils.toBN;
+//var BN = web3.utils.toBN;
 var totalGas = 0;
 var showGas = true;
 
@@ -110,7 +110,7 @@ contract("BCAI", function(accounts) {
                 
                 truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
                     //console.log(ev[0])
-                    return ev.req == accounts[8] && ev.prov == accounts[0]
+                    return ev.reqAddr == accounts[8] && ev.provAddr == accounts[0]
                         && ev.info == web3.utils.asciiToHex("Request Assigned");
                 },"Pairing req1 => prov0 fail!");
 
@@ -242,7 +242,7 @@ contract("BCAI", function(accounts) {
                         return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Request Added');
                     },'Request event mismatch');
                     truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
-                        return ev.req == accounts[7] && ev.prov == accounts[1] &&
+                        return ev.reqAddr == accounts[7] && ev.provAddr == accounts[1] &&
                             ev.info == web3.utils.asciiToHex("Request Assigned");
                     },"Pairing req#2 => prov#1 fail!");
 
@@ -268,7 +268,7 @@ contract("BCAI", function(accounts) {
                     },'Submit Complete computation req#2 fail');
                     truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
                         //console.log(ev)
-                        return ev.req == accounts[7] && ev.prov == accounts[2] 
+                        return ev.reqAddr == accounts[7] && ev.provAddr == accounts[2] 
                         && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
                     },'validator assignment fail');
                     truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
@@ -300,7 +300,7 @@ contract("BCAI", function(accounts) {
                 checkGas(ret);
                 truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
                     //console.log(ev[0])
-                    return ev.req == accounts[7] && ev.prov == accounts[2]
+                    return ev.reqAddr == accounts[7] && ev.provAddr == accounts[2]
                         && ev.info == web3.utils.asciiToHex('Validator Signed');
                 },'Validator submit signature fail');
                 // no autoValidation for now
