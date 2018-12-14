@@ -171,9 +171,9 @@ contract TaskContract {
             for (uint64 i = 0; i < pendingPool.length; i++){
                 //save the re-usable reqID , may save gas
                 address payable reqAddr = pendingPool[i];    
-                if( requestList[reqAddr].time     < providerList[addr].maxTime &&
-                    requestList[reqAddr].target   < providerList[addr].maxTarget &&
-                    requestList[reqAddr].price    > providerList[addr].minPrice){
+                if( requestList[reqAddr].time     <= providerList[addr].maxTime &&
+                    requestList[reqAddr].target   <= providerList[addr].maxTarget &&
+                    requestList[reqAddr].price    >= providerList[addr].minPrice){
                         //meet the requirement, assign the task
                         //update provider
                         providerList[addr].available = false;
@@ -187,7 +187,7 @@ contract TaskContract {
                         //update balanceList            addr here is requester's
                         balanceList[reqAddr] += requestList[reqAddr].price; 
 
-                        providingPool.push(addr);                       
+                        providingPool.push(reqAddr);                       
                         //status move from pending to providing
                         emit PairingInfo(reqAddr, addr, "Request Assigned");
                         return '0';                   
@@ -487,18 +487,18 @@ contract TaskContract {
         return pendingPool.length;
     }
 
-/*
+
     //function getBalance(address addr) public view returns (uint256){
     //    return balanceList[addr];
     //}
-    function listRequests(uint256[] memory IDList) public view returns(Request[50] memory){
+    function listRequests(address payable[] memory IDList) public view returns(Request[50] memory){
 	    Request[50] memory allRequest;
 	    for (uint64 i = 0; i < IDList.length; i++){
 		    allRequest[i] = getRequest(IDList[i]);
 	    }
 	    return allRequest;
     }
-    function listProviders(uint256[] memory IDList) public view returns(Provider[50] memory){
+    function listProviders(address payable[] memory IDList) public view returns(Provider[50] memory){
         Provider[50] memory allProvider;
         //address addr;
         for (uint64 i = 0; i < IDList.length;i++){
@@ -506,7 +506,7 @@ contract TaskContract {
         }
         return allProvider;
     }
-    function listAllRequests() public view returns(Request[50] memory){
+/*    function listAllRequests() public view returns(Request[50] memory){
 	    Request[50] memory allRequest;
 	    for (uint64 i = 0; i < requestCount; i++){
 		    allRequest[i] = getRequest(i);
