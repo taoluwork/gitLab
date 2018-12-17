@@ -236,7 +236,7 @@ contract("BCAI", function(accounts) {
             })
             // add a new request#2, assigned to prov#1
             .then(function(){
-                return myContract.startRequest(1215125,20,90,{from: accounts[9], value: 80000})  //ID target time  
+                return myContract.startRequest(80,30,12000,1215125,{from: accounts[9], value: 80000})  //ID target time  
                 .then(function(ret){
                     checkGas(ret);
                     truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
