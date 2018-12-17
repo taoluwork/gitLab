@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////
 // Unit test in truffle environment                                     //
-// version 0.9.4                                                        //  
-// Align with sol 0.9.4, independent with client version                //
+// version 0.9.5                                                        //  
+// Align with sol 0.9.5, independent with client version                //
 // Author: Taurus tlu4@lsu.edu                                          //  
 //////////////////////////////////////////////////////////////////////////
 
@@ -12,19 +12,16 @@ var BCAI = artifacts.require("TaskContract");
 //npm install -g truffle-assertions
 const truffleAssert = require('truffle-assertions');
 //npm install -g bignumber.js
-var BigNumber = require('bignumber.js') //not used use web3.utils.BN [important]
+//var BigNumber = require('bignumber.js') //not used use web3.utils.BN [important]
 //handle the BN is essential
 var BN = web3.utils.toBN;
-var pendingPool = [];
-var providingPool = [];
-var validationPool = [];
 var totalGas = 0; 
 var showGas = true;
 
 
 
 contract("BCAI", function(accounts) {
-
+    ///////////////////////////////////////////////////////////////////////////////
     it("Contract Deploymnet", function(){
         console.log(accounts);
         if(accounts != undefined) return true;
@@ -33,9 +30,9 @@ contract("BCAI", function(accounts) {
     ///////////////////////////////////////////////////////////////////////////////
     it("Test Providing", function(){
         return BCAI.deployed().then(function(myContract) {
-            return myContract.startProviding(100,100,100,{from: accounts[0]})  //time target price  
+            return myContract.startProviding(1000,99,12000,{from: accounts[0]})  //time target price  
             .then(function(ret){
-                checkGas(ret);
+                checkGas(ret);      //record the gas usage
                 //check the event using receipt
                 //truffleAssert.prettyPrintEmittedEvents(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
@@ -57,13 +54,14 @@ contract("BCAI", function(accounts) {
     })
 
     /////////////////////////////////////////////////////////////////////////////////
-    // send a request which will not be matched, thus appear in pool
+    // send a request which will NOT be matched (low price), thus appear in pool
     // test stop and update on this and send a new for next stage test.
     ////////////////////////////////////////////////////////////////////////////
     it("Test Request", function(){
         return BCAI.deployed().then(function(myContract) {
             //first send a no matching request, value == 0
-            return myContract.startRequest(1215125,200,100,{from: accounts[9]})  //ID target time  
+            return myContract.startRequest(200,80,20,1215124,    //time target price, ID
+                    {from: accounts[9], value: 20, gas:200000})                    //account  
             .then(function(ret){
                 checkGas(ret);
                 //check the event using receipt
@@ -103,7 +101,8 @@ contract("BCAI", function(accounts) {
     it("Test Task Assignment", function(){
         return BCAI.deployed().then(function(myContract) {
             //send a matching request
-            return myContract.startRequest(1215125,20,90,{from: accounts[9], value: 12000})  //ID target time  
+            return myContract.startRequest(800,80,20000, 12512412,      //time target price ID
+                {from: accounts[9], value: 15000, gas: 200000})  //ID target time  
             .then(function(ret){
                 checkGas(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
@@ -140,7 +139,7 @@ contract("BCAI", function(accounts) {
             return myContract.completeRequest(1,12516136,{from: accounts[0]})  //reqID resultID  
             .then(function(ret){
                 checkGas(ret);
-                truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                     //console.log(ev[0])
                     return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Request Computation Completed');
                 },'Submit computation result fail');
@@ -178,9 +177,9 @@ contract("BCAI", function(accounts) {
             return myContract.validateRequest(1,{from: accounts[0]})  //reqID resultID  
             .then(function(ret){
                 checkGas(ret);
-                truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                     //console.log(ev)
-                    return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Not enough validators');
+                    return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Not Enough validators');
                 },'Submit validation fail');
                 // no autoValidation for now
 
@@ -245,7 +244,7 @@ contract("BCAI", function(accounts) {
                     },'Request event mismatch');
                     truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
                         return ev.reqID == 2 && ev.provID == 1 &&
-                            ev.info == web3.utils.asciiToHex("Request assigned to Provider");
+                            ev.info == web3.utils.asciiToHex("Request Assigned to Provider");
                     },"Pairing req#2 => prov#1 fail!");
 
                     //check pool update
@@ -264,7 +263,7 @@ contract("BCAI", function(accounts) {
                 return myContract.completeRequest(2,1225135,{from: accounts[1]})  //reqID resultID  
                 .then(function(ret){
                     checkGas(ret);
-                    truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                    truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                         //console.log(ev)
                         return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Request Computation Completed');
                     },'Submit Complete computation req#2 fail');
@@ -273,7 +272,7 @@ contract("BCAI", function(accounts) {
                         return ev.reqID == 2 && ev.provID == 2 
                         && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
                     },'validator assignment fail');
-                    truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                    truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                         //console.log(ev)
                         return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Enough validators');
                     },'get enough validator fail');
@@ -337,7 +336,7 @@ contract("BCAI", function(accounts) {
             return myContract.checkValidation(2,{from: accounts[0]})  //reqID resultID  
             .then(function(ret){
                 checkGas(ret);
-                truffleAssert.eventEmitted(ret,'UpdateInfo',  (ev)=>{
+                truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                     //console.log(ev[0])
                     return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Validation Complete');
                 },'Validator final check fail');
