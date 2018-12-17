@@ -272,7 +272,7 @@ function workerFireMessage(){
 /////////////////////Conditional Display/////////////////////////////////////////////////////////
 //list only active pool linked the current account , called by --my
 function RequestOnlyMy(myAccount){
-    return myContract.methods.getRequestPool().call().then(function(pool){
+    return myContract.methods.getPendingPooll().call().then(function(pool){
         console.log("Active Request count = ",pool.length);
         console.log("Active Request Pool: ");
         console.log(pool);
@@ -316,7 +316,7 @@ function PoolRequests (){
         console.log("-----------------------------------------------------");
         console.log("Total Request since start = ", totalCount);
     }).then(function(){	        
-        return myContract.methods.getRequestPool().call().then(function(pool){             
+        return myContract.methods.getPendingPooll().call().then(function(pool){             
             console.log("Active Request pool: total = ", pool.length);
             console.log(pool);
             return pool;
@@ -356,7 +356,7 @@ function LatestRequest(){
     })
     .then(function(totalCount){
         //get Request pool     
-        return myContract.methods.getRequestPool().call().then(function(pool){
+        return myContract.methods.getPendingPooll().call().then(function(pool){
             console.log("Active Request count = ",pool.length);
             console.log("Request Pool: ");
             console.log(pool); 
@@ -431,7 +431,13 @@ function AllProviders(){
 //////////////////////display helpers all here//////////////////////////////////////////////////////
 function DisplayRequest(reqID){
     myContract.methods.getRequest(reqID).call().then(function(result){
-        console.log(result);
+        if(argv['debug']) console.log(result);
+        else {
+            console.log("reqID = ",   result['reqID']);
+			console.log("addr = ",    result['addr']);
+			console.log("provider = ", result['provider']);
+			console.log("status = ",   result['status']);
+        }
     })
 }
 function PrintEvent(event){

@@ -214,7 +214,7 @@ function DisplayNonZeroInList(List, type){
 					console.log(List[i]);
 					console.log("-----------------------------------------------------")
 				} else{
-					console.log("provD = ", List[i]['provID']);
+					console.log("provID = ", List[i]['provID']);
 					console.log("addr = ", List[i]['addr']);
 					console.log("available = ", List[i]['available']);
 					console.log("-----------------------------------------------------")
