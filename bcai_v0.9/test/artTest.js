@@ -30,7 +30,7 @@ contract("BCAI", function(accounts) {
     ///////////////////////////////////////////////////////////////////////////////
     it("Test Providing", function(){
         return BCAI.deployed().then(function(myContract) {
-            return myContract.startProviding(1000,99,12000,{from: accounts[0]})  //time target price  
+            return myContract.startProviding(1000,99,12000,{from: accounts[0], gas:200000})  //time target price  
             .then(function(ret){
                 checkGas(ret);      //record the gas usage
                 //check the event using receipt
@@ -413,7 +413,7 @@ function checkingPool(myContract, providers, pendPool, provPool, valiPool){
         assert.deepEqual(providers, pool);
     })
     .then(function(){    
-        return myContract.getRequestPool.call().then(function(pool){
+        return myContract.getPendingPool.call().then(function(pool){
         //console.log(pool);
         //expect(pool).deep.equal(pendPool);
         assert.deepEqual(pendPool, pool);
