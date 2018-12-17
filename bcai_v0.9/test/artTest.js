@@ -61,7 +61,7 @@ contract("BCAI", function(accounts) {
         return BCAI.deployed().then(function(myContract) {
             //first send a no matching request, value == 0
             return myContract.startRequest(200,80,20,1215124,    //time target price, ID
-                    {from: accounts[9], value: 20, gas:200000})                    //account  
+                    {from: accounts[9], value: 20, gas:400000})                    //account  
             .then(function(ret){
                 checkGas(ret);
                 //check the event using receipt
@@ -102,7 +102,7 @@ contract("BCAI", function(accounts) {
         return BCAI.deployed().then(function(myContract) {
             //send a matching request
             return myContract.startRequest(800,80,20000, 12512412,      //time target price ID
-                {from: accounts[9], value: 15000, gas: 200000})  //ID target time  
+                {from: accounts[9], value: 15000, gas: 400000})  //ID target time  
             .then(function(ret){
                 checkGas(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
