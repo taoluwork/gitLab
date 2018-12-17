@@ -179,7 +179,7 @@ contract("BCAI", function(accounts) {
                 checkGas(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                     //console.log(ev)
-                    return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Not Enough validators');
+                    return ev.ID == 1 && ev.info == web3.utils.asciiToHex('Not Enough Validators');
                 },'Submit validation fail');
                 // no autoValidation for now
 
