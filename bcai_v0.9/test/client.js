@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////////
 //client's js app, combined --user mode and --worker mode
-//version: 0.9.4
+//version: 0.9.5
 //author: taurus tlu4@lsu.edu
 //use: $ node client.js --help --version
 /////////////////////////////////////////////////////////////////
-const version = "bcai_client v0.9.4     ----  by Taurus"
+const version = "bcai_client v0.9.5     ----  by Taurus"
 const NetworkID = 512;
 //NOTE: combine user and worker client together switch using --user, --worker
 //Avoid using version earlier than 0.9.2
@@ -12,11 +12,11 @@ const NetworkID = 512;
 //edit default parameter here:
 var dataID = 31415926;
 var target = 90;            //must < workders maxTarget
-var time = 90000;           //must < worker's maxTime
-var money = 800000;         //must > worker's minPrice
-var maxTime = 100000;
+var time = 9000;           //must < worker's maxTime
+var price = 80000;         //must > worker's minPrice
+var maxTime = 10000;
 var maxTarget = 99;
-var minPrice = 500000;
+var minPrice = 50000;
 var mode;                   // = 'user';      //default mode: no
 var myAccount;              // default set below
 ////////////////////////////////////////////////////////////////////
@@ -63,7 +63,7 @@ else {
 if(mode == 'user'){
     if(argv['t'] != undefined) time = argv['t'];
     if(argv['T'] != undefined) target = argv['T'];
-    if(argv['p'] != undefined) money = argv['p']; 
+    if(argv['p'] != undefined) price = argv['p']; 
 }
 else if(mode == 'worker'){
     if(argv['t'] != undefined) maxTime = argv['t'];
@@ -123,17 +123,17 @@ web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
         else if(mode == 'worker')   AllProviders();
     }
     else if (argv['my']){           //display my info
-        if(mode == 'user')  RequestOnlyMy(myAccount);
-        else if(mode == 'worker') ProviderOnlyMy(myAccount);
+        if(mode == 'user')          RequestOnlyMy(myAccount);
+        else if(mode == 'worker')   ProviderOnlyMy(myAccount);
     }
     else if (argv['view']){
         console.log(accounts);      //only view, no change
-        if (mode == 'user') PoolRequests();
-        if (mode == 'worker') PoolProviders();
+        if (mode == 'user')         PoolRequests();
+        if (mode == 'worker')       PoolProviders();
     }
     else {                          //real state change
-        if (mode == 'user') userFireMessage();
-        else if (mode =='worker') workerFireMessage();
+        if (mode == 'user')         userFireMessage();
+        else if (mode =='worker')   workerFireMessage();
     }
 })
 .then(function(){                   //subcribe and monitor the events  
@@ -178,10 +178,10 @@ function userFireMessage(){
     else if(argv['u'] != undefined) {                              // call updateProviding
         //TODO: [Important] update request need refund 
         myContract.methods.updateRequest(time, target, argv['u'])
-        .send({from: myAccount, gas: 200000, value: money})
+        .send({from: myAccount, gas: 200000, value: price})
         .then(function(ret){
             console.log("Update request: Block = ", ret.blockNumber);
-            console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
+            console.log("Using parameters: time = ",time,", target = ",target,", price = ",price);
             console.log("-----------------------------------------------------------------");
             if(argv['recpt']) console.log("Receipt :    <<====####  ", ret);
             if(ret.events['SystemInfo'] == undefined) throw 'Update Request failed!'
@@ -192,11 +192,11 @@ function userFireMessage(){
         })
     }
     else {        //submit a request
-        myContract.methods.startRequest(dataID, target, time)
-        .send({from: myAccount, gas: 80000000, value: money})
+        myContract.methods.startRequest(time, target, price, dataID)
+        .send({from: myAccount, gas: 800000, value: price})
         .then(function(ret){                                                        //handle the receipt
             //console.log("-----------------------------------------------------------------")
-            console.log("Using parameters: time = ",time,", target = ",target,", price = ",money);
+            console.log("Using parameters: time = ",time,", target = ",target,", price = ",price);
             console.log("Request Submitted! Block: ",ret.blockNumber);
             console.log("-----------------------------------------------------------------")
             if(argv['recpt'])  console.log("Receipt:    <=====######", ret);
