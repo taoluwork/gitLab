@@ -274,7 +274,7 @@ contract("BCAI", function(accounts) {
                     },'validator assignment fail');
                     truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                         //console.log(ev)
-                        return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Enough validators');
+                        return ev.ID == 2 && ev.info == web3.utils.asciiToHex('Enough Validators');
                     },'get enough validator fail');
                     //checking pool
                     return checkingPool(myContract,
