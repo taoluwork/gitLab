@@ -178,7 +178,7 @@ contract("BCAI", function(accounts) {
                 checkGas(ret);
                 truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                     //console.log(ev)
-                    return ev.addr == accounts[8] && ev.info == web3.utils.asciiToHex('Not enough validators');
+                    return ev.addr == accounts[8] && ev.info == web3.utils.asciiToHex('Not Enough Validators');
                 },'Submit validation fail');
                 // no autoValidation for now
 
@@ -273,7 +273,7 @@ contract("BCAI", function(accounts) {
                     },'validator assignment fail');
                     truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                         //console.log(ev)
-                        return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Enough validators');
+                        return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Enough Validators');
                     },'get enough validator fail');
                     //checking pool
                     return checkingPool(myContract,

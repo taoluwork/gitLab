@@ -21,8 +21,6 @@ contract TaskContract {
     uint256 private providerCount;                       //+1 each time
     uint256 private requestCount;
 
-    
-
     constructor() public {                               //sol 5.0 syntax
         providerCount = 0;
         requestCount = 0;
@@ -303,14 +301,14 @@ contract TaskContract {
                 continue;
             }
             else{       //enough validator
-                emit SystemInfo(reqAddr, 'Enough validators');
+                emit SystemInfo(reqAddr, 'Enough Validators');
                 return true;
                 break;
             }
             //loop until certain # of validators selected
         }   
         //exit loop without enough validators    
-        emit SystemInfo(reqAddr, 'Not enough validators');
+        emit SystemInfo(reqAddr, 'Not Enough Validators');
     }
 
     // needs to be more secure by ensuring the submission is coming from someone legit 

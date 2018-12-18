@@ -180,7 +180,7 @@ contract TaskContract {
         flag = ArrayPop(pendingPool,reqID);                 // pop first  
         if(flag && requestList[reqID].status == '0'         //can only update pending request
         && requestList[reqID].addr == msg.sender){          //you cannot modify other's config
-            requestList[reqID].blockNumber    = block.number;         
+            requestList[reqID].blockNumber = block.number;         
             requestList[reqID].time        = time;       
             requestList[reqID].target      = target;
             requestList[reqID].price       = msg.value;                         
@@ -207,9 +207,9 @@ contract TaskContract {
             for (uint64 i = 0; i < pendingPool.length; i++){
                 //save the re-usable reqID , may save gas
                 uint256 reqID = pendingPool[i]; //
-                if( requestList[reqID].time     < providerList[provID].maxTime &&
-                    requestList[reqID].target   < providerList[provID].maxTarget &&
-                    requestList[reqID].price    > providerList[provID].minPrice)
+                if( requestList[reqID].time     <= providerList[provID].maxTime &&
+                    requestList[reqID].target   <= providerList[provID].maxTarget &&
+                    requestList[reqID].price    >= providerList[provID].minPrice)
                     return assign(reqID, provID);         //emit here btw       
             }
             //after for loop and no match
@@ -231,9 +231,9 @@ contract TaskContract {
             for (uint64 i = 0; i < providerPool.length; i++) {
                 // save the provider's addr, reusable and save gas cost
                 uint256 provID  = providerPool[i];
-                if( requestList[reqID].time     < providerList[provID].maxTime &&
-                    requestList[reqID].target   < providerList[provID].maxTarget &&
-                    requestList[reqID].price    > providerList[provID].minPrice)
+                if( requestList[reqID].time     <= providerList[provID].maxTime &&
+                    requestList[reqID].target   <=providerList[provID].maxTarget &&
+                    requestList[reqID].price    >= providerList[provID].minPrice)
                     return assign(reqID, provID);   //emit here btw
             }
             // No provider was found matching the criteria -- request failed
