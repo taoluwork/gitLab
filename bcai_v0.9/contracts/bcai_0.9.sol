@@ -509,6 +509,7 @@ contract TaskContract {
     function getPendingPoolSize() public view returns (uint256){
         return pendingPool.length;
     }
+    
     //function getBalance(address addr) public view returns (uint256){
     //    return balanceList[addr];
     //}
