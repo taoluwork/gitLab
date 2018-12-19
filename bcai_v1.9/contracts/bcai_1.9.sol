@@ -453,25 +453,6 @@ contract TaskContract {
 	    }
 	    return allProvider;
     }
-    function listProviders() public view returns(Provider[50] memory){
-        Provider[50] memory allProvider;
-        //address addr;
-        for (uint64 i = 0; i < providerCount;i++){
-            if(providerPool.length > 0) {
-                addr = providerPool[i];     
-            }else {
-                addr = address(0);
-            }
-            allProvider[i] = getProvider(i);
-        }
-        return allProvider;
-    }
-    /*function listTestProviders() public view returns(Provider[3] memory){
-        Provider[3] memory allProvider;
-        for (uint64 i = 0; i < 3;i++){
-            allProvider[i] = getTestProvider(i);
-        }
-        return allProvider;
-    }*/
+*/
 
 }
