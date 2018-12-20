@@ -1,10 +1,11 @@
 ////////////////////////////////////////////////////////////////
 //user's js script
-//version: 0.9.4
+//version: 1.9.2, compatable with sol v1.9.2
 //author: taurus tlu4@lsu.edu
 //use: $ node user.js --help
 /////////////////////////////////////////////////////////////////
-var version = "bcai_client v0.9.4     ----  by Taurus"
+var version = "bcai_client v1.9.2     ----  by Taurus"
+var networkID = 512;
 //get arguments from console
 var argv = require('minimist')(process.argv.slice(2));
 //argument example:
@@ -32,7 +33,7 @@ function init() {
 	Web3 = require('web3');
 	web3 = new Web3('ws://localhost:8545');
 	MyContract = require('../build/contracts/TaskContract.json');
-	myContract = new web3.eth.Contract(MyContract.abi, MyContract.networks[512].address);
+	myContract = new web3.eth.Contract(MyContract.abi, MyContract.networks[networkID].address);
 }
 
 ///////////////////////////////////////////////main
@@ -53,15 +54,6 @@ web3.eth.getAccounts()
 		if(err) console.log(err);
 	}).on('data', function(event){
 		PrintEvent(event);
-	})
-	
-	myContract.events.UpdateInfo({
-		fromBLock: 0,
-		toBlock: 'latest'
-	}, function(err, event){
-		if(err) console.log(err);
-	}).on('data', function(event){
-		PrintEvent(event);		
 	})
 
 	myContract.events.PairingInfo({
@@ -97,7 +89,6 @@ function showCurrentStatus(myAccounts){
 }
 function showStatics(){		//called yb showCurrentStatus
 	return myContract.methods.getRequestCount().call().then(function(totalCount){
-		//console.log("=======================================================   <- updated!");
 		console.log("Total Request since start: ", totalCount);
 	}).then(function(){
 		return myContract.methods.getProviderCount().call().then(function(totalCount){
@@ -119,7 +110,7 @@ function showPools(){		//optional [--list]
 	}).then(function(provPool){
 		if(argv['list'] && provPool.length >0) return ListoutPool(provPool,'provider');
 	}).then(function(){
-		return myContract.methods.getRequestPool().call().then(function(reqPool){
+		return myContract.methods.getPendingPool().call().then(function(reqPool){
 			console.log("=======================================================")
 			console.log("Pending pool:  Total = ", reqPool.length);
 			console.log(reqPool);
@@ -135,7 +126,7 @@ function showPools(){		//optional [--list]
 			return providingPool;
 		})
 	}).then(function(providingPool){
-		if(argv['list'] && providingPool.length>0) return ListoutPool(providingPool, 'request');
+		if(argv['list'] && providingPool.length>0)  return ListoutPool(providingPool, 'request');
 	}).then(function(){
 		return myContract.methods.getValidatingPool().call().then(function(valiPool){
 			console.log("=======================================================")
@@ -150,7 +141,8 @@ function showPools(){		//optional [--list]
 	})
 	
 }
-//[developed] [tested]
+/*
+//[developed] [tested] [deprecated]
 function ListAllProvidersInHistory(){
 	return myContract.methods.getProviderCount().call().then(function(totalCount){
 		//console.log("Total Request since start: ", totalCount);
@@ -160,30 +152,15 @@ function ListAllProvidersInHistory(){
 		return myContract.methods.listAllProviders().call().then(function(allproList){
 			if(allproList.length > 0) {
 				console.log("=====================================================");
-				//console.log("-----------------------------------------------------");
 				console.log("List all the Providers : <++     ", totalCount, " total in history")
 				DisplayNonZeroInList(allproList,'provider');
-				// for(var i = 0;i < allproList.length;i++){
-				// 	if(allproList[i]['addr'] != 0){
-				// 		if(argv['debug']){
-				// 			console.log("-----------------------------------------------------");
-				// 			console.log("##############: ", i,  allproList[i]);
-				// 		} else {
-				// 			//simple print:	
-				// 			console.log("-----------------------------------------------------");
-				// 			console.log("provID = ", allproList[i]['provID']);
-				// 			console.log("addr = ", allproList[i]['addr']);
-				// 			console.log("available = ", allproList[i]['available']);							
-				// 		}
-				// 	}
-				// }
+
 			}
 			else throw 'Get history provider list failed!'		
 		})
 	})
 }
 function ListAllRequestsInHistory(){
-	
 	return myContract.methods.getRequestCount().call().then(function(totalCount){
 		//console.log("Total Request since start: ", totalCount);
 		return totalCount;
@@ -192,7 +169,6 @@ function ListAllRequestsInHistory(){
 		return myContract.methods.listAllRequests().call().then(function(allReqList){
 			if(allReqList.length > 0) {
 				console.log("=====================================================");
-				//console.log("-----------------------------------------------------");	
 				console.log("List all the Requests : <++     ", totalCount, " total in history")
 				DisplayNonZeroInList(allReqList,'request');
 				// for(var i = 0;i < allReqList.length;i++){
@@ -215,6 +191,7 @@ function ListAllRequestsInHistory(){
 		})
 	})
 }
+*/
 /////////// Display helpers / format ////////////////////////////////////////////////////
 function PrintEvent(event){
 	if(argv['debug']){	
@@ -225,25 +202,23 @@ function PrintEvent(event){
 		console.log("=======================================================  <- Event!");
 		console.log(event.event, "  ==>  ", event.blockNumber);
 		if(event.event == 'SystemInfo')
-			console.log("Event: ", web3.utils.hexToAscii(event.returnValues[2]));
-		else if(event.event == 'UpdateInfo')
 			console.log("Event: ", web3.utils.hexToAscii(event.returnValues[1]));
 		else if (event.event == 'PairingInfo')
-			console.log("Event: ", web3.utils.hexToAscii(event.returnValues[4]));
+			console.log("Event: ", web3.utils.hexToAscii(event.returnValues[2]));
 		console.log(event.returnValues);
 	}
 }
 function DisplayNonZeroInList(List, type){
 	if(type == 'request')
 		for(var i = 0;i < List.length;i++){
-			if(List[i]['addr'] != 0){
+			//console.log("status",List[i]['status'])
+			if(List[i]['status'] != 0x00){
 				if(argv['debug']){
 					console.log(List[i]);
 					console.log("-----------------------------------------------------")
 				} else {
 					//simple print:
 					console.log("reqID = ", List[i]['reqID']);
-					console.log("addr = ", List[i]['addr']);
 					console.log("provider = ", List[i]['provider']);
 					console.log("status = ",  List[i]['status']);
 					console.log("-----------------------------------------------------")							
@@ -252,13 +227,13 @@ function DisplayNonZeroInList(List, type){
 		}
 	else if (type == 'provider')
 		for (var i = 0;i < List.length ;i++){
-			if(List[i]['addr'] != 0){
+			if(List[i]['available'] != false){
 				if(argv['debug']){
 					console.log(List[i]);
 					console.log("-----------------------------------------------------")
 				} else{
 					console.log("provD = ", List[i]['provID']);
-					console.log("addr = ", List[i]['addr']);
+					//console.log("addr = ", List[i]['addr']);
 					console.log("available = ", List[i]['available']);
 					console.log("-----------------------------------------------------")
 				}
@@ -278,9 +253,9 @@ function ListoutPool(Pool,type){		//--list [--debug]
 	}
 	else if (type == 'request'){
 		return myContract.methods.listRequests(Pool).call()
-		.then(function(pendList){
+		.then(function(List){
 			console.log("-----------------------------------------------------")
-			DisplayNonZeroInList(pendList,'request');
+			DisplayNonZeroInList(List,'request');
 		})
 	}
 	else throw "Not supported type!"
