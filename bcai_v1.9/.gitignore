@@ -3,6 +3,7 @@
 # dependencies
 /node_modules
 /test/node_modules
+/build/contracts
 /.pnp
 .pnp.js
 

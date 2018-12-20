@@ -3,8 +3,9 @@
 # dependencies
 /node_modules
 /test/node_modules
-/.pnp
-.pnp.js
+/build/contracts
+
+
 
 # testing
 /coverage
