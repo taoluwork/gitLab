@@ -7,7 +7,7 @@ Use this folder:
 
 bcai_v* are design folders for project BCAI.
 
-metaCoin, petShop are original example from Truffle suite
+metaCoin, petShop are original example from Truffle suite.
 payroll is an example desiged by Tao to practise and understand solidity syntax.
 MarksWill* is example from LSU Blockchain course using solidity, truffle and webpack as frontend.
 eventTest is an simple example to test how to interact with EVENTS.
