@@ -272,7 +272,7 @@ function workerFireMessage(){
 /////////////////////Conditional Display/////////////////////////////////////////////////////////
 //list only active pool linked the current account , called by --my
 function RequestOnlyMy(myAccount){
-    return myContract.methods.getPendingPooll().call().then(function(pool){
+    return myContract.methods.getPendingPool().call().then(function(pool){
         console.log("Active Request count = ",pool.length);
         console.log("Active Request Pool: ");
         console.log(pool);
@@ -316,7 +316,7 @@ function PoolRequests (){
         console.log("-----------------------------------------------------");
         console.log("Total Request since start = ", totalCount);
     }).then(function(){	        
-        return myContract.methods.getPendingPooll().call().then(function(pool){             
+        return myContract.methods.getPendingPool().call().then(function(pool){             
             console.log("Active Request pool: total = ", pool.length);
             console.log(pool);
             return pool;
@@ -356,7 +356,7 @@ function LatestRequest(){
     })
     .then(function(totalCount){
         //get Request pool     
-        return myContract.methods.getPendingPooll().call().then(function(pool){
+        return myContract.methods.getPendingPool().call().then(function(pool){
             console.log("Active Request count = ",pool.length);
             console.log("Request Pool: ");
             console.log(pool); 
