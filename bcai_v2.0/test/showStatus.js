@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////
 //user's js script
-//version: 1.9.2, compatable with sol v1.9.2
+//version: 2.0.1, compatable with sol v1.9.2+
 //author: taurus tlu4@lsu.edu
 //use: $ node user.js --help
 /////////////////////////////////////////////////////////////////
@@ -32,7 +32,7 @@ var myAccounts;
 function init() {
 	Web3 = require('web3');
 	web3 = new Web3('ws://localhost:8545');
-	MyContract = require('../build/contracts/TaskContract.json');
+	MyContract = require('../client/src/contracts/TaskContract.json');
 	myContract = new web3.eth.Contract(MyContract.abi, MyContract.networks[networkID].address);
 }
 
