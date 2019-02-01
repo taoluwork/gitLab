@@ -21,4 +21,4 @@ quickTest is an setted-up environment to quickly try out something fun.
 
 NOTE: the design with frontend is using React env, (bcai_v2.0 as an example) which is different from typical truffle env. Use caution to put files in the right place.
 
-
+Error: When run into capability issue, try remove module folder and try npm install again.
