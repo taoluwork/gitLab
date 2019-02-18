@@ -9,8 +9,7 @@
   "dependencies": {
     "bignumber.js": "^8.0.2",
     "minimist": "^1.2.0",
-    "truffle-assertions": "^0.8.0",
-    "webpack": "^4.29.5"
+    "truffle-assertions": "^0.8.0"
   },
   "devDependencies": {
     "ganache-cli": "^6.3.0",
