@@ -1,0 +1,25 @@
+{
+  "name": "bcai_web",
+  "version": "2.0.1",
+  "description": "Developing version of BCAI project.",
+  "main": "./client/src/App.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "bignumber.js": "^8.0.2",
+    "minimist": "^1.2.0",
+    "truffle-assertions": "^0.8.0",
+    "webpack": "^4.29.5"
+  },
+  "devDependencies": {
+    "ganache-cli": "^6.3.0",
+    "truffle": "^5.0.4"
+  },
+  "scripts": {
+    "test": "truffle test ./test/artTest.js",
+    "migrate": "truffle migrate --reset"
+  },
+  "author": "Taurus tlu4@lsu.edu",
+  "license": "MIT"
+}
