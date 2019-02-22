@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////
 // Example Documentation
-// version: 1.0.1, (optional: aligned with some version v0.9.4 //NOTE: do not use early versions.)
+// version: 1.0.2, (optional: aligned with some version v0.9.4 //NOTE: do not use early versions.)
 // Author: TaurusLu tlu4@lsu.edu
 //
 // Description: 
@@ -86,13 +86,13 @@ else
 	
 assignProvider()
 check ValidatingPool, try a pairing
-if Y:   
+if matches:   
 	assign to validation
-if N:   
+else:   
 	check PendingPool, try a pairing
-	if Y:
+	if matches:
 		assign to provider
-	if N:
+	else:
 		do nothing (leave inn providerPool)
 
 
