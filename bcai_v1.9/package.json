@@ -1,0 +1,21 @@
+{
+  "name": "bcai",
+  "version": "1.9.1",
+  "description": "This is a developing version targeting v2.0.0, without web support",
+  "main": "client.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "minimist": "^1.2.0",
+    "truffle": "^5.0.5",
+    "truffle-assertions": "^0.8.0",
+    "web3": "^1.0.0-beta.46"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "truffle test ./test/artTest.js"
+  },
+  "author": "Taurus",
+  "license": "MIT"
+}
