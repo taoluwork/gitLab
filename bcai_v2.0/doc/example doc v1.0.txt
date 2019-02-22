@@ -1,0 +1,97 @@
+////////////////////////////////////////////////////////////////////////
+// Example Documentation
+// version: 1.0.0, (optional: aligned with some version v0.9.4 //NOTE: do not use early versions.)
+// Author: TaurusLu tlu4@lsu.edu
+//
+// Description: 
+// Please use this file as a doc template. You can change contents but keep the section format.
+// <put your overall description of this file here, keep this short>
+//
+// update:
+// <optional update notes: such as "upgraded from v0.9.1 -- fixed bug"
+//////////////////////////////////////////////////////////////////////// 
+<Introduction here>
+
+Some tips and rule about docs:
+1. Generally, these docs we make will serve as two roles. 
+        A: a tutorial for others to use,
+        B: our design and develop guide.
+2. You can keep your technical details in the comments of design files. Only illustrate your idea and usage here.
+3. Mark your version alignment and copyright at top (see my example). Coders are glorified to have names there.
+    About version: name sketches/unfinished as 0.9.x, and first availble version should start from v1.0.0
+4. Break the sections with some clear format, such as multiple lines in between or use '//////' as I like.
+5. Keep length of each line limited. Conventional industrial standard is around 120 charactors per line.
+
+
+
+/////////////////////////////////////////////////////////////////////////
+<Setup or env initiation, dependency install.. etc.>
+
+[example]
+This file works with truffle template and ganache-cli.
+To install truffle: $ npm install truffle
+To install ganache: $ npm install ganache
+
+Nodejs is also needed to run .js files
+To install nodejs: $ npm install node
+(optional: node can also be installed via nvm(node version manager), which will provide version capatibility)
+
+////////////////////////////////////////////////////////////
+<how to use here>
+
+[example]
+Usage:
+1. start ganache : $ ganache-cli -i 512
+2. run this script: $ node client.js
+
+
+//////////////////////////////////////////////////////////////////
+NOTE: 
+All the above will be the tutorial and will be potentially expose to our user.
+All things below will be the developer guide. 
+You can assume reader has qualified skills, so keep your ideas simple and clear.
+You can use psudo code or anything else to make things clear. 
+Avoid verbosity, such as no need to explain a simple loop, etc.
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Main
+<design introduction>
+
+[A good example from Sam:]
+
+main functions:
+Get the accounts from ganache: web3.eth.getAccounts(), if successful...
+Display the default info such as: account, mode, display level(all/ my/ view)
+state changing function will be called (userFireMessage or workerFireMessage)
+then wait for event to be emitted from blockchain
+once event recieved, call PrintEvent() or DisplayAfterEvent()
+
+TODO: priority design
+TODO: concurrent firing
+
+////////////////////////////////////////////////////////////////
+<detailed explanation of essential functions>
+Tips: you can use pseudo-code for simplicity.
+
+[example from Sam]:
+
+web3.eth.getAccounts() returns a list of accounts the node controls. These addresses are in an array. A promise is initiated
+        if argv['a'] > 9, then the accounts will all be listed
+        then if argv['a] is undefined (which means the user didn't pass -a in command line)
+            the variable myAccount will be set to either accounts[0] or accounts [9] depending on if the client is a user or worker
+            a message is then logged out saying that using the user is using the default account and can infer a specific amount by pasing -a on the command line
+        else (so if the user actually passes -a)
+            myAccount is set to accounts[argv['a']]
+            if myAccount comes out as underfined, an error is logged saying that the account they tried to access didn't worker
+        finally, the mode that the client is on is logged out (user or worker)
+        accounts is returned to fufill the promise
+another promise is chained after the previous one
+        if the user passed 'all' on command line, the functions AllRequests is called if the client is a user or AllProviders if the client is a worker
+        if the user passed 'my' on command line, the functions RequestOnlyMy is called if the client is a user or ProviderOnlyMy if the client is a worker
+        if the user passed 'view' on command line, the functions PoolRequests is called if the client is a user or ProvidorPool is called if the client is a worker
+        else the functions userFireMessage or workerFireMessage are called based on the client's mode
+another promise is chained after the previous one
+        myContract.events.SystemInfo is used to recieve an event transmit from bcai
+
+if the original function threw an error, this .catch() will run the following
+        error message is logged out and process exits
+
+......
