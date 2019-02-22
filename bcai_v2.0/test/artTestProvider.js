@@ -49,16 +49,16 @@ contract("BCAI", function(accounts) {
 
     it("Assign request to Account 0", function(){
         return BCAI.deployed().then(function(myContract) {
-            return myContract.startRequest(200, 90, 9000, 12345, {from: accounts[1]}) //time target price dataID
+            return myContract.startRequest(200, 90, 9000, web3.utils.fromAscii(12345), {from: accounts[1]}) //time target price dataID
             .then(function(ret){
                 checkGas(ret);
 
                 truffleAssert.eventEmitted(ret, 'SystemInfo',   (ev) => {
-                    return ev.adder = accounts[1] && ev.info == web3.utils.asciiToHex('Request Added');
+                    return ev.addr = accounts[1] && ev.info == web3.utils.asciiToHex('Request Added');
                 }, 'Request event mismatch');
                 
                 truffleAssert.eventEmitted(ret, 'PairingInfo', (ev) => {
-                    return ev.req == accounts[1] && ev.prov == accounts[0]
+                    return ev.reqAddr == accounts[1] && ev.provAddr == accounts[0]
                         && ev.info == web3.utils.asciiToHex('Request Assigned');
                 },"Pairing req1 => prov0 success");
 
@@ -81,14 +81,14 @@ contract("BCAI", function(accounts) {
                 checkGas(ret);
 
                 truffleAssert.eventEmitted(ret, 'SystemInfo',   (ev) => {
-                    return ev.adder = accounts[0] && ev.info == web3.utils.asciiToHex('Provider Unavailable To Update');
-                }, 'Provider Update Failed');
+                    return ev.addr = accounts[0] && ev.info == web3.utils.asciiToHex('Provider Unable to Update');
+                });
 
                 //checking pool
                 return checkingPool(myContract,
-                    [accounts[0]],
-                    [accounts[1]],
                     [],
+                    [],
+                    [accounts[1]],
                     [])
                     
 
@@ -99,14 +99,14 @@ contract("BCAI", function(accounts) {
                     checkGas(ret);
 
                     truffleAssert.eventEmitted(ret, 'SystemInfo', (ev) => {
-                        return ev.adder = accounts[0] && ev.info == web3.utils.asciiToHex('Provider Unavailable To Stop Providing');
-                    }, 'Provider Unable To Stop Providing');
-
+                        return ev.addr = accounts[0] && ev.info == web3.utils.asciiToHex('Provider Unable to Stop');
+                    });
+                    
                     //checking pool
                     return checkingPool(myContract,
-                        [accounts[0]],
-                        [accounts[1]],
                         [],
+                        [],
+                        [accounts[1]],
                         [])
                 })
             })
@@ -115,19 +115,19 @@ contract("BCAI", function(accounts) {
 
     it("Account 0 completes request", function(){
         return BCAI.deployed().then(function(myContract){
-            return myContract.completeRequest(accounts[1], 12345,{from: accounts[0]}) //reqId, resultId
+            return myContract.completeRequest(accounts[1], web3.utils.fromAscii(12345),{from: accounts[0]}) //reqId, resultId
             .then(function(ret){
                 checkGas(ret);
 
                 truffleAssert.eventEmitted(ret, 'SystemInfo', (ev) => {
-                    return ev.adder = accounts[1] && ev.info == web3.utils.asciiToHex('Request Computation Completed');
+                    return ev.addr = accounts[1] && ev.info == web3.utils.asciiToHex('Request Computation Completed');
                 }, 'Request Computation Completed');
 
                 return checkingPool(myContract,
                     [accounts[0]],
-                    [accounts[1]],
                     [],
-                    []
+                    [],
+                    [accounts[1]]
                     ).catch(console.log);
 
             })
@@ -136,19 +136,19 @@ contract("BCAI", function(accounts) {
 
     it("Account 9 starts providing in order to validate completed requests", function(){
         return BCAI.deployed().then(function(myContract){
-            return BCAI.startProviding(2000, 500, 5000,{from: accounts[9]})
+            return myContract.startProviding(2000, 500, 5000,{from: accounts[9]})
             .then(function(ret){
                 checkGas(ret);
 
                 truffleAssert.eventEmitted(ret, 'SystemInfo', (ev) => {
-                    return ev.adder = accounts[9] && ev.info == web3.utils.asciiToHex('Provider Added');
+                    return ev.addr = accounts[9] && ev.info == web3.utils.asciiToHex('Provider Added');
                 }, 'Provider Added');
 
                 return checkingPool(myContract,
-                    [accounts[0]],
-                    [accounts[9]],
+                    [accounts[9], accounts[0]],
                     [],
-                    []
+                    [],
+                    [accounts[1]]
                     );
 
             })
@@ -158,14 +158,14 @@ contract("BCAI", function(accounts) {
                     checkGas(ret);
 
                     truffleAssert.eventEmitted(ret, 'PairingInfo', (ev) => {
-                        return ev.req == accounts[1] && ev.prov == accounts[9] && ev.info == web3.utils.asciiToHex('Validator Signed');
+                        return ev.reqAddr == accounts[1] && ev.provAddr == accounts[9] && ev.info == web3.utils.asciiToHex('Validator Signed');
                     }, 'Validator Signed');
 
                     return checkingPool(myContract,
-                        [accounts[0]],
-                        [accounts[9]],
-                        [accounts[1]],
+                        [accounts[9], accounts[0]],
                         [],
+                        [],
+                        [accounts[1]],
                         );
 
                 })
@@ -177,14 +177,14 @@ contract("BCAI", function(accounts) {
                     checkGas(ret);
 
                     truffleAssert.eventEmitted(ret, 'SystemInfo', (ev)=>{
-                        return ev.adder == accounts[1] && ev.info == web3.utils.asciiToHex('Validation Completion');
+                        return ev.addr == accounts[1] && ev.info == web3.utils.asciiToHex('Validation Completion');
                     }, 'Validation Complete');
 
                     return checkingPool(myContract,
-                        [accounts[0]],
-                        [accounts[9]],
-                        [accounts[1]],
+                        [accounts[9], accounts[0]],
                         [],
+                        [],
+                        [accounts[1]],
                         );
 
                 })
@@ -202,14 +202,14 @@ contract("BCAI", function(accounts) {
                         checkGas(ret);
 
                         truffleAssert.eventEmitted(ret, 'SystemInfo', (ev)=>{
-                            return ev.adder == accounts[9] && ev.info == web3.utils.asciiToHex('Provider Stopped');
+                            return ev.addr == accounts[9] && ev.info == web3.utils.asciiToHex('Provider Stopped');
                         }, 'Provider Stopped');
 
                         return checkingPool(myContract,
                             [accounts[0]],
                             [],
-                            [accounts[1]],
                             [],
+                            [accounts[1]],
                             );
                     })
                 })
@@ -217,14 +217,14 @@ contract("BCAI", function(accounts) {
         })
     })
 
-    it('Account 8 uploads a request, account 0 will update his parameters to match the new request', function(){     //finish this
+    it('Account 8 uploads a request, account 0 will update his parameters to match the new request', function(){
         return BCAI.deployed().then(function(myContract){
-            return myContract.startRequest(200, 90, 5000, 98765, {from: accounts[8]})
+            return myContract.startRequest(200, 90, 5000, web3.utils.fromAscii(98765), {from: accounts[8]})
             .then(function(ret){
                 checkGas(ret);
 
                 truffleAssert.eventEmitted(ret, 'SystemInfo', (ev)=>{
-                    return ev.adder == accounts[8] && ev.info == web3.utils.asciiToHex('Request Added');
+                    return ev.addr == accounts[8] && ev.info == web3.utils.asciiToHex('Request Added');
                 }, 'Request event mismatch')
 
             })
@@ -234,47 +234,43 @@ contract("BCAI", function(accounts) {
                     checkGas(ret);
 
                     truffleAssert.eventEmitted(ret, 'SystemInfo',   (ev) => {
-                        return ev.adder = accounts[0] && ev.info == web3.utils.asciiToHex('Provider Updated');
+                        return ev.addr = accounts[0] && ev.info == web3.utils.asciiToHex('Provider Updated');
                     }, 'Provider Update Failed');
 
-                    //unfinished here, need to assign the request to account 0
-
-
-
+                    /*truffleAssert.eventEmitted(ret, 'PairingInfo', (ev) => {
+                        return ev.reqAddr == accounts[1] && ev.provAddr == accounts[0]                        //once he updates his info nothing happens so this doesnt work
+                            && ev.info == web3.utils.asciiToHex('Request Assigned');
+                    },"Pairing req8 => prov0 success");*/
 
                 })
-
-
             })
         })
     })
-
-    
 })
 
 function checkingPool(myContract, providers, pendPool, provPool, valiPool){
     return myContract.getProviderPool.call().then(function(pool){
         //console.log(pool);
         //expect(pool).deep.equal(pendPool);
-        assert.deepEqual(providers, pool);
+        assert.deepEqual(pool, providers);
     })
     .then(function(){    
         return myContract.getPendingPool.call().then(function(pool){
         //console.log(pool);
         //expect(pool).deep.equal(pendPool);
-        assert.deepEqual(pendPool, pool);
+        assert.deepEqual(pool, pendPool);
         })
     })
     .then(function(){
         return myContract.getProvidingPool.call().then(function(pool){
             //console.log(pool);
-            assert.deepEqual(provPool, pool);
+            assert.deepEqual(pool, provPool);
         })
     
     }).then(function(){
         return myContract.getValidatingPool.call().then(function(pool){
             //console.log(pool);
-            assert.deepEqual(valiPool, pool);
+            assert.deepEqual(pool, valiPool);
         })
     })
 }

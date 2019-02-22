@@ -92,6 +92,9 @@ contract TaskContract {
             providerPool.push(msg.sender);
             emit SystemInfo (msg.sender, "Provider Added");
             providerCount++;
+            /*if(validatingPool.length != 0){                           //need to update how validation works before we can prioritize it here
+
+            }*/
             assignProvider(msg.sender);                                 //try an instant assignment trial
             return true;
         } 
@@ -297,8 +300,9 @@ contract TaskContract {
             //move from providing pool to validating Pool.
             ArrayPop(providingPool, reqAddr);
             validatingPool.push(reqAddr);
-            //release provider (not necessarily depend on provider)
+            //release provider (not necessarily depend on provider) back into providerPool
             providerList[msg.sender].available = true;
+            providerPool.push(msg.sender);
             emit SystemInfo(reqAddr, 'Request Computation Completed');
             //start validation process
             return validateRequest(reqAddr);
@@ -317,15 +321,28 @@ contract TaskContract {
         uint64 validatorsFound = 0;
         //select # of available provider from the pool and force em to do the validation
         for (uint64 i = 0; i < providerPool.length; i++) {
-            //get provider ID
-            address payable provID = providerPool[i];
+            address payable provID = providerPool[i]; //get provider ID
             if(provID != requestList[reqAddr].provider){   //validator and computer cannot be same
-                //EVENT: informs validator that they were selected and need to validate
-                emit PairingInfo(reqAddr, provID, 'Validation Assigned to Provider');
-                validatorsFound++;
-                //remove the providers availablity and pop from pool
-                providerList[provID].available = false;
-                ArrayPop(providerPool, provID);
+                if(requestList[reqAddr].validators.length == 0){ //if there are no validators yet, no need to compare to existing validator
+                        //EVENT: informs validator that they were selected and need to validate
+                        emit PairingInfo(reqAddr, provID, 'Validation Assigned to Provider');
+                        validatorsFound++;
+                        //remove the providers availablity and pop from pool
+                        providerList[provID].available = false;
+                        ArrayPop(providerPool, provID);
+                }
+                else{
+                        for(uint64 j = 0; j <= requestList[reqAddr].validators.length; j++){   //go through the list of existing validators
+                            if(provID != requestList[reqAddr].validators[j]){ //validator cannot be same as existing validator
+                                //EVENT: informs validator that they were selected and need to validate
+                                emit PairingInfo(reqAddr, provID, 'Validation Assigned to Provider');
+                                validatorsFound++;
+                                //remove the providers availablity and pop from pool
+                                providerList[provID].available = false;
+                                ArrayPop(providerPool, provID);
+                            }
+                        }
+                    }    
             } else continue;
             //check whether got enough validator
             if(validatorsFound < numValidatorsNeeded){
