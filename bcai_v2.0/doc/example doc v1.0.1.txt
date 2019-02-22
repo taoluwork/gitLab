@@ -74,6 +74,26 @@ Tips: you can use pseudo-code for simplicity.
 
 [example]:
 
+Entry point: startProviding()
+if provider is_new
+	add to providerPool
+	emit "Provider Added"
+	try an instant pairing : assignProvider()
+else 
+	updateProvider()
+	
+	
+	
+assignProvider()
+check ValidatingPool, try a pairing
+if Y:   
+	assign to validation
+if N:   
+	check PendingPool, try a pairing
+	if Y:
+		assign to provider
+	if N:
+		do nothing (leave inn providerPool)
 
 
 ......
