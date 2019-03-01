@@ -324,6 +324,7 @@ contract TaskContract {
             address payable provID = providerPool[i]; //get provider ID
             if(provID != requestList[reqAddr].provider){   //validator and computer cannot be same
                 if(requestList[reqAddr].validators.length == 0){ //if there are no validators yet, no need to compare to existing validator
+                        //TODO: check whether selected validator capable with parameters (time, accuracy,....)
                         //EVENT: informs validator that they were selected and need to validate
                         emit PairingInfo(reqAddr, provID, 'Validation Assigned to Provider');
                         validatorsFound++;
@@ -331,7 +332,7 @@ contract TaskContract {
                         providerList[provID].available = false;
                         ArrayPop(providerPool, provID);
                 }
-                else{
+                else{  //previous validator exist in list, try avoiding them.
                         for(uint64 j = 0; j <= requestList[reqAddr].validators.length; j++){   //go through the list of existing validators
                             if(provID != requestList[reqAddr].validators[j]){ //validator cannot be same as existing validator
                                 //EVENT: informs validator that they were selected and need to validate
