@@ -2,17 +2,20 @@
 //client's js app, combined --user mode and --worker mode
 //version: v2.0.1 , aligned with contract v2.0.x
 //author: taurus tlu4@lsu.edu
+//
 //description: this is the CLI client design
+//update: fixed the event incapatible from client v0.9
 //
 //use: $ node client.js --help --version
 /////////////////////////////////////////////////////////////////
 const version = "bcai_client v2.0.1"
-const NetworkID = 1544726768855;
+const NetworkID = 512;
+//const NetworkID = 1544726768855;
 //NOTE: combine user and worker client together switch using --user, --worker
 //Avoid using version earlier than 0.9.2
 /////////////////////////////////////////////////////////////////
 //edit default parameter here:
-var dataID = 31415926;
+var dataID = '0x31415926';
 var target = 90;            //must < workders maxTarget
 var time = 90000;           //must < worker's maxTime
 var money = 800000;         //must > worker's minPrice
@@ -194,7 +197,7 @@ function userFireMessage(){
         })
     }
     else {        //submit a request
-        myContract.methods.startRequest(time, target, money, dataID)
+        myContract.methods.startRequest(time, target, money, web3.utils.hexToBytes(dataID))
         .send({from: myAccount, gas: 80000000, value: money})
         .then(function(ret){                                                        //handle the receipt
             //console.log("-----------------------------------------------------------------")
@@ -275,9 +278,9 @@ function workerFireMessage(){
 /////////////////////Conditional Display/////////////////////////////////////////////////////////
 //list only active pool linked the current account , called by --my
 function RequestOnlyMy(myAccount){
-    return myContract.methods.getRequestPool().call().then(function(pool){
+    return myContract.methods.getPendingPool().call().then(function(pool){
         console.log("Active Request count = ",pool.length);
-        console.log("Active Request Pool: ");
+        console.log("Active Pending Pool: ");
         console.log(pool);
         return pool; 
     })
@@ -319,8 +322,8 @@ function PoolRequests (){
         console.log("-----------------------------------------------------");
         console.log("Total Request since start = ", totalCount);
     }).then(function(){	        
-        return myContract.methods.getRequestPool().call().then(function(pool){             
-            console.log("Active Request pool: total = ", pool.length);
+        return myContract.methods.getPendingPool().call().then(function(pool){             
+            console.log("Active Pending Pool: total = ", pool.length);
             console.log(pool);
             return pool;
         })
@@ -358,10 +361,10 @@ function LatestRequest(){
         return totalCount;
     })
     .then(function(totalCount){
-        //get Request pool     
-        return myContract.methods.getRequestPool().call().then(function(pool){
+        //get Pending Pool     
+        return myContract.methods.getPendingPool().call().then(function(pool){
             console.log("Active Request count = ",pool.length);
-            console.log("Request Pool: ");
+            console.log("Pending Pool: ");
             console.log(pool); 
             return totalCount;  
         })
@@ -444,13 +447,14 @@ function PrintEvent(event){
 		console.log("=================================================================");
 	} else { 
 		console.log("=======================================================  <- Event!");
-		console.log(event.event, "  ==>  ", event.blockNumber);
+        console.log(event.event, "  ==>  ", event.blockNumber);
+        //console.log (event);
 		if(event.event == 'SystemInfo')
-			console.log("Event: ", web3.utils.hexToAscii(event.returnValues[2]));
-		else if(event.event == 'UpdateInfo')
 			console.log("Event: ", web3.utils.hexToAscii(event.returnValues[1]));
+		//else if(event.event == 'UpdateInfo')
+		//	console.log("Event: ", web3.utils.hexToAscii(event.returnValues[1]));
 		else if (event.event == 'PairingInfo')
-			console.log("Event: ", web3.utils.hexToAscii(event.returnValues[4]));
+			console.log("Event: ", web3.utils.hexToAscii(event.returnValues[2]));
 		console.log(event.returnValues);
 	}
 }
