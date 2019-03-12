@@ -411,25 +411,25 @@ function checkingPool(myContract, providers, pendPool, provPool, valiPool){
     return myContract.getProviderPool.call().then(function(pool){
         //console.log(pool);
         //expect(pool).deep.equal(pendPool);
-        assert.deepEqual(providers, pool);
+        assert.deepEqual(pool, providers);
     })
     .then(function(){    
         return myContract.getPendingPool.call().then(function(pool){
         //console.log(pool);
         //expect(pool).deep.equal(pendPool);
-        assert.deepEqual(pendPool, pool);
+        assert.deepEqual(pool, pendPool);
         })
     })
     .then(function(){
         return myContract.getProvidingPool.call().then(function(pool){
             //console.log(pool);
-            assert.deepEqual(provPool, pool);
+            assert.deepEqual(pool, provPool);
         })
     
     }).then(function(){
         return myContract.getValidatingPool.call().then(function(pool){
             //console.log(pool);
-            assert.deepEqual(valiPool, pool);
+            assert.deepEqual(pool, valiPool);
         })
     })
 }
