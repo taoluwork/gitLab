@@ -1,9 +1,10 @@
-//////////////////////////////////////////////////////////////////////////
-// Unit test in truffle environment                                     //
-// version 1.9.1                                                        //  
-// Align with sol 1.9.1, independent with client version                //
-// Author: Taurus tlu4@lsu.edu                                          //  
-//////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Unit test in truffle environment, tests basic contract functions                                       //
+// version 2.0.0                                                                                          //  
+// Align with sol 2.0.1, independent with client version                                                  //
+// Author: Taurus tlu4@lsu.edu, Samuel Pritchett spritc6@lsu.edu                                          //
+// TODO: Align with 2.0.2 features (validation priority) and 3 validators                                 //  
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //need a truffle environment to run this
@@ -151,7 +152,7 @@ contract("BCAI", function(accounts) {
                 //checking pool
                 //var x = new BigNumber("0");
                 return checkingPool(myContract,
-                    [],
+                    [accounts[0]],
                     [accounts[9]],
                     [],
                     [accounts[8]]
@@ -187,7 +188,7 @@ contract("BCAI", function(accounts) {
 
                 //checking pool
                 return checkingPool(myContract,
-                    [],
+                    [accounts[0]],
                     [accounts[9]],
                     [],
                     [accounts[8]]
@@ -197,16 +198,23 @@ contract("BCAI", function(accounts) {
             })
             // add a new provider #1
             .then(function(){
-                return myContract.startProviding(3000,100,8000,{from: accounts[1]})  //time target price  
+                return myContract.startProviding(3000,100,7000,{from: accounts[1]})  //time target price  
                 .then(function(ret){
                     checkGas(ret);
                     truffleAssert.eventEmitted(ret,'SystemInfo', (ev)=>{
                         //console.log(ev[0])
                         return ev.addr == accounts[1] && ev.info == web3.utils.asciiToHex('Provider Added');
                     },"Add new provider fail");
+
+                    truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
+                        return ev.reqAddr == accounts[9] && ev.provAddr == accounts[1] 
+                        && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
+                    },'validator assignment fail');
+
+
                     //checking pool
                     return checkingPool(myContract,
-                        [accounts[1]],
+                        [accounts[0]],
                         [accounts[9]],
                         [],
                         [accounts[8]]
@@ -222,9 +230,16 @@ contract("BCAI", function(accounts) {
                         //console.log(ev[0])1
                         return ev.addr == accounts[2] && ev.info == web3.utils.asciiToHex('Provider Added');
                     },"Add new provider fail");
+
+                    truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
+                        return ev.reqAddr == accounts[9] && ev.provAddr == accounts[2] 
+                        && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
+                    },'validator assignment fail');
+
+
                     //checking pool
                     return checkingPool(myContract,
-                        [accounts[1], accounts[2]],
+                        [accounts[0]],
                         [accounts[9]],
                         [],
                         [accounts[8]]
@@ -232,21 +247,26 @@ contract("BCAI", function(accounts) {
                 })
             })
             // add a new request#2, assigned to prov#1
+
+
+            //at this point accounts 1 and 2 are validating the request. Major changes needed to fix this test.
+
             .then(function(){
-                return myContract.startRequest(2400,80,20000,web3.utils.fromAscii('121512'),{from: accounts[7], value: 80000})  //time target price dataID  
+                return myContract.startRequest(2400,80,7500,web3.utils.fromAscii('121512'),{from: accounts[7], value: 80000})  //time target price dataID  
                 .then(function(ret){
                     checkGas(ret);
                     truffleAssert.eventEmitted(ret,'SystemInfo',  (ev) => {
                         return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Request Added');
                     },'Request event mismatch');
                     truffleAssert.eventEmitted(ret, 'PairingInfo', (ev)=>{
+                        console.log("%%%%%%%%%%%", ev.reqAddr, ev.provAddr, ev.info);
                         return ev.reqAddr == accounts[7] && ev.provAddr == accounts[1] &&
                             ev.info == web3.utils.asciiToHex("Request Assigned");
-                    },"Pairing req#2 => prov#1 fail!");
+                    },"Pairing req#7 => prov#1 fail!");
 
                     //check pool update
                     return checkingPool(myContract,
-                        [accounts[2]],
+                        [accounts[0], accounts[2]],
                         [accounts[9]],
                         [accounts[7]],
                         [accounts[8]]
@@ -255,7 +275,7 @@ contract("BCAI", function(accounts) {
                     //...
                 })
             })
-            // prov#1 submit computation finished and assgin prov#2 to validate
+           // prov#1 submit computation finished and assgin prov#2 to validate
             .then(function(){
                 return myContract.completeRequest(accounts[7],web3.utils.fromAscii('1225135'),{from: accounts[1]})  //reqID resultID  
                 .then(function(ret){
@@ -268,12 +288,12 @@ contract("BCAI", function(accounts) {
                         return ev.reqAddr == accounts[7] && ev.provAddr == accounts[2] 
                         && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
                     },'validator assignment fail');
-                    truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
+                    /*truffleAssert.eventEmitted(ret,'SystemInfo',  (ev)=>{
                         return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Enough Validators');
-                    },'get enough validator fail');
+                    },'get enough validator fail');*/
                     //checking pool
                     return checkingPool(myContract,
-                        [],
+                        [accounts[0], accounts[1]],
                         [accounts[9]],
                         [],
                         [accounts[8],accounts[7]]
@@ -283,7 +303,61 @@ contract("BCAI", function(accounts) {
                 })
             })
         })
-    })  
+    })
+    
+    it("Accounts 3 and 4 start providing", function(){
+        return BCAI.deployed().then(function(myContract){
+            return myContract.startProviding(3000, 100, 8000,{from: accounts[3]})
+            .then(function(ret){
+                checkGas(ret);
+
+                truffleAssert.eventEmitted(ret, 'SystemInfo', (ev) => {
+                    return ev.addr == accounts[3] && ev.info == web3.utils.asciiToHex('Provider Added');
+                }, "Account 3 Becomes Provider");
+
+                truffleAssert.eventEmitted(ret, 'PairingInfo', (ev) => {
+                    return ev.reqAddr == accounts[7] && ev.provAddr == accounts[3]
+                        && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
+                }, "Account 3 Assigned to validate")
+
+                return checkingPool(myContract,
+                    [accounts[0], accounts[1]],
+                    [accounts[9]],
+                    [],
+                    [accounts[8],accounts[7]]
+                )
+
+            })
+            .then(function(ret){
+                return myContract.startProviding(3000, 100, 8000, {from: accounts[4]})
+                .then(function(ret){
+                    checkGas(ret);
+
+                    truffleAssert.eventEmitted(ret, 'SystemInfo', (ev) => {
+                        return ev.addr == accounts[4] && ev.info == web3.utils.asciiToHex('Provider Added');
+                    }, "Account 4 Becomes Provider");
+    
+                    truffleAssert.eventEmitted(ret, 'PairingInfo', (ev) => {
+                        return ev.reqAddr == accounts[7] && ev.provAddr == accounts[4]
+                            && ev.info == web3.utils.asciiToHex('Validation Assigned to Provider');
+                    }, "Account 4 Assigned to validate")
+    
+                    truffleAssert.eventEmitted(ret, 'SystemInfo', (ev) => {
+                        return ev.addr == accounts[7] && ev.info == web3.utils.asciiToHex('Enough Validators');
+                    }, "Account 1's Request Has Enough Validators")
+    
+                    return checkingPool(myContract,
+                        [accounts[0], accounts[1]],
+                        [accounts[9]],
+                        [],
+                        [accounts[8],accounts[7]]
+                    )
+
+                })
+            })
+        })
+    })
+
     ////////////////////////////////////////////////////////////////////////////////
     //validator send back result and sign the List
     //reqID = 2, provID = 1, validatorID = 2
@@ -295,7 +369,6 @@ contract("BCAI", function(accounts) {
             .then(function(ret){
                 checkGas(ret);
                 truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
-                    //console.log(ev[0])
                     return ev.reqAddr == accounts[7] && ev.provAddr == accounts[2]
                         && ev.info == web3.utils.asciiToHex("Validator Signed");
                 },"Validator submit signature fail");
@@ -309,22 +382,48 @@ contract("BCAI", function(accounts) {
                 //checking pool
                 //var x = new BigNumber("0");
                 return checkingPool(myContract,
-                    [],
+                    [accounts[0], accounts[2]],
                     [accounts[9]],
                     [],
                     [accounts[8],accounts[7]]
                 //checking List
-                ).then(function(){
+                )/*.then(function(){
                     return myContract.getRequest.call(accounts[7]).then(function(ret){
                         //console.log(ret);
                         //assert(ret.reqID == 2);
                         assert(ret.validators[0] == accounts[2])
                         assert(ret.signatures[0] == true);
                     })
+                })*/
+            })
+            .then(function(ret){
+                return myContract.submitValidation(accounts[7], true, {from: accounts[3]})
+                .then(function(ret){
+                    checkGas(ret);
+
+                    truffleAssert.eventEmitted(ret,'PairingInfo',  (ev)=>{
+                        return ev.reqAddr == accounts[7] && ev.provAddr == accounts[3]
+                            && ev.info == web3.utils.asciiToHex("Validator Signed");
+                    },"Validator submit signature fail");
+
+                })
+                
+            })
+            .then(function(ret){
+                return myContract.submitValidation(accounts[7], true, {from: accounts[4]})
+                .then(function(ret){
+                    checkGas(ret);
+
+                    truffleAssert.eventEmitted(ret, 'PairingInfo', (ev) =>{
+                        return ev.reqAddr == accounts[7] && ev.provAddr == accounts[4]
+                            && ev.info == web3.utils.asciiToHex("Validator Signed");
+                    }, "Validator submit signature fail");
+
                 })
             })
         })
     })
+    
     it("Test Check Validation", function(){
         return BCAI.deployed().then(function(myContract) {
             //submit a complete computation result
