@@ -1,0 +1,22 @@
+{
+  "name": "bcai",
+  "version": "0.9.0",
+  "description": "This is a developing version with multi-account supported",
+  "main": "client.js",
+  "directories": {
+    "doc": "doc",
+    "test": "test"
+  },
+  "dependencies": {
+    "minimist": "^1.2.0",
+    "truffle": "^5.0.5",
+    "truffle-assertions": "^0.8.0",
+    "web3": "^1.0.0-beta.46"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "taurus",
+  "license": "MIT"
+}

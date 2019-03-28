@@ -4,7 +4,7 @@
 //author: taurus tlu4@lsu.edu
 //use: $ node user.js --help
 /////////////////////////////////////////////////////////////////
-var version = "bcai_client v1.9.2     ----  by Taurus"
+var version = "bcai_client v2.0.1"
 var networkID = 512;
 //get arguments from console
 var argv = require('minimist')(process.argv.slice(2));
