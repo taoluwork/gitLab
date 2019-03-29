@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////////
-//version 2.0.1
-//Author: Taurus, Sam
+//version 2.0.2
+//Author: Taurus, Samuel Pritchett
 //Copyright: tlu4@lsu.edu
 //
 //This is the formal release of v2.0, comments updated on Feb.2019
@@ -92,9 +92,9 @@ contract TaskContract {
             providerPool.push(msg.sender);
             emit SystemInfo (msg.sender, "Provider Added");
             providerCount++;
-            /*if(validatingPool.length != 0){                           //need to update how validation works before we can prioritize it here
-
-            }*/
+            if(validatingPool.length != 0){                           //need to update how validation works before we can prioritize it here
+                findValidation(msg.sender);
+            }
             assignProvider(msg.sender);                                 //try an instant assignment trial
             return true;
         } 
@@ -338,6 +338,8 @@ contract TaskContract {
                                 //EVENT: informs validator that they were selected and need to validate
                                 emit PairingInfo(reqAddr, provID, 'Validation Assigned to Provider');
                                 validatorsFound++;
+                                //TODO: Add provider to the validators array for this request
+                                requestList[reqAddr].validators.push(provID);
                                 //remove the providers availablity and pop from pool
                                 providerList[provID].available = false;
                                 ArrayPop(providerPool, provID);
@@ -371,6 +373,8 @@ contract TaskContract {
         if(msg.sender != requestList[reqAddr].provider) {     //validator cannot be provider
             requestList[reqAddr].validators.push(msg.sender);     //push array
             requestList[reqAddr].signatures.push(result);     //edit mapping
+            providerList[msg.sender].available = true;        //release validator
+            providerPool.push(msg.sender);
         }
         //emit ValidationInfo(reqID, provID, 'Validator Signed');
         //check if valid
@@ -413,6 +417,38 @@ contract TaskContract {
         flag = flag && ArrayPop(validatingPool, reqAddr);
 
         return flag;
+    }
+
+
+    // called by startProviding if the validatingPool is not empty
+    // assigns the new provider to validate a task
+    // IDEA: Could be modified so that any available provider could call. For now it assumes only used on new providers in startProviding
+    function findValidation(address payable provAddr) private {
+        for(uint64 i = 0; i < validatingPool.length; i++){  //search the entire validatingpool
+
+            address payable reqAddr = validatingPool[i]; //set reqAddr current task
+
+            if(requestList[reqAddr].numValidations > requestList[reqAddr].validators.length){ //check to see if the task has enough validators
+
+                //since the provAddr is a new provider, we don't need to check if he is already a validator, should be impossible unless bug exists
+
+                if(provAddr != requestList[reqAddr].provider){ //check to make sure he is not the computer
+                    emit PairingInfo(reqAddr, provAddr, 'Validation Assigned to Provider');
+                    requestList[reqAddr].validators.push(provAddr);
+
+                    providerList[provAddr].available = false;
+                    ArrayPop(providerPool, provAddr);
+
+                    //alert task owner if their task now has enough validators
+                    if(requestList[validatingPool[i]].validators.length == requestList[validatingPool[i]].numValidations){
+                        emit SystemInfo(reqAddr, 'Enough Validators');
+                    }
+                    break;
+                }
+                //else{}
+            }
+            //else{}
+        }
     }
 
 /////////////////////////////////////////////////////////////////////
