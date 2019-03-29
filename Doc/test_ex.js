@@ -1,3 +1,6 @@
+// this is an example for testing from online resources
+
+
 var assert = require("chai").assert;
 var util = require("./util");
 
