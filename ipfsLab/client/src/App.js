@@ -13,7 +13,7 @@ class App extends Component {
     
     this.state = {
       ipfsHash: '',
-      storageValue: 0, 
+      storageValue: 5, 
       web3: null, 
       buffer: null}
     
@@ -119,6 +119,9 @@ class App extends Component {
         <p>Your image is saved on IPFS and Ethereum blockchain</p>
         <img src={`https://ipfs.infura.io/ipfs/${this.state.ipfsHash}`} alt="" />
         <h2>Upload Image</h2>
+        <p>Choose a image file and it will be compressed in a Buffer. </p>
+        <p>Click the button and the file will be submitted onto the ipfs system, returning a Hash ID. </p>
+        <p>The above area will use that Hash ID to display the image  </p>
         <form  onSubmit = {this.onSubmit}>
           <input type = 'file' onChange = {this.captureFile}></input>
           <input type = 'submit' value = "Click"></input>
@@ -129,7 +132,7 @@ class App extends Component {
           a stored value of 5 (by default).
         </p>
         <p>
-          Try changing the value stored on <strong>line 40</strong> of App.js.
+          Try changing the value stored on <strong>line 16</strong> of App.js.
         </p>
         <div>The stored value is: {this.state.storageValue}</div>
       </div>
