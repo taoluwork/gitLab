@@ -468,7 +468,7 @@ class App extends Component {
       // Validation Complete
       if (hex2ascii(events[i].args.info) == "Validation Complete") {
         if (this.state.myAccount == events[i].args.reqAddr) {
-          this.addNotification("Job Done", "Please download your resultant file from IPFS", "success")
+          this.addNotification("Job Done", "Please download your resultant file from IPFS using the hash " + events[i].args.extra, "success")
         }
         if (this.state.myAccount == events[i].args.provAddr) {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
