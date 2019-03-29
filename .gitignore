@@ -12,7 +12,7 @@
 /bcai_v2.0/client/src/contracts/*
 /bcai_v2.0/client/node_modules/*
 /.vscode/*
-
+/quickTest/*
 
 
 # testing
