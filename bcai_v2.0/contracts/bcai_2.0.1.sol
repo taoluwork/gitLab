@@ -62,7 +62,8 @@ contract TaskContract {
 
     //two types of events, only difference is # of returned address
     //no need seperate events for each type, just put whatever info passed in bytes info
-    event SystemInfo        (address payable addr, bytes info);
+    event IPFSInfo          (address payable reqAddr, bytes info, bytes extra);
+    event SystemInfo        (address payable reqAddr, bytes info);
     event PairingInfo       (address payable reqAddr, address payable provAddr, bytes info);
 
 
@@ -154,7 +155,7 @@ contract TaskContract {
             requestList[msg.sender].target        = target;
             requestList[msg.sender].price         = price;
             requestList[msg.sender].dataID        = dataID;
-            requestList[msg.sender].numValidations = 3;//fixed 3 for testing reasons
+            requestList[msg.sender].numValidations = 1;//fixed 3 for testing reasons
             requestList[msg.sender].status = '0' ;     //pending = 0x30, is in ascii not number 0
             pendingPool.push(msg.sender);
             emit SystemInfo (msg.sender, "Request Added");
@@ -379,13 +380,12 @@ contract TaskContract {
         //emit ValidationInfo(reqID, provID, 'Validator Signed');
         //check if valid
         
-        emit PairingInfo(reqAddr, msg.sender, 'Validator Signed');
-       
+        //emit PairingInfo(reqAddr, msg.sender, 'Validator Signed');
+        return checkValidation(reqAddr);
         // If enough validations have been submitted
-        if (requestList[reqAddr].validators.length == requestList[reqAddr].numValidations) {
+        //if (requestList[reqAddr].validators.length == requestList[reqAddr].numValidations) {
             //return checkValidation(reqID, requestList[reqID].price - requestList[reqID].numValidationsNeeded * partialPayment);
-            //checkValidation(reqID);
-        }
+        //}
     }
     
     function checkValidation(address payable reqAddr) public returns (bool) {
@@ -404,18 +404,20 @@ contract TaskContract {
             //TODO: [important] leave out the payment part for now.
             requestList[reqAddr].isValid = true; // Task was successfully completed! 
             flag = true;
+            emit IPFSInfo(reqAddr, 'Validation Complete', requestList[reqAddr].resultID);
         }
         // otherwise, work was invalid, the providers payment goes back to requester
-        else {
+        //else {
             //requestList[reqID].addr.transfer(payment);
             //balanceList[requestList[reqID].addr] -= payment;
-        }
+        //}
         // EVENT: task is done whether successful or not
         //emit TaskCompleted(requestList[reqID].addr, reqID);
-        emit SystemInfo(reqAddr, 'Validation Complete');
+
         //popout from pool
         flag = flag && ArrayPop(validatingPool, reqAddr);
-
+        // TODO : 
+        // Add
         return flag;
     }
 

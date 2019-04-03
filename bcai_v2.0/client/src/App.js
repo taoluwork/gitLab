@@ -154,23 +154,22 @@ class App extends Component {
   }
 
   matchReq = async (provAddr) => {
-    console.log(this.state.myContract);
     //let contractEvent = this.state.myContract.PairingInfo();
+    //let events = await this.state.myContract.contract.events.allEvents();
     let events = await this.state.myContract.getPastEvents();
-    // For pairing info events
-    for (var i = events.length - 1; i >= 0; i--) {
-      // Request Assigned
-      if (hex2ascii(events[i].args.info) == "Request Assigned" && this.state.myAccount == events[i].args.provAddr) {
-        console.log("here is the requester")
-        console.log(events[i].args.reqAddr)
-        return events[i].args.reqAddr;
+    console.log(events);
+    //this.state.myContract.allEventsyyy({}, { fromBlock: 'latest', toBlock: 0 }).get((error, events) => {
+
+      // For pairing info events
+      for (var i = events.length - 1; i >= 0; i--) {
+        // Request Assigned
+        if (provAddr == events[i].args.provAddr) {
+          console.log("here is the requester")
+          console.log(events[i].args.reqAddr)
+          return events[i].args.reqAddr;
+        }
       }
-      else if (hex2ascii(events[i].args.info) == "Validation Assigned to Provider" && this.state.myAccount == events[i].args.provAddr) {
-        console.log("here is the requester")
-        console.log(events[i].args.reqAddr)
-        return events[i].args.reqAddr;
-      }
-    }
+    //})
   }
 
   submitRequest(event) {
@@ -200,7 +199,7 @@ class App extends Component {
 
 
 
-  submitJob(event) {
+  submitJob = async (event) => {
     event.preventDefault();
     ipfs.files.add(this.state.buffer, (err, result) => {
       if (err) {
@@ -212,38 +211,36 @@ class App extends Component {
         this.setState({ dataID: result[0].hash })
       }
     })
-    let reqMatch = this.findReq(this.state.myAccount)
-    console.log(reqMatch);
-    this.state.myContract.completeRequest(reqMatch, this.state.web3.utils.asciiToHex(this.state.dataID),
-      { from: this.state.myAccount, value: this.state.Price }).then(ret => {
+    let req = await this.matchReq(this.state.myAccount)
+    console.log(req)
+    console.log(this.state.web3.utils.asciiToHex(this.state.dataID))
+    this.state.myContract.completeRequest(req, this.state.web3.utils.asciiToHex(this.state.dataID),
+      { from: this.state.myAccount }).then(ret => {
         console.log(ret);
         this.addNotification("Blockchain Tx Successful", "Work submitted to contract", "success")
       })
 
   }
 
-  submitValidation(event) {
+  submitValidation = async (event) => {
     event.preventDefault();
-    let reqMatch = this.findReq(this.state.myAccount)
-    console.log(reqMatch);
-    this.state.myContract.submitValidation(reqMatch, this.state.web3.utils.asciiToHex(this.state.dataID),
-      { from: this.state.myAccount, value: this.state.Price }).then(ret => {
+    let req = await this.matchReq(this.state.myAccount)
+    console.log(req);
+    this.state.myContract.submitValidation(req, this.state.ValidationResult,
+      { from: this.state.myAccount }).then(ret => {
         console.log(ret);
         this.addNotification("Blockchain Tx Successful", "Validation submitted to contract", "success")
       })
-
   }
 
-  applyAsProvider() {
+  applyAsProvider(event) {
+    event.preventDefault();
+
     this.addNotification("Worker application submitted!", "Stand by for approval from the contract", "info")
     this.state.myContract.startProviding(this.state.Time, this.state.Target,
       this.state.Price, { from: this.state.myAccount }).then(ret => {
         this.addNotification("Worker application approved", "Your computer is now registered on the blockchain", "success")
       })
-  }
-
-  validationSubmit() {
-
   }
 
 
@@ -395,7 +392,7 @@ class App extends Component {
     console.log(this.state.myContract);
     //let contractEvent = this.state.myContract.PairingInfo();
     let events = await this.state.myContract.getPastEvents();
-
+    console.log(events)
     // For pairing info events
     for (var i = events.length - 1; i >= 0; i--) {
       // Request Assigned
@@ -413,8 +410,7 @@ class App extends Component {
       if (hex2ascii(events[i].args.info) == "Request Computation Completed") {
         console.log("alskdjf;laksjdf;laskjdf")
         if (this.state.myAccount == events[i].args.reqAddr) {
-          this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated"
-            + events[i].args.provAddr, "success")
+          this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "success")
         }
         if (this.state.myAccount == events[i].args.provAddr) {
           this.addNotification("Awaiting validation", "You have completed a task an are waiting for validation"
@@ -429,7 +425,7 @@ class App extends Component {
             + events[i].args.provAddr, "success")
         }
         if (this.state.myAccount == events[i].args.provAddr) {
-          this.addNotification("Validating Work", "Your result is waiting in the verification process."
+          this.addNotification("You are a validator", "You need to validate the task as true or false."
             + events[i].args.reqAddr, "info");
         }
       }
@@ -461,10 +457,10 @@ class App extends Component {
       // Validator Signed
       if (hex2ascii(events[i].args.info) == "Validator Signed") {
         if (this.state.myAccount == events[i].args.reqAddr) {
-          this.addNotification("Provider Found", "Your task is being completed by address ", "success")
+          this.addNotification("Validator signed", "Your task is being validated", "success")
         }
         if (this.state.myAccount == events[i].args.provAddr) {
-          this.addNotification("You Have Been Assigned A Task", "You have been chosen to complete the request from address", "info");
+          this.addNotification("You Have signed your validation", "You have validated the request from address", "info");
         }
       }
 
@@ -472,7 +468,7 @@ class App extends Component {
       // Validation Complete
       if (hex2ascii(events[i].args.info) == "Validation Complete") {
         if (this.state.myAccount == events[i].args.reqAddr) {
-          this.addNotification("Job Done", "Please download your resultant file from IPFS", "success")
+          this.addNotification("Job Done", "Please download your resultant file from IPFS using the hash " + events[i].args.extra, "success")
         }
         if (this.state.myAccount == events[i].args.provAddr) {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
@@ -518,12 +514,12 @@ class App extends Component {
     if (this.state.mode === 'WORKER') {
       return (
         <div>
-        <h2> VALIDATIONS </h2>
-          <button onClick={() => this.setState({ ValidationResult: !this.state.ValidationResult })} style={{ marginBottom:5 }} >
+          <h2> VALIDATIONS </h2>
+          <button onClick={() => this.setState({ ValidationResult: !this.state.ValidationResult })} style={{ marginBottom: 5 }} >
             Click Here to toggle validation result
           </button>
           <br></br>
-          Current Validation Result: { '' + this.state.ValidationResult }
+          Current Validation Result: {'' + this.state.ValidationResult}
           <br></br>
           <button onClick={this.submitValidation} style={{ marginTop: 10, marginBottom: 100 }}>
             Submit Validation Result
