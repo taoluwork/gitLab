@@ -1,6 +1,8 @@
 // 
 
-
+import Peer from 'peerjs';
+import randomstring from 'randomstring';
+import { Button, TextField, List, ListItem, ListItemText, ListItemIcon, Chip } from '@material-ui/core';
 import React, { Component } from "react";
 import TaskContract from "./contracts/TaskContract.json";
 import getWeb3 from "./utils/getWeb3";
@@ -9,10 +11,15 @@ import ipfs from './ipfs';
 import t from 'tcomb-form';
 import ReactNotification from "react-notifications-component";
 import "react-notifications-component/dist/theme.css";
-
+import copy from 'clipboard-copy';
+import { Drafts, Face } from '@material-ui/icons';
 import "./App.css";
 //import { userInfo } from "os";
 const hex2ascii = require('hex2ascii')
+
+const TYPE_FILE = 'file';
+const TYPE_TEXT = 'text';
+
 
 const FormSchema = t.struct({
   time: t.Number,
@@ -20,6 +27,9 @@ const FormSchema = t.struct({
   price: t.Number,
   account: t.String
 })
+
+
+
 
 class App extends Component {
   state = {
@@ -40,14 +50,33 @@ class App extends Component {
     Time: 0,
     Target: 0,
     Price: 0,
-    dataID: null
+    dataID: null,
+    peer: null,
   };
-
+  
 
   constructor(props) {
     super(props)
     this.state = {
-      mode: "USER",
+      peer: new Peer({key: this.props.opts.peerjsKey, debug: 3}), //for testing
+			/*
+			//for production:
+			peer = new Peer({
+			  host: 'yourwebsite.com', port: 3000, path: '/peerjs',
+			  debug: 3,
+			  config: {'iceServers': [
+			    { url: 'stun:stun1.l.google.com:19302' },
+			    { url: 'turn:numb.viagenie.ca', credential: 'muazkh', username: 'webrtc@live.com' }
+			  ]}
+			})
+			*/
+			myId: '',
+			peerId: '',
+			initialized: false,
+			files: [],
+			textReceived: '',
+			textSend: '',
+			conn: null,
     };
     this.captureFile = this.captureFile.bind(this);
     this.showPools = this.showPools.bind(this);
@@ -86,6 +115,31 @@ class App extends Component {
       this.setState({ web3, accounts, myContract: instance, myAccount: accounts[0] })
       console.log("contract set up!");
       this.showPools();
+      this.state.peer.on('open', (id) => {
+        console.log('My peer ID is: ' + id);
+        this.setState({
+          myId: id,
+          initialized: true
+        });
+      });
+  
+      this.state.peer.on('connection', (connection) => {
+        console.log('someone connected');
+        console.log(connection);
+  
+        this.setState({
+          conn: connection
+        }, () => {
+          this.state.conn.on('open', () => {
+            this.setState({
+              connected: true
+            });
+          });
+  
+          this.state.conn.on('data', this.onReceiveData);
+        });
+      });
+
     }
     catch (error) {
       // Catch any errors for any of the above operations.
@@ -96,6 +150,82 @@ class App extends Component {
     }
   };
 
+  componentWillUnmount() {
+		this.state.peer.destroy();
+  }
+  
+  sendFile = (event) => {
+		console.log(event.target.files);
+		if (!event.target.files) {
+			return;
+		}
+
+		var file = event.target.files[0];
+    var blob = new Blob(event.target.files, {type: file.type});
+
+    this.state.conn.send({
+				type: TYPE_FILE,
+        file: blob,
+        filename: file.name,
+        filetype: file.type
+		});
+	};
+
+	sendText = (event) => {
+		const text = event.target.value;
+		console.log(text);
+		this.setState({
+			textSend: text
+		});
+		this.state.conn.send({
+			type: TYPE_TEXT,
+			text
+		});
+	};
+
+	onReceiveData = (data) => {
+		console.log('Received', data);
+		switch (data.type) {
+			case TYPE_FILE:
+				const blob = new Blob([data.file], {type: data.filetype});
+				const url = URL.createObjectURL(blob);
+				this.addFile({
+					'name': data.filename,
+					'url': url
+				});
+				break;
+			case TYPE_TEXT:
+				this.setState({
+					textReceived: data.text
+				});
+				break;
+			default:
+		}
+  };
+
+	addFile = (file) => {
+		const fileName = file.name;
+		const fileUrl = file.url;
+
+		const files = this.state.files;
+		const fileId = randomstring.generate(5);
+
+		files.push({
+			id: fileId,
+			url: fileUrl,
+			name: fileName
+		});
+
+		this.setState({
+			files: files
+		});
+	};
+
+	handleTextChange = (event) => {
+		this.setState({
+		  peerId: event.target.value
+		});
+	};
 
   /*   componentDidMount = async () => {
       if (this.state.myContract) {
@@ -117,6 +247,8 @@ class App extends Component {
       console.log("buffer", this.state.buffer);
     }
   }
+
+ 
 
   IPFSSubmit(event) {
     event.preventDefault();
@@ -154,22 +286,23 @@ class App extends Component {
   }
 
   matchReq = async (provAddr) => {
+    console.log(this.state.myContract);
     //let contractEvent = this.state.myContract.PairingInfo();
-    //let events = await this.state.myContract.contract.events.allEvents();
     let events = await this.state.myContract.getPastEvents();
-    console.log(events);
-    //this.state.myContract.allEventsyyy({}, { fromBlock: 'latest', toBlock: 0 }).get((error, events) => {
-
-      // For pairing info events
-      for (var i = events.length - 1; i >= 0; i--) {
-        // Request Assigned
-        if (provAddr == events[i].args.provAddr) {
-          console.log("here is the requester")
-          console.log(events[i].args.reqAddr)
-          return events[i].args.reqAddr;
-        }
+    // For pairing info events
+    for (var i = events.length - 1; i >= 0; i--) {
+      // Request Assigned
+      if (hex2ascii(events[i].args.info) == "Request Assigned" && this.state.myAccount == events[i].args.provAddr) {
+        console.log("here is the requester")
+        console.log(events[i].args.reqAddr)
+        return events[i].args.reqAddr;
       }
-    //})
+      else if (hex2ascii(events[i].args.info) == "Validation Assigned to Provider" && this.state.myAccount == events[i].args.provAddr) {
+        console.log("here is the requester")
+        console.log(events[i].args.reqAddr)
+        return events[i].args.reqAddr;
+      }
+    }
   }
 
   submitRequest(event) {
@@ -178,28 +311,42 @@ class App extends Component {
     console.log("minTarget = ", this.state.Target);
     console.log("maxPrice = ", this.state.Price);
     console.log("dataID = ", this.state.dataID);
-    this.addNotification("Sending Request to Ethereum Blockchain", "You will be notified when the tx is finished", "info");
-    ipfs.files.add(this.state.buffer, (err, result) => {
-      if (err) {
-        console.log("Error!", err);
-        return
-      }
-      else {
-        console.log("ipfsHash returned", result[0].hash)
-        this.setState({ dataID: result[0].hash })
-      }
-    })
-    this.state.myContract.startRequest(this.state.Time, this.state.Target,
-      this.state.Price, this.state.web3.utils.asciiToHex(this.state.dataID),
-      { from: this.state.myAccount, value: this.state.Price }).then(ret => {
-        console.log(ret);
-        this.addNotification("Blockchain Tx Successful", "Request submitted to contract", "success")
+    if(this.state.Time <= 0)
+    {
+      this.addNotification("Submission Error: Request Unable to Submit", "The time input is incompatible", "info")
+    }
+    else if(this.state.Target>100 || this.state.Target<0)
+    {
+      this.addNotification("Submission Error: Request Unable to Submit", "The target input is incompatible", "info")
+    }
+    else if(this.state.Price < 0)
+    {
+      this.addNotification("Submission Error: Request Unable to Submit", "The price input is incompatible", "info")
+    }
+    else{
+      this.addNotification("Sending Request to Ethereum Blockchain", "You will be notified when the tx is finished", "info");
+      ipfs.files.add(this.state.buffer, (err, result) => {
+        if (err) {
+          console.log("Error!", err);
+          return
+        }
+        else {
+          console.log("ipfsHash returned", result[0].hash)
+          this.setState({ dataID: result[0].hash })
+        }
       })
+      this.state.myContract.startRequest(this.state.Time, this.state.Target,
+        this.state.Price, this.state.web3.utils.asciiToHex(this.state.dataID),
+        { from: this.state.myAccount, value: this.state.Price }).then(ret => {
+          console.log(ret);
+          this.addNotification("Blockchain Tx Successful", "Request submitted to contract", "success")
+        })
+    }
   }
 
 
 
-  submitJob = async (event) => {
+  submitJob(event) {
     event.preventDefault();
     ipfs.files.add(this.state.buffer, (err, result) => {
       if (err) {
@@ -211,36 +358,38 @@ class App extends Component {
         this.setState({ dataID: result[0].hash })
       }
     })
-    let req = await this.matchReq(this.state.myAccount)
-    console.log(req)
-    console.log(this.state.web3.utils.asciiToHex(this.state.dataID))
-    this.state.myContract.completeRequest(req, this.state.web3.utils.asciiToHex(this.state.dataID),
-      { from: this.state.myAccount }).then(ret => {
+    let reqMatch = this.findReq(this.state.myAccount)
+    console.log(reqMatch);
+    this.state.myContract.completeRequest(reqMatch, this.state.web3.utils.asciiToHex(this.state.dataID),
+      { from: this.state.myAccount, value: this.state.Price }).then(ret => {
         console.log(ret);
         this.addNotification("Blockchain Tx Successful", "Work submitted to contract", "success")
       })
 
   }
 
-  submitValidation = async (event) => {
+  submitValidation(event) {
     event.preventDefault();
-    let req = await this.matchReq(this.state.myAccount)
-    console.log(req);
-    this.state.myContract.submitValidation(req, this.state.ValidationResult,
-      { from: this.state.myAccount }).then(ret => {
+    let reqMatch = this.findReq(this.state.myAccount)
+    console.log(reqMatch);
+    this.state.myContract.submitValidation(reqMatch, this.state.web3.utils.asciiToHex(this.state.dataID),
+      { from: this.state.myAccount, value: this.state.Price }).then(ret => {
         console.log(ret);
         this.addNotification("Blockchain Tx Successful", "Validation submitted to contract", "success")
       })
+
   }
 
-  applyAsProvider(event) {
-    event.preventDefault();
-
+  applyAsProvider() {
     this.addNotification("Worker application submitted!", "Stand by for approval from the contract", "info")
     this.state.myContract.startProviding(this.state.Time, this.state.Target,
       this.state.Price, { from: this.state.myAccount }).then(ret => {
         this.addNotification("Worker application approved", "Your computer is now registered on the blockchain", "success")
       })
+  }
+
+  validationSubmit() {
+
   }
 
 
@@ -250,6 +399,7 @@ class App extends Component {
     else if (this.state.mode === "WORKER") this.setState({ mode: "USER" })
     else throw String("Setting mode error!")
   }
+
 
   changeAccount(event) {
     event.preventDefault();
@@ -392,8 +542,14 @@ class App extends Component {
     console.log(this.state.myContract);
     //let contractEvent = this.state.myContract.PairingInfo();
     let events = await this.state.myContract.getPastEvents();
-    console.log(events)
     // For pairing info events
+    console.log(events.length)
+    if(this.state.mode == "USER"){
+      if(events.length == 0)
+      {
+        this.addNotification("No Task Scripts", "This account is not awaiting a task", "info")
+      }
+    }
     for (var i = events.length - 1; i >= 0; i--) {
       // Request Assigned
       if (hex2ascii(events[i].args.info) == "Request Assigned") {
@@ -410,7 +566,8 @@ class App extends Component {
       if (hex2ascii(events[i].args.info) == "Request Computation Completed") {
         console.log("alskdjf;laksjdf;laskjdf")
         if (this.state.myAccount == events[i].args.reqAddr) {
-          this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "success")
+          this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated"
+            + events[i].args.provAddr, "success")
         }
         if (this.state.myAccount == events[i].args.provAddr) {
           this.addNotification("Awaiting validation", "You have completed a task an are waiting for validation"
@@ -425,7 +582,7 @@ class App extends Component {
             + events[i].args.provAddr, "success")
         }
         if (this.state.myAccount == events[i].args.provAddr) {
-          this.addNotification("You are a validator", "You need to validate the task as true or false."
+          this.addNotification("Validating Work", "Your result is waiting in the verification process."
             + events[i].args.reqAddr, "info");
         }
       }
@@ -457,10 +614,10 @@ class App extends Component {
       // Validator Signed
       if (hex2ascii(events[i].args.info) == "Validator Signed") {
         if (this.state.myAccount == events[i].args.reqAddr) {
-          this.addNotification("Validator signed", "Your task is being validated", "success")
+          this.addNotification("Provider Found", "Your task is being completed by address ", "success")
         }
         if (this.state.myAccount == events[i].args.provAddr) {
-          this.addNotification("You Have signed your validation", "You have validated the request from address", "info");
+          this.addNotification("You Have Been Assigned A Task", "You have been chosen to complete the request from address", "info");
         }
       }
 
@@ -468,7 +625,7 @@ class App extends Component {
       // Validation Complete
       if (hex2ascii(events[i].args.info) == "Validation Complete") {
         if (this.state.myAccount == events[i].args.reqAddr) {
-          this.addNotification("Job Done", "Please download your resultant file from IPFS using the hash " + events[i].args.extra, "success")
+          this.addNotification("Job Done", "Please download your resultant file from IPFS", "success")
         }
         if (this.state.myAccount == events[i].args.provAddr) {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
@@ -514,12 +671,12 @@ class App extends Component {
     if (this.state.mode === 'WORKER') {
       return (
         <div>
-          <h2> VALIDATIONS </h2>
-          <button onClick={() => this.setState({ ValidationResult: !this.state.ValidationResult })} style={{ marginBottom: 5 }} >
+        <h2> VALIDATIONS </h2>
+          <button onClick={() => this.setState({ ValidationResult: !this.state.ValidationResult })} style={{ marginBottom:5 }} >
             Click Here to toggle validation result
           </button>
           <br></br>
-          Current Validation Result: {'' + this.state.ValidationResult}
+          Current Validation Result: { '' + this.state.ValidationResult }
           <br></br>
           <button onClick={this.submitValidation} style={{ marginTop: 10, marginBottom: 100 }}>
             Submit Validation Result
@@ -572,9 +729,11 @@ class App extends Component {
 
         <h2 style={{ margin: 5 }}>CURRENT ACCOUNT</h2>
         {this.state.myAccount} <br></br>
-        <button onClick={this.checkEvents} style={{ marginBottom: 20 }}> Check Current Account Status </button>
+        <button onClick={this.checkEvents} style={{ margin: 5 }}> Check Current Account Status </button>
+        <p style = {{marginBottom: 50}}><label>Use account: <input type="number" value={this.state.count} onChange={this.changeAccount}></input></label>
+        </p>
         <h2 style={{ margin: 5 }}>{this.state.mode} MODE</h2>
-        <button onClick={this.changeMode} style={{ marginBottom: 100 }}>Switch modes</button>
+        <button onClick={this.changeMode} style={{ marginBottom: 50 }}>Switch modes</button>
 
 
 
@@ -603,8 +762,7 @@ class App extends Component {
             Price : (in wei)
           <input type="number" value={this.state.Price} onChange={this.PriceChange} />
           </label></p>
-          <p>Use account: <input type="number" value={this.state.count} onChange={this.changeAccount}></input>
-            <br></br>
+          <p>
             {this.showSubmitRequestButton()}
             {this.showApplyButton()}
           </p>
@@ -612,7 +770,7 @@ class App extends Component {
 
 
 
-        <div style={{ marginTop: 100 }}>
+        <div style={{ marginTop: 50 }}>
           <h2 style={{ margin: 5 }}>CURRENT STATE OF CONTRACT</h2>
           <p>Provider Pool = {this.state.providerCount}</p>
           <p>Pending Pool = {this.state.pendingCount}</p>
@@ -621,11 +779,148 @@ class App extends Component {
           <button onClick={this.showPools}>
             Refresh
         </button>
+        <div className="app app-container">
+				{this.state.initialized ? this.renderInitialized() : this.renderNotInitialized()}
+			  </div>
         </div>
-
-      </div>
+        </div>
+        
     );
   }
+
+	renderInitialized() {
+		const myId = this.state.myId;
+
+		return (
+			<div>
+				<div className="my-id">
+					<span>{this.props.opts.myIdLabel || 'Your PeerJS ID:'} </span>
+					<Chip icon={<Face />}label={myId} onClick={() => {
+						copy(myId);
+					}} />
+				</div>
+				<hr />
+				{this.state.connected ? this.renderConnected() : this.renderNotConnected()}
+			</div>
+		);
+	}
+
+	renderNotInitialized() {
+		return (
+			<div>Loading...</div>
+		);
+	}
+
+	renderNotConnected() {
+		return (
+			<div>
+				<div className="p-10">
+					<TextField
+						className="input-peer-id"
+						onChange={this.handleTextChange}
+						label={this.props.opts.peerIdLabel || 'Peer ID'}
+						variant="outlined" fullWidth={true}
+					/>
+				</div>
+				<div className="p-10">
+					<Button
+						onClick={this.connect}
+						variant="contained"
+						color="primary"
+					>
+						{this.props.opts.connectLabel || 'connect'}
+					</Button>
+				</div>
+			</div>
+		);
+	}
+
+	renderConnected() {
+		return (
+			<div>
+				<div className="p-10">
+					<TextField
+						className="text-send"
+						value={this.state.textSend}
+						onChange={this.sendText}
+						variant="outlined"
+						label="Send Text"
+						multiline={true}
+						fullWidth={true}
+					/>
+				</div>
+				<div className="p-10">
+					<input type="file" name="file" id="file" onChange={this.sendFile} style={{display: "none"}} />
+					<Button
+						type="file"
+						name="file"
+						id="file"
+						onClick={() => document.getElementById('file').click()}
+						variant="fab"
+						color="secondary"
+					>
+						+
+					</Button>
+				</div>
+				<hr />
+				<div className="p-10 section-title">
+					<span>Text shared to you:</span>
+				</div>
+				<div className="p-10">
+					<TextField
+						className="input-peer-id"
+						value={this.state.textReceived || 'No text received.'}
+						label={'Received Text'}
+						variant="outlined"
+						fullWidth={true}
+						multiline={true}
+					/>
+				</div>
+				<div className="p-10 section-title">
+					<span>
+						{this.props.opts.fileListLabel || 'Files shared to you: '}
+					</span>
+				</div>
+				<div className="p-10">
+					{this.state.files.length ? this.renderFiles() : this.renderNoFiles()}
+				</div>
+			</div>
+		);
+	}
+
+	renderFiles() {
+		return(
+			<List component="nav">
+				{this.state.files.map(item => {
+					return(
+						<ListItem
+							button
+							key={item.id}
+							component="a"
+							href={item.url}
+							download={item.name}
+						>
+							<ListItemIcon>
+								<Drafts />
+							</ListItemIcon>
+							<ListItemText primary={item.name} />
+						</ListItem>
+					);
+				})}
+			</List>
+		);
+	}
+
+  renderNoFiles() {
+		return (
+			<div>
+				<span>
+					{this.props.opts.noFilesLabel || 'No files shared to you yet.'}
+				</span>
+			</div>
+		);
+	}
 }
+
 
 export default App;
