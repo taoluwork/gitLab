@@ -234,7 +234,8 @@ class App extends Component {
 
   }
 
-  applyAsProvider() {
+  applyAsProvider(event) {
+    event.preventDefault();
     this.addNotification("Worker application submitted!", "Stand by for approval from the contract", "info")
     this.state.myContract.startProviding(this.state.Time, this.state.Target,
       this.state.Price, { from: this.state.myAccount }).then(ret => {
