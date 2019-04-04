@@ -154,11 +154,8 @@ class App extends Component {
   }
 
   matchReq = async (provAddr) => {
-    //let contractEvent = this.state.myContract.PairingInfo();
-    //let events = await this.state.myContract.contract.events.allEvents();
     let events = await this.state.myContract.getPastEvents();
     console.log(events);
-    //this.state.myContract.allEventsyyy({}, { fromBlock: 'latest', toBlock: 0 }).get((error, events) => {
 
       // For pairing info events
       for (var i = events.length - 1; i >= 0; i--) {
@@ -361,6 +358,23 @@ class App extends Component {
 
 
   // Workflow:
+
+
+  // Some bugs to note:
+  // Validating pool isnt always cleared
+
+  // For validators, account[3] is always skipped, making the validators accounts 1, 2, and 4
+
+  // only 1 validator is currently working - this is because ctrct.getPastEvents() only
+  // gets the events that were emitted within the last call to the contract on the blockchain
+  // - any events emitted before that call are erased and must be fetched in other ways.
+
+  // The number of provider pool sometimes spontaneously increments when performing certain tasks
+
+  // The code to watch for events needs to be changed entirely most likely
+
+
+
 
   //USER
   // Ensure User mode is active
