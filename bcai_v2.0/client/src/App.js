@@ -29,7 +29,7 @@ class App extends Component {
     myContract: null,
     debug: false,
     mode: "USER",
-
+    events: [],
     providerCount: 0,
     pendingCount: 0,
     validatingCount: 0,
@@ -83,7 +83,7 @@ class App extends Component {
       console.log("here is the instance " + instance);
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, myContract: instance, myAccount: accounts[0] })
+      this.setState({ web3, accounts, myContract: instance, myAccount: accounts[0], events: [] })
       console.log("contract set up!");
       this.showPools();
     }
@@ -156,17 +156,23 @@ class App extends Component {
   matchReq = async (provAddr) => {
     //let contractEvent = this.state.myContract.PairingInfo();
     //let events = await this.state.myContract.contract.events.allEvents();
-    let events = await this.state.myContract.getPastEvents();
-    console.log(events);
+    let pastEvents = await this.state.myContract.getPastEvents();
+    this.state.events.push(pastEvents)
+    this.setState({
+        events: this.state.events
+    });
+    //this.setState({ events: this.state.events.push(pastEvents)})
+    console.log('here are th events')
+    console.log(this.state.events);
     //this.state.myContract.allEventsyyy({}, { fromBlock: 'latest', toBlock: 0 }).get((error, events) => {
 
       // For pairing info events
-      for (var i = events.length - 1; i >= 0; i--) {
+      for (var i = this.state.events.length - 1; i >= 0; i--) {
         // Request Assigned
-        if (provAddr == events[i].args.provAddr) {
+        if (this.state.events[i] && provAddr == this.state.events[i].args.provAddr) {
           console.log("here is the requester")
-          console.log(events[i].args.reqAddr)
-          return events[i].args.reqAddr;
+          console.log(this.state.events[i].args.reqAddr)
+          return this.state.events[i].args.reqAddr;
         }
       }
     //})
@@ -362,6 +368,23 @@ class App extends Component {
 
   // Workflow:
 
+
+  // Some bugs to note:
+  // Validating pool isnt always cleared
+
+  // For validators, account[3] is always skipped, making the validators accounts 1, 2, and 4
+
+  // only 1 validator is currently working - this is because ctrct.getPastEvents() only
+  // gets the events that were emitted within the last call to the contract on the blockchain
+  // - any events emitted before that call are erased and must be fetched in other ways.
+
+  // The number of provider pool sometimes spontaneously increments when performing certain tasks
+
+  // The code to watch for events needs to be changed entirely most likely
+
+
+
+
   //USER
   // Ensure User mode is active
   // choose job file 
@@ -391,86 +414,92 @@ class App extends Component {
   checkEvents = async () => {
     console.log(this.state.myContract);
     //let contractEvent = this.state.myContract.PairingInfo();
-    let events = await this.state.myContract.getPastEvents();
-    console.log(events)
+    let pastEvents = await this.state.myContract.getPastEvents();
+    this.state.events.push(pastEvents)
+    this.setState({
+        events: this.state.events
+    });
+    //this.setState({ events: this.state.events.push(pastEvents)})
+    console.log('here are th events')
+    console.log(this.state.events)
     // For pairing info events
-    for (var i = events.length - 1; i >= 0; i--) {
+    for (var i = this.state.events.length - 1; i >= 0; i--) {
       // Request Assigned
-      if (hex2ascii(events[i].args.info) == "Request Assigned") {
-        if (this.state.myAccount == events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Request Assigned") {
+        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.reqAddr) {
           this.addNotification("Provider Found", "Your task is being completed by address "
-            + events[i].args.provAddr, "success")
+            + this.state.events[i].args.provAddr, "success")
         }
-        if (this.state.myAccount == events[i].args.provAddr) {
+        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("You Have Been Assigned A Task", "You have been chosen to complete the request from address", "info");
         }
       }
 
       // Request Computation Complete
-      if (hex2ascii(events[i].args.info) == "Request Computation Completed") {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Request Computation Completed") {
         console.log("alskdjf;laksjdf;laskjdf")
-        if (this.state.myAccount == events[i].args.reqAddr) {
+        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.reqAddr) {
           this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "success")
         }
-        if (this.state.myAccount == events[i].args.provAddr) {
+        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("Awaiting validation", "You have completed a task an are waiting for validation"
-            + events[i].args.reqAddr, "info");
+            + this.state.events[i].args.reqAddr, "info");
         }
       }
 
       // Validation Assigned to Provider
-      if (hex2ascii(events[i].args.info) == "Validation Assigned to Provider") {
-        if (this.state.myAccount == events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Validation Assigned to Provider") {
+        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.reqAddr) {
           this.addNotification("Validator Found", "A validator was found for your task but more are still needed"
-            + events[i].args.provAddr, "success")
+            + this.state.events[i].args.provAddr, "success")
         }
-        if (this.state.myAccount == events[i].args.provAddr) {
+        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("You are a validator", "You need to validate the task as true or false."
-            + events[i].args.reqAddr, "info");
+            + this.state.events[i].args.reqAddr, "info");
         }
       }
 
       // Not Enough validators
-      if (hex2ascii(events[i].args.info) == "Not Enough Validators") {
-        if (this.state.myAccount == events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Not Enough Validators") {
+        if (this.state.myAccount == this.state.events[i].args.reqAddr) {
           this.addNotification("Not Enough Validators", "More validators are needed before the result can be sent to you"
-            + events[i].args.provAddr, "success")
+            + this.state.events[i].args.provAddr, "success")
         }
-        if (this.state.myAccount == events[i].args.provAddr) {
+        if (this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("Not Enough Validators", "There were not enough validators to verfiy your resulting work. Please wait."
-            + events[i].args.reqAddr, "info");
+            + this.state.events[i].args.reqAddr, "info");
         }
       }
 
 
       // Enough Validators
-      if (hex2ascii(events[i].args.info) == "Enough Validators") {
-        if (this.state.myAccount == events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Enough Validators") {
+        if (this.state.myAccount == this.state.events[i].args.reqAddr) {
           this.addNotification("All Validators Found", "Your task is being validated. Please hold.", "success")
         }
-        if (this.state.myAccount == events[i].args.provAddr) {
+        if (this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("All Validators Found", "Your work is being validated. Please hold.", "info");
         }
       }
 
 
       // Validator Signed
-      if (hex2ascii(events[i].args.info) == "Validator Signed") {
-        if (this.state.myAccount == events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Validator Signed") {
+        if (this.state.myAccount == this.state.events[i].args.reqAddr) {
           this.addNotification("Validator signed", "Your task is being validated", "success")
         }
-        if (this.state.myAccount == events[i].args.provAddr) {
+        if (this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("You Have signed your validation", "You have validated the request from address", "info");
         }
       }
 
 
       // Validation Complete
-      if (hex2ascii(events[i].args.info) == "Validation Complete") {
-        if (this.state.myAccount == events[i].args.reqAddr) {
-          this.addNotification("Job Done", "Please download your resultant file from IPFS using the hash " + events[i].args.extra, "success")
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Validation Complete") {
+        if (this.state.myAccount == this.state.events[i].args.reqAddr) {
+          this.addNotification("Job Done", "Please download your resultant file from IPFS using the hash " + this.state.events[i].args.extra, "success")
         }
-        if (this.state.myAccount == events[i].args.provAddr) {
+        if (this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
         }
       }
