@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////////
-//version 2.0.2
+//version 2.0.3
 //Author: Taurus, Samuel Pritchett
 //Copyright: tlu4@lsu.edu
 //
@@ -380,7 +380,7 @@ contract TaskContract {
         //emit ValidationInfo(reqID, provID, 'Validator Signed');
         //check if valid
         
-        //emit PairingInfo(reqAddr, msg.sender, 'Validator Signed');
+        emit PairingInfo(reqAddr, msg.sender, 'Validator Signed');
         return checkValidation(reqAddr);
         // If enough validations have been submitted
         //if (requestList[reqAddr].validators.length == requestList[reqAddr].numValidations) {
@@ -403,8 +403,9 @@ contract TaskContract {
             //balanceList[requestList[reqID].addr] -= payment;
             //TODO: [important] leave out the payment part for now.
             requestList[reqAddr].isValid = true; // Task was successfully completed! 
-            flag = true;
+            
             emit IPFSInfo(reqAddr, 'Validation Complete', requestList[reqAddr].resultID);
+            flag = finalizeRequest(reqAddr);
         }
         // otherwise, work was invalid, the providers payment goes back to requester
         //else {
@@ -415,7 +416,7 @@ contract TaskContract {
         //emit TaskCompleted(requestList[reqID].addr, reqID);
 
         //popout from pool
-        flag = flag && ArrayPop(validatingPool, reqAddr);
+//        flag = flag && ArrayPop(validatingPool, reqAddr);
         // TODO : 
         // Add
         return flag;
@@ -453,6 +454,12 @@ contract TaskContract {
         }
     }
 
+    // finalize the completed result, move everything out of current pools
+    
+    function finalizeRequest(address payable reqAddr) private returns (bool) {
+        // TODO: handle any potential payment
+        return ArrayPop(validatingPool, reqAddr);
+    }
 /////////////////////////////////////////////////////////////////////
     // Used to dynamically remove elements from array of open provider spaces. 
     // Using a swap and delete method, search for the desired addr throughout the whole array
