@@ -62,6 +62,7 @@ class App extends Component {
     this.state = { mode: "USER", };
     //the following bind enable calling the function directly using func() syntax
     //NOTE: adding bind for new added functions is necessary
+    //If missed bind may result in error : "cannot access property of undefined"
     this.captureFile = this.captureFile.bind(this);
     this.showPools = this.showPools.bind(this);
     this.ListoutPool = this.ListoutPool.bind(this);
@@ -77,6 +78,10 @@ class App extends Component {
     this.changeAccount = this.changeAccount.bind(this);
     this.addNotification = this.addNotification.bind(this);
     this.applyAsProvider = this.applyAsProvider.bind(this);
+    this.submitValidationTrue = this.submitValidationTrue.bind(this);
+    this.submitValidationFalse = this.submitValidationFalse.bind(this);
+
+
     this.notificationDOMRef = React.createRef();
   }
 
@@ -283,6 +288,18 @@ class App extends Component {
       }
       else { console.log("Failed to submit to IPFS")}
     }
+  }
+
+  submitValidationTrue (event) {
+    event.preventDefault();
+    this.setState({ValidationResult: true})
+    this.submitValidation(event)
+  }
+
+  submitValidationFalse (event){
+    event.preventDefault();
+    this.setState({ValidationResult: false})
+    this.submitValidation(event)
   }
 
   submitValidation = async (event) => {
@@ -613,47 +630,68 @@ class App extends Component {
       return (
         <div>
           <h2> VALIDATIONS </h2>
-          <button onClick={() => this.setState({ ValidationResult: !this.state.ValidationResult })} style={{ marginBottom: 5 }} >
-            Click Here to toggle validation result
+          <p>
+          <button onClick={this.submitValidationTrue} style={{ marginBottom: 5 , marginRight : 10}} >
+            TRUE
           </button>
-          <br></br>
+          <button onClick={this.submitValidationFalse} style={{ marginBottom: 5 , marginLeft: 10}}>
+            FALSE
+          </button>
+          </p>
           Current Validation Result: {'' + this.state.ValidationResult}
-          <br></br>
-          <button onClick={this.submitValidation} style={{ marginTop: 10, marginBottom: 100 }}>
-            Submit Validation Result
-          </button>
         </div>
       );
     }
   }
 
-  showSubmitJobButton() {
-    if (this.state.mode === 'WORKER') {
-      return (
-        <button onClick={this.submitJob} style={{ marginTop: 10, marginLeft: 15, marginBottom: 100 }}>
-          Submit File as Job Result
-        </button>
-      );
-    }
-  }
-  showSubmitRequestButton() {
+  // apply provider or nothing
+  showSubmitButton() {
     if (this.state.mode === 'USER') {
-      return (
-        <button onClick={this.submitRequest} style={{ margin: 10 }}>
-          Submit Task Request
-        </button>
-      );
+      return
     }
-  }
-
-  showApplyTitle() {
     if (this.state.mode === 'WORKER') {
       return (
-        <h2>APPLY TO BE A PROVIDER</h2>
+        <button onClick={this.applyAsProvider} style={{ margin: 10 }}>
+          Apply Provider
+          </button>
       );
     }
   }
-
+  // upload script or result
+  showUploadModule() {
+    if (this.state.mode === "USER"){
+      return (
+        <div><h2>{"UPLOAD TASK SCRIPT" }</h2>
+        <form onSubmit={this.IPFSSubmit}>
+          <input type='file' onChange={this.captureFile}></input>
+          <button onClick={this.submitRequest} style={{ margin: 10 }}>
+          Submit Task
+          </button>
+          {/*<input type='submit' value="Upload to IPFS"></input>*/}
+        </form></div>
+      )
+    }
+    if (this.state.mode === 'WORKER') {
+      return (
+        <div><h2>SUBMIT RESULT PACKAGE</h2>
+          <form onSubmit={this.IPFSSubmit}>
+          <input type='file' onChange={this.captureFile}></input>
+          {/*<input type='submit' value="Upload to IPFS"></input>*/}
+       
+        <button onClick={this.submitJob} style={{ marginTop: 10, marginLeft: 15, marginBottom: 10 }}>
+          Submit Result
+        </button>
+        </form></div>
+      );
+    }
+  }
+  //used to align User mode with worker mode
+  showUserDivider(){
+    if (this.state.mode === "USER")
+      return (
+        <div style={{marginBottom: 190}}></div>
+      )
+  }
 
   /////////////////////////////////////////////////////////////////////////////////
   //components of react: https://reactjs.org/docs/forms.html  
@@ -672,23 +710,12 @@ class App extends Component {
         {this.state.myAccount} <br></br>
         <button onClick={this.checkEvents} style={{ marginBottom: 20 }}> Check Current Account Status </button>
         <h2 style={{ margin: 5 }}>{this.state.mode} MODE</h2>
-        <button onClick={this.changeMode} style={{ marginBottom: 100 }}>Switch modes</button>
+        <button onClick={this.changeMode} style={{ marginBottom: 30 }}>Switch modes</button>
 
-
-
-        <h2>{this.state.mode === 'USER' ? "UPLOAD TASK SCRIPT" : "UPLOAD RESULT"}</h2>
-        <form onSubmit={this.IPFSSubmit}>
-          <input type='file' onChange={this.captureFile}></input>
-          <input type='submit' value="Upload to IPFS"></input>
-        </form>
-        {this.showSubmitJobButton()}
-
-
-        {this.showValidationButtons()}
-
+        
 
         <form onSubmit={this.startRequestSubmit}>
-          {this.showApplyTitle()}
+        <h2>{this.state.mode === 'USER' ? "SUBMIT YOUR TASK" : "APPLY TO BE PROVIDER"}</h2>
           <p><label>
             Time : (in seconds)
           <input type="number" value={this.state.Time} onChange={this.TimeChange} />
@@ -703,22 +730,22 @@ class App extends Component {
           </label></p>
           <p>Use account: <input type="number" value={this.state.count} onChange={this.changeAccount}></input>
             <br></br>
-            {this.showSubmitRequestButton()}
-            {this.showApplyButton()}
+            {this.showSubmitButton()}
           </p>
         </form>
-
-
-
-        <div style={{ marginTop: 100 }}>
-          <h2 style={{ margin: 5 }}>CURRENT STATE OF CONTRACT</h2>
+        {this.showUploadModule()}
+        {this.showValidationButtons()}
+        {this.showUserDivider()}
+        <div style={{ marginTop: 20 }}>
+          <h2 style={{ margin: 1 }}>CURRENT STATE OF CONTRACT
+          <button onClick={this.showPools} style={{marginLeft: 20}}>
+            Refresh
+          </button></h2>
           <p>Provider Pool = {this.state.providerCount}</p>
           <p>Pending Pool = {this.state.pendingCount}</p>
           <p>Providing Pool = {this.state.providingCount}</p>
           <p>Validating Pool = {this.state.validatingCount}</p>
-          <button onClick={this.showPools}>
-            Refresh
-        </button>
+          
         </div>
 
       </div>
