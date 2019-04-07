@@ -1,10 +1,12 @@
 /////////////////////////////////////////////////////////////////////////////////////
-//version 2.0.3
+//version 2.0.4
 //Author: Taurus, Samuel Pritchett
 //Copyright: tlu4@lsu.edu
 //
-//This is the formal release of v2.0, comments updated on Feb.2019
-//
+//comments updated on Apr.2019
+//fixed validateReqeust Logic: validator list is updated when selection, 
+//                      signature list is updated when result submiteed, to avoid multi-submission
+//did not change function parameter, should not break anything
 ///////////////////////////////////////////////////////////////////////////////////////
 //NOTE:
 //This design uses account address as the identifier, meaning each address could only have one req/prov associated.
@@ -44,10 +46,12 @@ contract TaskContract {
         bytes   dataID;                     //dataID used to fetch the off-chain data, interact with ipfs
         bytes   resultID;                   //dataID to fetch the off-chain result, via ipfs
         uint64  numValidations;             //user defined the number of validation, TODO: fix this as 3 
-        address payable []  validators;     //addresses from validations, collect validator no matter valid or not
-        bool[]  signatures;                 //true or false array, associated with validator list above
+        address payable []  validators;     //validators' addr, update when assigned the task to validators
+        bool[]  signatures;                 //true or false array, update only when validator submit result
         bool    isValid;                    //the final flag
         byte    status;                     //one byte indicating the status: 0: 'pending', 1:'providing', 2: 'validating', 3: 'complete'
+        //mapping (address => bool)validationList;   //no way to know if a specific address is in this mapping
+                                                    //but this can be useful together with validator []array
     }
 
     struct Provider {
@@ -155,7 +159,7 @@ contract TaskContract {
             requestList[msg.sender].target        = target;
             requestList[msg.sender].price         = price;
             requestList[msg.sender].dataID        = dataID;
-            requestList[msg.sender].numValidations = 1;//fixed 3 for testing reasons
+            requestList[msg.sender].numValidations = 3;//fixed 3 for testing reasons
             requestList[msg.sender].status = '0' ;     //pending = 0x30, is in ascii not number 0
             pendingPool.push(msg.sender);
             emit SystemInfo (msg.sender, "Request Added");
@@ -257,7 +261,7 @@ contract TaskContract {
         else {            //if any provider in pool
             for (uint64 i = 0; i < providerPool.length; i++) {      
                 address payable provAddr  = providerPool[i];   // save the provider's addr, reusable and save gas cost
-                if(provAddr != address(0) && providerList[provAddr].available == true){
+                if (provAddr != address(0) && providerList[provAddr].available == true){
                     // Check if request conditions meet the providers requirements
                     if (requestList[reqAddr].target <= providerList[provAddr].maxTarget && 
                         requestList[reqAddr].time <= providerList[provAddr].maxTime && 
@@ -313,100 +317,99 @@ contract TaskContract {
         }
     }
 
-    // Called by assignRequest before finalizing stuff. Contract checks with validators
+    // Called by completeRequest before finalizing stuff. NOTE: must have no validators right now
+    // Try to find as many as possible qualified validators
     // Returns false if there wasnt enough free providers to send out the required number of validation requests
     // need validation from 1/10 of nodes -- could change
-    function validateRequest(address payable reqAddr) public returns (bool) {
+    function validateRequest(address payable reqAddr) private returns (bool) {
         uint64 numValidatorsNeeded = requestList[reqAddr].numValidations; 
-        //uint numValidators = providerCount / 10; 
         uint64 validatorsFound = 0;
         //select # of available provider from the pool and force em to do the validation
         for (uint64 i = 0; i < providerPool.length; i++) {
             address payable provID = providerPool[i]; //get provider ID
+            //TODO: check whether selected validator capable with parameters (time, accuracy,....)
             if(provID != requestList[reqAddr].provider){   //validator and computer cannot be same
-                if(requestList[reqAddr].validators.length == 0){ //if there are no validators yet, no need to compare to existing validator
-                        //TODO: check whether selected validator capable with parameters (time, accuracy,....)
-                        //EVENT: informs validator that they were selected and need to validate
-                        emit PairingInfo(reqAddr, provID, 'Validation Assigned to Provider');
-                        validatorsFound++;
-                        //remove the providers availablity and pop from pool
-                        providerList[provID].available = false;
-                        ArrayPop(providerPool, provID);
-                }
-                else{  //previous validator exist in list, try avoiding them.
-                        for(uint64 j = 0; j <= requestList[reqAddr].validators.length; j++){   //go through the list of existing validators
-                            if(provID != requestList[reqAddr].validators[j]){ //validator cannot be same as existing validator
-                                //EVENT: informs validator that they were selected and need to validate
-                                emit PairingInfo(reqAddr, provID, 'Validation Assigned to Provider');
-                                validatorsFound++;
-                                //TODO: Add provider to the validators array for this request
-                                requestList[reqAddr].validators.push(provID);
-                                //remove the providers availablity and pop from pool
-                                providerList[provID].available = false;
-                                ArrayPop(providerPool, provID);
-                            }
-                        }
-                    }    
-            } else continue;
+                emit PairingInfo(reqAddr, provID, 'Validation Assigned to Provider');
+                validatorsFound++;
+                //remove the providers availablity and pop from pool
+                requestList[reqAddr].validators.push(provID);
+                requestList[reqAddr].signatures.push(false);    //push false to hold position
+                providerList[provID].available = false;
+                     
+                //NOTE [IMPORTANT] : pop array while looping this array is very dangerous
+                //because popping will change the sequence of the elements thus will skip some item.
+                //[deprecated] ArrayPop(providerPool, provID);
+                //solution: only pop after looping through all the pool
+    
+            } else continue;    //skip the provider/computer itself
+            
             //check whether got enough validator
             if(validatorsFound < numValidatorsNeeded){
                 continue;
             }
             else{       //enough validator
                 emit SystemInfo(reqAddr, 'Enough Validators');
+                ArrayPopArray(providerPool, requestList[reqAddr].validators);
                 return true;
                 break;
             }
             //loop until certain # of validators selected
         }   
-        //exit loop without enough validators    
+        //exit loop without enough validators
+        ArrayPopArray(providerPool, requestList[reqAddr].validators);  //not sure if necessary , for safety
         emit SystemInfo(reqAddr, 'Not Enough Validators');
+        return false;
     }
 
     // needs to be more secure by ensuring the submission is coming from someone legit 
     // similar to completeTask but this will sign the validation list of the target Task
-    //TODO: the money part is ommited for now
-    function submitValidation(address payable reqAddr, bool result) public returns (bool) {
+    // TODO: the money part is ommited for now
+    function submitValidation(address payable reqAddr, bool result) public returns (bool) {       
+        if(msg.sender != requestList[reqAddr].provider) {     //validator cannot be provider
+            for (uint64 i = 0; i<requestList[reqAddr].validators.length; i++){
+                if(requestList[reqAddr].validators[i] == msg.sender     // vali must be previous validator assigned
+                && requestList[reqAddr].signatures[i] == false){    // not yet signed
+                    
+                    requestList[reqAddr].signatures[i] = result;        //length is matched, this prevent multi-submission and can update his own
+                    providerList[msg.sender].available = true;          //release validator
+                    providerPool.push(msg.sender);
+                    emit PairingInfo(reqAddr, msg.sender, 'Validator Signed');
+                }
+                else continue;   //either submitted already or not find , go for next
+            }
+            checkValidation(reqAddr);
+        }
+        else   //submit vali from provider
+            return false;
+
         // Pay the validator 
         // uint partialPayment = requestList[reqID].price / 100; // amount each validator is paid
         // msg.sender.transfer(partialPayment);
         // balanceList[requestList[reqID].addr] -= partialPayment;
-        if(msg.sender != requestList[reqAddr].provider) {     //validator cannot be provider
-            requestList[reqAddr].validators.push(msg.sender);     //push array
-            requestList[reqAddr].signatures.push(result);     //edit mapping
-            providerList[msg.sender].available = true;        //release validator
-            providerPool.push(msg.sender);
-        }
-        //emit ValidationInfo(reqID, provID, 'Validator Signed');
-        //check if valid
-        
-        emit PairingInfo(reqAddr, msg.sender, 'Validator Signed');
-        return checkValidation(reqAddr);
-        // If enough validations have been submitted
-        //if (requestList[reqAddr].validators.length == requestList[reqAddr].numValidations) {
-            //return checkValidation(reqID, requestList[reqID].price - requestList[reqID].numValidationsNeeded * partialPayment);
-        //}
     }
     
-    function checkValidation(address payable reqAddr) public returns (bool) {
+    //TODO: what if result is invalid, we got 3 false signature, will stuck here.
+    function checkValidation(address payable reqAddr) private returns (bool) {
         // Add up successful validations
         bool flag = false;
         uint64 successCount = 0;
-        for (uint64 i=0; i<requestList[reqAddr].validators.length; i++) {
-            if (requestList[reqAddr].signatures[i] == true) successCount++;
+        for (uint64 i=0; i<requestList[reqAddr].signatures.length; i++) {
+           if (requestList[reqAddr].signatures[i] == true) successCount += 1;
         }
         // if 2/3 of validation attempts were successful
         // TODO: determine the fraction
+        
         if (successCount  >= requestList[reqAddr].numValidations) { 
             // if 2/3 of validations were valid then provider gets remainder of money
             //requestList[reqID].provider.transfer(payment); 
             //balanceList[requestList[reqID].addr] -= payment;
             //TODO: [important] leave out the payment part for now.
             requestList[reqAddr].isValid = true; // Task was successfully completed! 
-            
             emit IPFSInfo(reqAddr, 'Validation Complete', requestList[reqAddr].resultID);
-            flag = finalizeRequest(reqAddr);
+            //flag = ArrayPop(validatingPool, reqAddr);
+            finalizeRequest(reqAddr);
         }
+        /*
         // otherwise, work was invalid, the providers payment goes back to requester
         //else {
             //requestList[reqID].addr.transfer(payment);
@@ -415,10 +418,8 @@ contract TaskContract {
         // EVENT: task is done whether successful or not
         //emit TaskCompleted(requestList[reqID].addr, reqID);
 
-        //popout from pool
-//        flag = flag && ArrayPop(validatingPool, reqAddr);
-        // TODO : 
-        // Add
+        // popout from pool
+        */
         return flag;
     }
 
@@ -428,37 +429,34 @@ contract TaskContract {
     // IDEA: Could be modified so that any available provider could call. For now it assumes only used on new providers in startProviding
     function findValidation(address payable provAddr) private {
         for(uint64 i = 0; i < validatingPool.length; i++){  //search the entire validatingpool
-
             address payable reqAddr = validatingPool[i]; //set reqAddr current task
-
             if(requestList[reqAddr].numValidations > requestList[reqAddr].validators.length){ //check to see if the task has enough validators
-
                 //since the provAddr is a new provider, we don't need to check if he is already a validator, should be impossible unless bug exists
-
                 if(provAddr != requestList[reqAddr].provider){ //check to make sure he is not the computer
                     emit PairingInfo(reqAddr, provAddr, 'Validation Assigned to Provider');
                     requestList[reqAddr].validators.push(provAddr);
-
+                    requestList[reqAddr].signatures.push(false);    //extend length to match length of validator list
                     providerList[provAddr].available = false;
                     ArrayPop(providerPool, provAddr);
 
                     //alert task owner if their task now has enough validators
                     if(requestList[validatingPool[i]].validators.length == requestList[validatingPool[i]].numValidations){
                         emit SystemInfo(reqAddr, 'Enough Validators');
+                        break;  //only break when got enough
                     }
-                    break;
                 }
-                //else{}
+                //else he is computer, did nothing
             }
-            //else{}
+            else continue; //this req has already got enough, check next
         }
     }
 
     // finalize the completed result, move everything out of current pools
-    
+    // TODO: handle any potential payment
     function finalizeRequest(address payable reqAddr) private returns (bool) {
-        // TODO: handle any potential payment
-        return ArrayPop(validatingPool, reqAddr);
+        ArrayPop(validatingPool, reqAddr);
+        //delete related record
+        requestList[reqAddr].blockNumber = 0;
     }
 /////////////////////////////////////////////////////////////////////
     // Used to dynamically remove elements from array of open provider spaces. 
@@ -477,6 +475,13 @@ contract TaskContract {
             }
         }
         return false;   //fail to search: no matching in pool
+    }
+    function ArrayPopArray(address payable[] storage array, address payable[] memory targetArray) private returns (bool){
+        bool flag = true;
+        for (uint64 j = 0;j<targetArray.length;j++){
+            flag = flag && ArrayPop(array, targetArray[j]);
+        }
+        return flag;
     }
     /////////////////////////////////////////////////////////////////////////////////
     //some helpers defined here
