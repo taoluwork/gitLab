@@ -129,15 +129,24 @@ class App extends Component {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   TimeChange(event) {
     event.preventDefault();
-    this.setState({ Time: event.target.value })
+    if (event.target.value != "")   //under extreme cases, user will input empty by mistake
+      this.setState({Time: event.target.value })
+    else
+      this.setState({Time: undefined})
   }
   TargetChange(event) {
     event.preventDefault();
-    this.setState({ Target: event.target.value })
+    if (event.target.value != "")   //under extreme cases, user will input empty by mistake
+      this.setState({Target: event.target.value })
+    else
+      this.setState({Target: undefined})
   }
   PriceChange(event) {
     event.preventDefault();
-    this.setState({ Price: event.target.value })
+    if (event.target.value != "")   //under extreme cases, user will input empty by mistake
+      this.setState({Price: event.target.value })
+    else
+      this.setState({Price: undefined})
   }
 
   //file readers: https://developer.mozilla.org/en-US/docs/Web/API/FileReader
@@ -215,11 +224,11 @@ class App extends Component {
         else {
           // Look for pairing info events
           for (var i = pastEvents.length - 1; i >= 0; i--) {
+            console.log("------------", this.state.web3.utils.hexToAscii(pastEvents[i].args.info))
             console.log(  "prov", pastEvents[i].args.provAddr)
-            console.log(  "req", pastEvents[i].args.reqAddr)
-            console.log("provD ", provAddr)
+            console.log(  "req",  pastEvents[i].args.reqAddr)
             // Request Addr exist and provAddr matches
-            if (pastEvents[i].args.reqAddr && provAddr == pastEvents[i].args.provAddr) {
+            if (pastEvents[i].args.reqAddr && provAddr == pastEvents[i].args.provAddr ) {
                 return pastEvents[i].args.reqAddr
             }
           }
@@ -242,14 +251,14 @@ class App extends Component {
         { from: this.state.myAccount, value: this.state.Price })
         .then(ret => {
           console.log(ret);
-          this.addNotification("Blockchain Tx Successful", "Request submitted to contract", "success")
+          this.addNotification("Request Submission Succeed", "Request submitted to contract", "success")
           var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
           this.setState({RequestStartTime : StartTime})
           console.log("Event Tracking start at #", this.state.RequestStartTime)
         })
         .catch(err => {
           console.log(err);
-          this.addNotification("Submit Request Failed", "Please check your configuration", "warning")
+          this.addNotification("Request Submission Failed", "Please check your configuration", "warning")
         })
     }
     else {
@@ -281,7 +290,7 @@ class App extends Component {
       if (resultHash != undefined){
         console.log("ResultHash = ", resultHash)
         this.state.myContract.completeRequest(reqAddr, this.state.web3.utils.asciiToHex(resultHash),
-          { from: this.state.myAccount }).then(ret => {
+          { from: this.state.myAccount, gas:500000 }).then(ret => {
             console.log("Submit Result Return:", ret);
             this.addNotification("Result Submission Succeed", "Work submitted to contract", "success")
           })
@@ -305,15 +314,23 @@ class App extends Component {
   submitValidation = async (event) => {
     event.preventDefault();
     let req = await this.matchReq(this.state.myAccount)
-    console.log(req);
+    console.log("submit vali for: ", req);
     if (req == undefined){
       this.addNotification("Validation Submission Failed", "You are not assigned as Validator", "warning")
     }
-    this.state.myContract.submitValidation(req, this.state.ValidationResult,
-      { from: this.state.myAccount }).then(ret => {
-        console.log(ret);
-        this.addNotification("Validation Submission Succeeded", "Validation submitted to contract", "success")
-      })
+    else {
+      console.log("submit result = ", this.state.ValidationResult)
+      this.state.myContract.submitValidation(req, this.state.ValidationResult,
+        { from: this.state.myAccount, gas: 200000 })
+        .then(ret => {
+          console.log(ret);
+          this.addNotification("Validation Submission Succeeded", "Validation submitted to contract", "success")
+        })
+        .catch(err => { //most common err here is out-of-gas VM error
+          console.log(err);
+          this.addNotification("Validation Submission Error!", "Please check console for error", "warning")
+        })
+    }
   }
 
   applyAsProvider(event) {
