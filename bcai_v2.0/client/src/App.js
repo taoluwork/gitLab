@@ -1,5 +1,10 @@
-// 
+// this is the main entrance of Application
+// version: v2.0.2, align with bcai_2.0.2.sol
 
+
+// TODO: update appearance -- material-ui
+// TODO: fix the async function dependency. e.g. Need returned dataID to send Tx
+// TODO: use this.state.RequestStartTime to record block# and narrow down the searching range of events
 
 import React, { Component } from "react";
 import TaskContract from "./contracts/TaskContract.json";
@@ -11,6 +16,7 @@ import ReactNotification from "react-notifications-component";
 import "react-notifications-component/dist/theme.css";
 
 import "./App.css";
+//import { Accounts } from "web3-eth-accounts/types";
 //import { userInfo } from "os";
 const hex2ascii = require('hex2ascii')
 
@@ -23,32 +29,40 @@ const FormSchema = t.struct({
 
 class App extends Component {
   state = {
+    //web3, account, contract instance, update later by setState()
     web3: null,
     accounts: null,
     myAccount: null,
     myContract: null,
     debug: false,
+    count: 0,
+
+    //user level variable
     mode: "USER",
     events: [],
+    ValidationResult: false,
+    Time: 0,
+    Target: 0,
+    Price: 0,
+    dataID: null,
+    resultID: null, //TODO
+    RequestStartTime: 0,
+
+    //variables to display status
     providerCount: 0,
     pendingCount: 0,
     validatingCount: 0,
     providingCount: 0,
     providerList: null,
-
-    ValidationResult: false,
-    Time: 0,
-    Target: 0,
-    Price: 0,
-    dataID: null
+    
   };
-
 
   constructor(props) {
     super(props)
-    this.state = {
-      mode: "USER",
-    };
+    this.state = { mode: "USER", };
+    //the following bind enable calling the function directly using func() syntax
+    //NOTE: adding bind for new added functions is necessary
+    //If missed bind may result in error : "cannot access property of undefined"
     this.captureFile = this.captureFile.bind(this);
     this.showPools = this.showPools.bind(this);
     this.ListoutPool = this.ListoutPool.bind(this);
@@ -64,18 +78,20 @@ class App extends Component {
     this.changeAccount = this.changeAccount.bind(this);
     this.addNotification = this.addNotification.bind(this);
     this.applyAsProvider = this.applyAsProvider.bind(this);
+    this.submitValidationTrue = this.submitValidationTrue.bind(this);
+    this.submitValidationFalse = this.submitValidationFalse.bind(this);
+
+
     this.notificationDOMRef = React.createRef();
   }
 
-
+  //initiate the page
   componentWillMount = async () => {
     try {
       // Get network provider and web3 instance.
       const web3 = await getWeb3();
-      //console.log(web3);
       // Use web3 to get the user's accounts.
       const accounts = await web3.eth.getAccounts();
-      //console.log(accounts);
       // Get the contract instance.
       const Contract = truffleContract(TaskContract);
       Contract.setProvider(web3.currentProvider);
@@ -84,6 +100,7 @@ class App extends Component {
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
       this.setState({ web3, accounts, myContract: instance, myAccount: accounts[0], events: [] })
+      this.setState({Time: 1, Price : 1, Target : 1, count : 0})
       console.log("contract set up!");
       this.showPools();
     }
@@ -96,19 +113,46 @@ class App extends Component {
     }
   };
 
-
+  //DidMount handel the task after page loaded, omitted here
   /*   componentDidMount = async () => {
       if (this.state.myContract) {
   
       }
     } */
-  //file readers: https://developer.mozilla.org/en-US/docs/Web/API/FileReader
-  /////// Supporting functions for app //////////////////////////////////////////////////////////////////////////////////////////
+  
+  /////// Supporting functions for app ////////////////////////////////////////////////////////////////////
   //NOTE:[important] using => is very important,this pass the context without changing the this ref.
   //https://medium.com/@thejasonfile/callback-functions-in-react-e822ebede766
-  captureFile(event) {
-    console.log("capture file");
+  //NOTE: event.preventDefault() is important to stop page from refreshing itself after an event happen.
+  //[Tutorial] some tricks about async and await: https://flaviocopes.com/javascript-async-await/
+  //https://medium.com/codebuddies/getting-to-know-asynchronous-javascript-callbacks-promises-and-async-await-17e0673281ee
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  TimeChange(event) {
+    event.preventDefault();
+    if (event.target.value != "")   //under extreme cases, user will input empty by mistake
+      this.setState({Time: event.target.value })
+    else
+      this.setState({Time: undefined})
+  }
+  TargetChange(event) {
+    event.preventDefault();
+    if (event.target.value != "")   //under extreme cases, user will input empty by mistake
+      this.setState({Target: event.target.value })
+    else
+      this.setState({Target: undefined})
+  }
+  PriceChange(event) {
+    event.preventDefault();
+    if (event.target.value != "")   //under extreme cases, user will input empty by mistake
+      this.setState({Price: event.target.value })
+    else
+      this.setState({Price: undefined})
+  }
+
+  //file readers: https://developer.mozilla.org/en-US/docs/Web/API/FileReader
+  captureFile(event) {    //using filereader to load file into buffer after selection
     event.preventDefault()
+    console.log("capture file")
     const file = event.target.files[0]
     const reader = new window.FileReader()
     reader.readAsArrayBuffer(file)
@@ -117,163 +161,222 @@ class App extends Component {
       console.log("buffer", this.state.buffer);
     }
   }
-
-  IPFSSubmit(event) {
-    event.preventDefault();
-    console.log("submitted!")
-    this.addNotification("Uploading file...", "Awaiting response from IPFS", "info");
+/*  //call-back style code only for reference [deprecated]
+  IPFS = async () =>{
     ipfs.files.add(this.state.buffer, (err, result) => {
       if (err) {
-        console.log("Error!", err);
+        console.log("IPFS Error!", err);
         this.addNotification("Error", "Your file could not be uploaded. Please choose a file and try again.", "warning");
-        return
+        return null
       }
       else {
-        //this.setState({ipfsHash: result[0].hash})
         console.log("ipfsHash returned", result[0].hash)
         this.addNotification("Upload Complete", "File was succesfully added to IPFS! URL/DataID: " + result[0].hash, "success")
-        this.setState({ ipfsHash: result[0].hash, dataID: result[0].hash })
-
-
-      }
-    })
-
-  }
-
-  TimeChange(event) {
-    event.preventDefault();
-    this.setState({ Time: event.target.value })
-  }
-  TargetChange(event) {
-    event.preventDefault();
-    this.setState({ Target: event.target.value })
-  }
-  PriceChange(event) {
-    event.preventDefault();
-    this.setState({ Price: event.target.value })
-  }
-
-  matchReq = async (provAddr) => {
-    //let contractEvent = this.state.myContract.PairingInfo();
-    //let events = await this.state.myContract.contract.events.allEvents();
-    let pastEvents = await this.state.myContract.getPastEvents();
-    this.state.events.push(pastEvents)
-    this.setState({
-        events: this.state.events
-    });
-    //this.setState({ events: this.state.events.push(pastEvents)})
-    console.log('here are th events')
-    console.log(this.state.events);
-    //this.state.myContract.allEventsyyy({}, { fromBlock: 'latest', toBlock: 0 }).get((error, events) => {
-
-      // For pairing info events
-      for (var i = this.state.events.length - 1; i >= 0; i--) {
-        // Request Assigned
-        if (this.state.events[i] && provAddr == this.state.events[i].args.provAddr) {
-          console.log("here is the requester")
-          console.log(this.state.events[i].args.reqAddr)
-          return this.state.events[i].args.reqAddr;
-        }
-      }
-    //})
-  }
-
-  submitRequest(event) {
-    event.preventDefault();
-    console.log("maxTime = ", this.state.Time);
-    console.log("minTarget = ", this.state.Target);
-    console.log("maxPrice = ", this.state.Price);
-    console.log("dataID = ", this.state.dataID);
-    this.addNotification("Sending Request to Ethereum Blockchain", "You will be notified when the tx is finished", "info");
-    ipfs.files.add(this.state.buffer, (err, result) => {
-      if (err) {
-        console.log("Error!", err);
-        return
-      }
-      else {
-        console.log("ipfsHash returned", result[0].hash)
         this.setState({ dataID: result[0].hash })
+        return result[0].hash
       }
     })
-    this.state.myContract.startRequest(this.state.Time, this.state.Target,
-      this.state.Price, this.state.web3.utils.asciiToHex(this.state.dataID),
-      { from: this.state.myAccount, value: this.state.Price }).then(ret => {
-        console.log(ret);
-        this.addNotification("Blockchain Tx Successful", "Request submitted to contract", "success")
+  }
+  */
+  //Wrap the IPFS api into a promise version, thus can be handled easily later.
+  IPFSupload = async() => {
+    return new Promise((resolve, reject) => {
+      ipfs.files.add(this.state.buffer, (err, result) => {
+        if (err) { reject(err) }    //if err, handle using reject function
+        else { resolve(result) }    //if no err, handle using resolve
+      })                            //NOTE: resolve and rej is provided where IPFSupload is called.
+    })
+  }
+  //submit the file in buffer to the IPFS api
+  //NOTE: wrap the callback function file.add() into a promiss-pattern call, see details in below link.
+  //https://medium.com/codebuddies/getting-to-know-asynchronous-javascript-callbacks-promises-and-async-await-17e0673281ee
+  IPFSSubmit =  async (event) => {  //declare this as async and it will return a promise, even not explicitly
+    event.preventDefault();   //stop refreshing
+    console.log("submiting...")
+    this.addNotification("Uploading file...", "Awaiting response from IPFS", "info");
+    let returnHash = await this.IPFSupload()
+      .then(result => {
+        return result[0].hash
+      }).catch(err => {
+        console.log("IPFS Error!", err);
+        return undefined
       })
+    if (returnHash != undefined){
+      console.log("ipfsHash returned", returnHash)
+      this.addNotification("Upload Complete", "File was succesfully added to IPFS! URL/DataID: " + returnHash, "success")
+      this.setState({ dataID: returnHash })
+      return returnHash
+    }
+    else {
+      this.addNotification("Error", "Your file could not be uploaded. Please choose a file and try again.", "warning");
+      return undefined
+    }
   }
 
 
 
+  //seach for all events related to current(provider) addr, return the reqAddrs
+  matchReq = async (provAddr) => {
+    let reqAddr = await this.state.myContract.getPastEvents("allEvents", {fromBlock: 0, toBlock: 'latest'})
+      .then(pastEvents => { //NOTE:[IMPORTANT] this.state.event is not updated in this stage
+        console.log("returned all events:", pastEvents) 
+        if (pastEvents == undefined) return undefined
+        else {
+          // Look for pairing info events
+          for (var i = pastEvents.length - 1; i >= 0; i--) {
+            console.log("------------", this.state.web3.utils.hexToAscii(pastEvents[i].args.info))
+            console.log(  "prov", pastEvents[i].args.provAddr)
+            console.log(  "req",  pastEvents[i].args.reqAddr)
+            // Request Addr exist and provAddr matches
+            if (pastEvents[i].args.reqAddr && provAddr == pastEvents[i].args.provAddr ) {
+                return pastEvents[i].args.reqAddr
+            }
+          }
+          return undefined  // not find
+        }
+      })
+      .catch(err => {return err})
+      console.log(reqAddr)
+      return reqAddr
+  }
+
+  //upload the file to IPFS and send the TX at the same time. No addtional button is needed
+  submitRequest = async (event) => {
+    event.preventDefault();
+    //Combine the startRequest with the IPFS, so user do not need click additional button
+    let returnHash = await this.IPFSSubmit(event)
+    if (returnHash != undefined){
+      this.state.myContract.startRequest(this.state.Time, this.state.Target,
+        this.state.Price, this.state.web3.utils.asciiToHex(this.state.dataID),
+        { from: this.state.myAccount, value: this.state.Price })
+        .then(ret => {
+          console.log(ret);
+          this.addNotification("Request Submission Succeed", "Request submitted to contract", "success")
+          var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
+          this.setState({RequestStartTime : StartTime})
+          console.log("Event Tracking start at #", this.state.RequestStartTime)
+        })
+        .catch(err => {
+          console.log(err);
+          this.addNotification("Request Submission Failed", "Please check your configuration", "warning")
+        })
+    }
+    else {
+      console.log("IPFS return Hash undefined")
+    }
+//    this.addNotification("Sending Request to Ethereum Blockchain", "You will be notified when the tx is finished", "info");
+    
+    //print output only after the state setting
+    console.log("maxTime = ",   this.state.Time);
+    console.log("minTarget = ", this.state.Target);
+    console.log("maxPrice = ",  this.state.Price);
+    console.log("dataID = ",    this.state.dataID);
+  }
+
+
+  //submitJob will check whether you are assigned a task first.
+  //Only if you are assigned, it will send the TX
+  //This check is also done in smart contract, you cannot submit result to other's task.
+  //Given that, checking in client is still necessary because checking onchain consumes gas.
   submitJob = async (event) => {
     event.preventDefault();
-    ipfs.files.add(this.state.buffer, (err, result) => {
-      if (err) {
-        console.log("Error!", err);
-        return
+    let reqAddr = await this.matchReq(this.state.myAccount)
+    console.log("RequestAddr = ", reqAddr)
+    if (reqAddr == undefined){
+      this.addNotification("Result Submission Failed", "You are not assigned a task", "warning")
+    }
+    else {
+      let resultHash = await this.IPFSSubmit(event)
+      if (resultHash != undefined){
+        console.log("ResultHash = ", resultHash)
+        this.state.myContract.completeRequest(reqAddr, this.state.web3.utils.asciiToHex(resultHash),
+          { from: this.state.myAccount, gas:500000 }).then(ret => {
+            console.log("Submit Result Return:", ret);
+            this.addNotification("Result Submission Succeed", "Work submitted to contract", "success")
+          })
       }
-      else {
-        console.log("ipfsHash returned", result[0].hash)
-        this.setState({ dataID: result[0].hash })
-      }
-    })
-    let req = await this.matchReq(this.state.myAccount)
-    console.log(req)
-    console.log(this.state.web3.utils.asciiToHex(this.state.dataID))
-    this.state.myContract.completeRequest(req, this.state.web3.utils.asciiToHex(this.state.dataID),
-      { from: this.state.myAccount }).then(ret => {
-        console.log(ret);
-        this.addNotification("Blockchain Tx Successful", "Work submitted to contract", "success")
-      })
+      else { console.log("Failed to submit to IPFS")}
+    }
+  }
 
+  submitValidationTrue (event) {
+    event.preventDefault();
+    this.setState({ValidationResult: true})
+    this.submitValidation(event)
+  }
+
+  submitValidationFalse (event){
+    event.preventDefault();
+    this.setState({ValidationResult: false})
+    this.submitValidation(event)
   }
 
   submitValidation = async (event) => {
     event.preventDefault();
     let req = await this.matchReq(this.state.myAccount)
-    console.log(req);
-    this.state.myContract.submitValidation(req, this.state.ValidationResult,
-      { from: this.state.myAccount }).then(ret => {
-        console.log(ret);
-        this.addNotification("Blockchain Tx Successful", "Validation submitted to contract", "success")
-      })
+    console.log("submit vali for: ", req);
+    if (req == undefined){
+      this.addNotification("Validation Submission Failed", "You are not assigned as Validator", "warning")
+    }
+    else {
+      console.log("submit result = ", this.state.ValidationResult)
+      this.state.myContract.submitValidation(req, this.state.ValidationResult,
+        { from: this.state.myAccount, gas: 200000 })
+        .then(ret => {
+          console.log(ret);
+          this.addNotification("Validation Submission Succeeded", "Validation submitted to contract", "success")
+        })
+        .catch(err => { //most common err here is out-of-gas VM error
+          console.log(err);
+          this.addNotification("Validation Submission Error!", "Please check console for error", "warning")
+        })
+    }
   }
 
   applyAsProvider(event) {
     event.preventDefault();
-
     this.addNotification("Worker application submitted!", "Stand by for approval from the contract", "info")
     this.state.myContract.startProviding(this.state.Time, this.state.Target,
-      this.state.Price, { from: this.state.myAccount }).then(ret => {
+      this.state.Price, { from: this.state.myAccount })
+      .then(ret => {
         this.addNotification("Worker application approved", "Your computer is now registered on the blockchain", "success")
+      })
+      .catch(err => {
+        console.log(err)
+        this.addNotification("Worker application failed", "Please check your configuration", "warning")
       })
   }
 
 
   changeMode(event) {
     event.preventDefault()
-    if (this.state.mode === "USER") this.setState({ mode: "WORKER" })
-    else if (this.state.mode === "WORKER") this.setState({ mode: "USER" })
+    if (this.state.mode === "USER"){
+      this.setState({ mode: "WORKER" })
+      this.setState({ count: 9, myAccount: this.state.accounts[9]})
+    } 
+    else if (this.state.mode === "WORKER"){
+      this.setState({ mode: "USER" })
+      this.setState({ count: 0, myAccount: this.state.accounts[0]})
+    } 
     else throw String("Setting mode error!")
   }
 
   changeAccount(event) {
     event.preventDefault();
-    this.setState({ myAccount: this.state.accounts[event.target.value] })
+    this.setState({ myAccount: this.state.accounts[event.target.value] ,
+    count: event.target.value})
   }
   ////// Supporting functions for display //////////////////////////////////////////////////////////////////
   showPools() {		//optional [--list] 
-    //NOTE: the following 'return' is important, it actually return the promise object
-    //this avoid the issue of unhandled promise.
     this.state.myContract.getProviderPool.call().then(provPool => {
       console.log("=======================================================");
       console.log("Active provider pool: Total = ", provPool.length);
       console.log(provPool);
       this.setState({ providerCount: provPool.length })
       this.setState({ providerList: provPool })
-      return provPool;
-    }).then(provPool => {
-      if (provPool.length > 0) return this.ListoutPool(provPool, 'provider');
+//      return provPool;
+//    }).then(provPool => {
+//      if (provPool.length > 0) return this.ListoutPool(provPool, 'provider');
     })
 
 
@@ -282,10 +385,9 @@ class App extends Component {
       console.log("Pending pool:  Total = ", reqPool.length);
       console.log(reqPool);
       this.setState({ pendingCount: reqPool.length })
-      return reqPool;
-
-    }).then(reqPool => {
-      if (reqPool.length > 0) return this.ListoutPool(reqPool, 'request');
+      //return reqPool;
+    //}).then(reqPool => {
+      //if (reqPool.length > 0) return this.ListoutPool(reqPool, 'request');
     })
 
     this.state.myContract.getProvidingPool.call().then(providingPool => {
@@ -293,9 +395,9 @@ class App extends Component {
       console.log("Providing pool:  Total = ", providingPool.length);
       console.log(providingPool);
       this.setState({ providingCount: providingPool.length })
-      return providingPool;
-    }).then(providingPool => {
-      if (providingPool.length > 0) return this.ListoutPool(providingPool, 'request');
+      //return providingPool;
+//    }).then(providingPool => {
+      //if (providingPool.length > 0) return this.ListoutPool(providingPool, 'request');
     })//.then(function(){
 
     this.state.myContract.getValidatingPool.call().then(valiPool => {
@@ -303,10 +405,10 @@ class App extends Component {
       console.log("Validating pool:  Total = ", valiPool.length);
       console.log(valiPool);
       this.setState({ validatingCount: valiPool.length })
-      return valiPool;
+//      return valiPool;
       //})
-    }).then(valiPool => {
-      if (valiPool.length > 0) return this.ListoutPool(valiPool, 'request');
+//    }).then(valiPool => {
+      //if (valiPool.length > 0) return this.ListoutPool(valiPool, 'request');
     })
   }
 
@@ -412,16 +514,17 @@ class App extends Component {
 
   // Checking status of account. 
   checkEvents = async () => {
-    console.log(this.state.myContract);
+//    console.log(this.state.myContract);
     //let contractEvent = this.state.myContract.PairingInfo();
-    let pastEvents = await this.state.myContract.getPastEvents();
-    this.state.events.push(pastEvents)
+    let pastEvents = await this.state.myContract.getPastEvents("allEvents", {fromBlock: 0, toBlock: 'latest'});
+    console.log("All events:", pastEvents)
+
     this.setState({
-        events: this.state.events
+        events: pastEvents
     });
     //this.setState({ events: this.state.events.push(pastEvents)})
-    console.log('here are th events')
-    console.log(this.state.events)
+    //console.log('here are th events')
+    //console.log(this.state.events)
     // For pairing info events
     for (var i = this.state.events.length - 1; i >= 0; i--) {
       // Request Assigned
@@ -437,9 +540,9 @@ class App extends Component {
 
       // Request Computation Complete
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Request Computation Completed") {
-        console.log("alskdjf;laksjdf;laskjdf")
+//        console.log("alskdjf;laksjdf;laskjdf")
         if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.reqAddr) {
-          this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "success")
+          this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "info")
         }
         if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("Awaiting validation", "You have completed a task an are waiting for validation"
@@ -451,7 +554,7 @@ class App extends Component {
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Validation Assigned to Provider") {
         if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.reqAddr) {
           this.addNotification("Validator Found", "A validator was found for your task but more are still needed"
-            + this.state.events[i].args.provAddr, "success")
+            + this.state.events[i].args.provAddr, "info")
         }
         if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("You are a validator", "You need to validate the task as true or false."
@@ -463,7 +566,7 @@ class App extends Component {
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Not Enough Validators") {
         if (this.state.myAccount == this.state.events[i].args.reqAddr) {
           this.addNotification("Not Enough Validators", "More validators are needed before the result can be sent to you"
-            + this.state.events[i].args.provAddr, "success")
+            + this.state.events[i].args.provAddr, "warning")
         }
         if (this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("Not Enough Validators", "There were not enough validators to verfiy your resulting work. Please wait."
@@ -486,7 +589,7 @@ class App extends Component {
       // Validator Signed
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Validator Signed") {
         if (this.state.myAccount == this.state.events[i].args.reqAddr) {
-          this.addNotification("Validator signed", "Your task is being validated", "success")
+          this.addNotification("Validator signed", "Your task is being validated", "info")
         }
         if (this.state.myAccount == this.state.events[i].args.provAddr) {
           this.addNotification("You Have signed your validation", "You have validated the request from address", "info");
@@ -525,7 +628,7 @@ class App extends Component {
       container: "top-right",
       animationIn: ["animated", "fadeIn"],
       animationOut: ["animated", "fadeOut"],
-      dismiss: { duration: 2000 },
+      dismiss: { duration: 5000 },
       dismissable: { click: true }
     });
   }
@@ -544,47 +647,68 @@ class App extends Component {
       return (
         <div>
           <h2> VALIDATIONS </h2>
-          <button onClick={() => this.setState({ ValidationResult: !this.state.ValidationResult })} style={{ marginBottom: 5 }} >
-            Click Here to toggle validation result
+          <p>
+          <button onClick={this.submitValidationTrue} style={{ marginBottom: 5 , marginRight : 10}} >
+            TRUE
           </button>
-          <br></br>
+          <button onClick={this.submitValidationFalse} style={{ marginBottom: 5 , marginLeft: 10}}>
+            FALSE
+          </button>
+          </p>
           Current Validation Result: {'' + this.state.ValidationResult}
-          <br></br>
-          <button onClick={this.submitValidation} style={{ marginTop: 10, marginBottom: 100 }}>
-            Submit Validation Result
-          </button>
         </div>
       );
     }
   }
 
-  showSubmitJobButton() {
-    if (this.state.mode === 'WORKER') {
-      return (
-        <button onClick={this.submitJob} style={{ marginTop: 10, marginLeft: 15, marginBottom: 100 }}>
-          Submit File as Job Result
-        </button>
-      );
-    }
-  }
-  showSubmitRequestButton() {
+  // apply provider or nothing
+  showSubmitButton() {
     if (this.state.mode === 'USER') {
-      return (
-        <button onClick={this.submitRequest} style={{ margin: 10 }}>
-          Submit Task Request
-        </button>
-      );
+      return
     }
-  }
-
-  showApplyTitle() {
     if (this.state.mode === 'WORKER') {
       return (
-        <h2>APPLY TO BE A PROVIDER</h2>
+        <button onClick={this.applyAsProvider} style={{ margin: 10 }}>
+          Apply Provider
+          </button>
       );
     }
   }
-
+  // upload script or result
+  showUploadModule() {
+    if (this.state.mode === "USER"){
+      return (
+        <div><h2>{"UPLOAD TASK SCRIPT" }</h2>
+        <form onSubmit={this.IPFSSubmit}>
+          <input type='file' onChange={this.captureFile}></input>
+          <button onClick={this.submitRequest} style={{ margin: 10 }}>
+          Submit Task
+          </button>
+          {/*<input type='submit' value="Upload to IPFS"></input>*/}
+        </form></div>
+      )
+    }
+    if (this.state.mode === 'WORKER') {
+      return (
+        <div><h2>SUBMIT RESULT PACKAGE</h2>
+          <form onSubmit={this.IPFSSubmit}>
+          <input type='file' onChange={this.captureFile}></input>
+          {/*<input type='submit' value="Upload to IPFS"></input>*/}
+       
+        <button onClick={this.submitJob} style={{ marginTop: 10, marginLeft: 15, marginBottom: 10 }}>
+          Submit Result
+        </button>
+        </form></div>
+      );
+    }
+  }
+  //used to align User mode with worker mode
+  showUserDivider(){
+    if (this.state.mode === "USER")
+      return (
+        <div style={{marginBottom: 190}}></div>
+      )
+  }
 
   /////////////////////////////////////////////////////////////////////////////////
   //components of react: https://reactjs.org/docs/forms.html  
@@ -603,23 +727,12 @@ class App extends Component {
         {this.state.myAccount} <br></br>
         <button onClick={this.checkEvents} style={{ marginBottom: 20 }}> Check Current Account Status </button>
         <h2 style={{ margin: 5 }}>{this.state.mode} MODE</h2>
-        <button onClick={this.changeMode} style={{ marginBottom: 100 }}>Switch modes</button>
+        <button onClick={this.changeMode} style={{ marginBottom: 30 }}>Switch modes</button>
 
-
-
-        <h2>{this.state.mode === 'USER' ? "UPLOAD TASK SCRIPT" : "UPLOAD RESULT"}</h2>
-        <form onSubmit={this.IPFSSubmit}>
-          <input type='file' onChange={this.captureFile}></input>
-          <input type='submit' value="Upload to IPFS"></input>
-        </form>
-        {this.showSubmitJobButton()}
-
-
-        {this.showValidationButtons()}
-
+        
 
         <form onSubmit={this.startRequestSubmit}>
-          {this.showApplyTitle()}
+        <h2>{this.state.mode === 'USER' ? "SUBMIT YOUR TASK" : "APPLY TO BE PROVIDER"}</h2>
           <p><label>
             Time : (in seconds)
           <input type="number" value={this.state.Time} onChange={this.TimeChange} />
@@ -634,22 +747,22 @@ class App extends Component {
           </label></p>
           <p>Use account: <input type="number" value={this.state.count} onChange={this.changeAccount}></input>
             <br></br>
-            {this.showSubmitRequestButton()}
-            {this.showApplyButton()}
+            {this.showSubmitButton()}
           </p>
         </form>
-
-
-
-        <div style={{ marginTop: 100 }}>
-          <h2 style={{ margin: 5 }}>CURRENT STATE OF CONTRACT</h2>
+        {this.showUploadModule()}
+        {this.showValidationButtons()}
+        {this.showUserDivider()}
+        <div style={{ marginTop: 20 }}>
+          <h2 style={{ margin: 1 }}>CURRENT STATE OF CONTRACT
+          <button onClick={this.showPools} style={{marginLeft: 20}}>
+            Refresh
+          </button></h2>
           <p>Provider Pool = {this.state.providerCount}</p>
           <p>Pending Pool = {this.state.pendingCount}</p>
           <p>Providing Pool = {this.state.providingCount}</p>
           <p>Validating Pool = {this.state.validatingCount}</p>
-          <button onClick={this.showPools}>
-            Refresh
-        </button>
+          
         </div>
 
       </div>
