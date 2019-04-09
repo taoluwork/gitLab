@@ -18,6 +18,7 @@
   "dependencies": {
     "bluebird": "^3.5.1",
     "jquery": "^3.3.1",
+    "php": "0.0.1",
     "truffle-contract": "^3.0.5",
     "web3": "^1.0.0-beta.34",
     "webpack": "^2.2.0"
