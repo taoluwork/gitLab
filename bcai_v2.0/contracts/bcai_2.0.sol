@@ -325,8 +325,8 @@ contract TaskContract {
         uint64 numValidatorsNeeded = requestList[reqAddr].numValidations; 
         uint64 validatorsFound = 0;
         //select # of available provider from the pool and force em to do the validation
-        for (uint64 i = 0; i < providerPool.length; i++) {
-            address payable provID = providerPool[i]; //get provider ID
+        for (uint64 i = 1; i <= providerPool.length; i++) {
+            address payable provID = providerPool[i - 1]; //get provider ID
             //TODO: check whether selected validator capable with parameters (time, accuracy,....)
             if(provID != requestList[reqAddr].provider){   //validator and computer cannot be same
                 emit PairingInfo(reqAddr, provID, 'Validation Assigned to Provider');
@@ -335,6 +335,8 @@ contract TaskContract {
                 requestList[reqAddr].validators.push(provID);
                 requestList[reqAddr].signatures.push(false);    //push false to hold position
                 providerList[provID].available = false;
+                ArrayPop(providerPool, provID);
+                i--;
                      
                 //NOTE [IMPORTANT] : pop array while looping this array is very dangerous
                 //because popping will change the sequence of the elements thus will skip some item.
@@ -349,14 +351,14 @@ contract TaskContract {
             }
             else{       //enough validator
                 emit SystemInfo(reqAddr, 'Enough Validators');
-                ArrayPopArray(providerPool, requestList[reqAddr].validators);
+               // ArrayPop(providerPool, requestList[reqAddr].validators);
                 return true;
                 break;
             }
             //loop until certain # of validators selected
         }   
         //exit loop without enough validators
-        ArrayPopArray(providerPool, requestList[reqAddr].validators);  //not sure if necessary , for safety
+       // ArrayPopArray(providerPool, requestList[reqAddr].validators);  //not sure if necessary , for safety
         emit SystemInfo(reqAddr, 'Not Enough Validators');
         return false;
     }
@@ -439,11 +441,14 @@ contract TaskContract {
                     providerList[provAddr].available = false;
                     ArrayPop(providerPool, provAddr);
 
+
                     //alert task owner if their task now has enough validators
                     if(requestList[validatingPool[i]].validators.length == requestList[validatingPool[i]].numValidations){
                         emit SystemInfo(reqAddr, 'Enough Validators');
-                        break;  //only break when got enough
                     }
+
+                    break;
+
                 }
                 //else he is computer, did nothing
             }
