@@ -733,7 +733,7 @@ class App extends Component {
     return (
       <div className="App">
         <ReactNotification ref={this.notificationDOMRef} />
-        <h1 style={{ marginBottom: 30 }}>Welcome to the BCAI Dapp Web Interface</h1>
+        <h1 style={{ marginBottom: 30 }}>Welcome to the BCAI Dapp</h1>
         <button onClick={this.changeMode} style={{ fontsize: 40, height:60, width: 120, marginBottom: 20 }}>{this.state.mode} MODE</button>
 
         
