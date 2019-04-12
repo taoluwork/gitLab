@@ -217,7 +217,7 @@ class App extends Component {
 
   //seach for all events related to current(provider) addr, return the reqAddrs
   matchReq = async (provAddr) => {
-    let reqAddr = await this.state.myContract.getPastEvents("allEvents", {fromBlock: 0, toBlock: 'latest'})
+    let reqAddr = await this.state.myContract.getPastEvents("allEvents", {fromBlock: this.state.RequestStartTime, toBlock: 'latest'})
       .then(pastEvents => { //NOTE:[IMPORTANT] this.state.event is not updated in this stage
         console.log("returned all events:", pastEvents) 
         if (pastEvents == undefined) return undefined
@@ -292,6 +292,8 @@ class App extends Component {
         this.state.myContract.completeRequest(reqAddr, this.state.web3.utils.asciiToHex(resultHash),
           { from: this.state.myAccount, gas:500000 }).then(ret => {
             console.log("Submit Result Return:", ret);
+            var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
+            this.setState({RequestStartTime : StartTime})
             this.addNotification("Result Submission Succeed", "Work submitted to contract", "success")
           })
       }
@@ -323,6 +325,8 @@ class App extends Component {
       this.state.myContract.submitValidation(req, this.state.ValidationResult,
         { from: this.state.myAccount, gas: 200000 })
         .then(ret => {
+          //var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
+          //this.setState({RequestStartTime : StartTime})
           console.log(ret);
           this.addNotification("Validation Submission Succeeded", "Validation submitted to contract", "success")
         })
@@ -516,7 +520,7 @@ class App extends Component {
   checkEvents = async () => {
 //    console.log(this.state.myContract);
     //let contractEvent = this.state.myContract.PairingInfo();
-    let pastEvents = await this.state.myContract.getPastEvents("allEvents", {fromBlock: 0, toBlock: 'latest'});
+    let pastEvents = await this.state.myContract.getPastEvents("allEvents", {fromBlock:  this.state.RequestStartTime, toBlock: 'latest'});
     console.log("All events:", pastEvents)
 
     this.setState({
@@ -526,7 +530,7 @@ class App extends Component {
     //console.log('here are th events')
     //console.log(this.state.events)
     // For pairing info events
-    for (var i = this.state.events.length - 1; i >= 0; i--) {
+    for (var i = 0; i < this.state.events.length; i++) {
       // Request Assigned
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Request Assigned") {
         if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.reqAddr) {
@@ -540,7 +544,6 @@ class App extends Component {
 
       // Request Computation Complete
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Request Computation Completed") {
-//        console.log("alskdjf;laksjdf;laskjdf")
         if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.reqAddr) {
           this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "info")
         }
@@ -714,7 +717,8 @@ class App extends Component {
   //components of react: https://reactjs.org/docs/forms.html  
   render() {
 
-    document.body.style = 'background:gold;';
+    this.state.mode === "USER" ? document.body.style = 'background:#ad628c;' : document.body.style = 'background:#85d3f2;'
+
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contract...</div>;
     }
