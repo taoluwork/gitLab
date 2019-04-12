@@ -5,6 +5,8 @@
 // TODO: update appearance -- material-ui
 // TODO: fix the async function dependency. e.g. Need returned dataID to send Tx
 // TODO: use this.state.RequestStartTime to record block# and narrow down the searching range of events
+// TODO: add notification of updating request
+// TODO: add button for cancel request , stop providing
 
 import React, { Component } from "react";
 import TaskContract from "./contracts/TaskContract.json";
@@ -101,6 +103,7 @@ class App extends Component {
       // example of interacting with the contract's methods.
       this.setState({ web3, accounts, myContract: instance, myAccount: accounts[0], events: [] })
       this.setState({Time: 1, Price : 1, Target : 1, count : 0})
+      this.setState({RequestStartTime: 0})
       console.log("contract set up!");
       this.showPools();
     }
@@ -344,6 +347,9 @@ class App extends Component {
       this.state.Price, { from: this.state.myAccount })
       .then(ret => {
         this.addNotification("Worker application approved", "Your computer is now registered on the blockchain", "success")
+        console.log("Submit Result Return:", ret);
+        var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
+        this.setState({RequestStartTime : StartTime})
       })
       .catch(err => {
         console.log(err)
@@ -521,6 +527,7 @@ class App extends Component {
 //    console.log(this.state.myContract);
     //let contractEvent = this.state.myContract.PairingInfo();
     let pastEvents = await this.state.myContract.getPastEvents("allEvents", {fromBlock:  this.state.RequestStartTime, toBlock: 'latest'});
+    console.log("Event range: ", this.state.RequestStartTime)
     console.log("All events:", pastEvents)
 
     this.setState({
@@ -717,7 +724,7 @@ class App extends Component {
   //components of react: https://reactjs.org/docs/forms.html  
   render() {
 
-    this.state.mode === "USER" ? document.body.style = 'background:#ad628c;' : document.body.style = 'background:#85d3f2;'
+    this.state.mode === "USER" ? document.body.style = 'background:#F5F2D1;' : document.body.style = 'background:#E7F5D1;'
 
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contract...</div>;
