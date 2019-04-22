@@ -5,6 +5,8 @@
 // TODO: update appearance -- material-ui
 // TODO: fix the async function dependency. e.g. Need returned dataID to send Tx
 // TODO: use this.state.RequestStartTime to record block# and narrow down the searching range of events
+// TODO: add notification of updating request
+// TODO: add button for cancel request , stop providing
 
 import React, { Component } from "react";
 import TaskContract from "./contracts/TaskContract.json";
@@ -20,12 +22,13 @@ import "./App.css";
 //import { userInfo } from "os";
 const hex2ascii = require('hex2ascii')
 
+/*
 const FormSchema = t.struct({
   time: t.Number,
   target: t.Number,
   price: t.Number,
   account: t.String
-})
+})*/
 
 class App extends Component {
   state = {
@@ -101,6 +104,7 @@ class App extends Component {
       // example of interacting with the contract's methods.
       this.setState({ web3, accounts, myContract: instance, myAccount: accounts[0], events: [] })
       this.setState({Time: 1, Price : 1, Target : 1, count : 0})
+      this.setState({RequestStartTime: 0})
       console.log("contract set up!");
       this.showPools();
     }
@@ -129,21 +133,21 @@ class App extends Component {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   TimeChange(event) {
     event.preventDefault();
-    if (event.target.value != "")   //under extreme cases, user will input empty by mistake
+    if (event.target.value !== "")   //under extreme cases, user will input empty by mistake
       this.setState({Time: event.target.value })
     else
       this.setState({Time: undefined})
   }
   TargetChange(event) {
     event.preventDefault();
-    if (event.target.value != "")   //under extreme cases, user will input empty by mistake
+    if (event.target.value !== "")   //under extreme cases, user will input empty by mistake
       this.setState({Target: event.target.value })
     else
       this.setState({Target: undefined})
   }
   PriceChange(event) {
     event.preventDefault();
-    if (event.target.value != "")   //under extreme cases, user will input empty by mistake
+    if (event.target.value !== "")   //under extreme cases, user will input empty by mistake
       this.setState({Price: event.target.value })
     else
       this.setState({Price: undefined})
@@ -201,7 +205,7 @@ class App extends Component {
         console.log("IPFS Error!", err);
         return undefined
       })
-    if (returnHash != undefined){
+    if (returnHash !== undefined){
       console.log("ipfsHash returned", returnHash)
       this.addNotification("Upload Complete", "File was succesfully added to IPFS! URL/DataID: " + returnHash, "success")
       this.setState({ dataID: returnHash })
@@ -217,10 +221,10 @@ class App extends Component {
 
   //seach for all events related to current(provider) addr, return the reqAddrs
   matchReq = async (provAddr) => {
-    let reqAddr = await this.state.myContract.getPastEvents("allEvents", {fromBlock: 0, toBlock: 'latest'})
+    let reqAddr = await this.state.myContract.getPastEvents("allEvents", {fromBlock: this.state.RequestStartTime, toBlock: 'latest'})
       .then(pastEvents => { //NOTE:[IMPORTANT] this.state.event is not updated in this stage
         console.log("returned all events:", pastEvents) 
-        if (pastEvents == undefined) return undefined
+        if (pastEvents === undefined) return undefined
         else {
           // Look for pairing info events
           for (var i = pastEvents.length - 1; i >= 0; i--) {
@@ -228,7 +232,7 @@ class App extends Component {
             console.log(  "prov", pastEvents[i].args.provAddr)
             console.log(  "req",  pastEvents[i].args.reqAddr)
             // Request Addr exist and provAddr matches
-            if (pastEvents[i].args.reqAddr && provAddr == pastEvents[i].args.provAddr ) {
+            if (pastEvents[i].args.reqAddr && provAddr === pastEvents[i].args.provAddr ) {
                 return pastEvents[i].args.reqAddr
             }
           }
@@ -245,7 +249,7 @@ class App extends Component {
     event.preventDefault();
     //Combine the startRequest with the IPFS, so user do not need click additional button
     let returnHash = await this.IPFSSubmit(event)
-    if (returnHash != undefined){
+    if (returnHash !== undefined){
       this.state.myContract.startRequest(this.state.Time, this.state.Target,
         this.state.Price, this.state.web3.utils.asciiToHex(this.state.dataID),
         { from: this.state.myAccount, value: this.state.Price })
@@ -282,16 +286,18 @@ class App extends Component {
     event.preventDefault();
     let reqAddr = await this.matchReq(this.state.myAccount)
     console.log("RequestAddr = ", reqAddr)
-    if (reqAddr == undefined){
+    if (reqAddr === undefined){
       this.addNotification("Result Submission Failed", "You are not assigned a task", "warning")
     }
     else {
       let resultHash = await this.IPFSSubmit(event)
-      if (resultHash != undefined){
+      if (resultHash !== undefined){
         console.log("ResultHash = ", resultHash)
         this.state.myContract.completeRequest(reqAddr, this.state.web3.utils.asciiToHex(resultHash),
           { from: this.state.myAccount, gas:500000 }).then(ret => {
             console.log("Submit Result Return:", ret);
+            var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
+            this.setState({RequestStartTime : StartTime})
             this.addNotification("Result Submission Succeed", "Work submitted to contract", "success")
           })
       }
@@ -315,7 +321,7 @@ class App extends Component {
     event.preventDefault();
     let req = await this.matchReq(this.state.myAccount)
     console.log("submit vali for: ", req);
-    if (req == undefined){
+    if (req === undefined){
       this.addNotification("Validation Submission Failed", "You are not assigned as Validator", "warning")
     }
     else {
@@ -323,6 +329,8 @@ class App extends Component {
       this.state.myContract.submitValidation(req, this.state.ValidationResult,
         { from: this.state.myAccount, gas: 200000 })
         .then(ret => {
+          //var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
+          //this.setState({RequestStartTime : StartTime})
           console.log(ret);
           this.addNotification("Validation Submission Succeeded", "Validation submitted to contract", "success")
         })
@@ -340,6 +348,9 @@ class App extends Component {
       this.state.Price, { from: this.state.myAccount })
       .then(ret => {
         this.addNotification("Worker application approved", "Your computer is now registered on the blockchain", "success")
+        console.log("Submit Result Return:", ret);
+        var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
+        this.setState({RequestStartTime : StartTime})
       })
       .catch(err => {
         console.log(err)
@@ -516,7 +527,8 @@ class App extends Component {
   checkEvents = async () => {
 //    console.log(this.state.myContract);
     //let contractEvent = this.state.myContract.PairingInfo();
-    let pastEvents = await this.state.myContract.getPastEvents("allEvents", {fromBlock: 0, toBlock: 'latest'});
+    let pastEvents = await this.state.myContract.getPastEvents("allEvents", {fromBlock:  this.state.RequestStartTime, toBlock: 'latest'});
+    console.log("Event range: ", this.state.RequestStartTime)
     console.log("All events:", pastEvents)
 
     this.setState({
@@ -526,49 +538,48 @@ class App extends Component {
     //console.log('here are th events')
     //console.log(this.state.events)
     // For pairing info events
-    for (var i = this.state.events.length - 1; i >= 0; i--) {
+    for (var i = 0; i < this.state.events.length; i++) {
       // Request Assigned
-      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Request Assigned") {
-        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Assigned") {
+        if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Provider Found", "Your task is being completed by address "
             + this.state.events[i].args.provAddr, "success")
         }
-        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.provAddr) {
+        if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("You Have Been Assigned A Task", "You have been chosen to complete the request from address", "info");
         }
       }
 
       // Request Computation Complete
-      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Request Computation Completed") {
-//        console.log("alskdjf;laksjdf;laskjdf")
-        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Computation Completed") {
+        if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "info")
         }
-        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.provAddr) {
+        if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("Awaiting validation", "You have completed a task an are waiting for validation"
             + this.state.events[i].args.reqAddr, "info");
         }
       }
 
       // Validation Assigned to Provider
-      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Validation Assigned to Provider") {
-        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Validation Assigned to Provider") {
+        if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Validator Found", "A validator was found for your task but more are still needed"
             + this.state.events[i].args.provAddr, "info")
         }
-        if (this.state.events[i] && this.state.myAccount == this.state.events[i].args.provAddr) {
+        if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("You are a validator", "You need to validate the task as true or false."
             + this.state.events[i].args.reqAddr, "info");
         }
       }
 
       // Not Enough validators
-      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Not Enough Validators") {
-        if (this.state.myAccount == this.state.events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Not Enough Validators") {
+        if (this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Not Enough Validators", "More validators are needed before the result can be sent to you"
             + this.state.events[i].args.provAddr, "warning")
         }
-        if (this.state.myAccount == this.state.events[i].args.provAddr) {
+        if (this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("Not Enough Validators", "There were not enough validators to verfiy your resulting work. Please wait."
             + this.state.events[i].args.reqAddr, "info");
         }
@@ -576,33 +587,33 @@ class App extends Component {
 
 
       // Enough Validators
-      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Enough Validators") {
-        if (this.state.myAccount == this.state.events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Enough Validators") {
+        if (this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("All Validators Found", "Your task is being validated. Please hold.", "success")
         }
-        if (this.state.myAccount == this.state.events[i].args.provAddr) {
+        if (this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("All Validators Found", "Your work is being validated. Please hold.", "info");
         }
       }
 
 
       // Validator Signed
-      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Validator Signed") {
-        if (this.state.myAccount == this.state.events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Validator Signed") {
+        if (this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Validator signed", "Your task is being validated", "info")
         }
-        if (this.state.myAccount == this.state.events[i].args.provAddr) {
+        if (this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("You Have signed your validation", "You have validated the request from address", "info");
         }
       }
 
 
       // Validation Complete
-      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) == "Validation Complete") {
-        if (this.state.myAccount == this.state.events[i].args.reqAddr) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Validation Complete") {
+        if (this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Job Done", "Please download your resultant file from IPFS using the hash " + this.state.events[i].args.extra, "success")
         }
-        if (this.state.myAccount == this.state.events[i].args.provAddr) {
+        if (this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
         }
       }
@@ -714,20 +725,16 @@ class App extends Component {
   //components of react: https://reactjs.org/docs/forms.html  
   render() {
 
-    document.body.style = 'background:gold;';
+    this.state.mode === "USER" ? document.body.style = 'background:#F5F2D1;' : document.body.style = 'background:#E7F5D1;'
+
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contract...</div>;
     }
     return (
       <div className="App">
         <ReactNotification ref={this.notificationDOMRef} />
-        <h1 style={{ marginBottom: 50 }}>Welcome to the BCAI Dapp Web Interface</h1>
-
-        <h2 style={{ margin: 5 }}>CURRENT ACCOUNT</h2>
-        {this.state.myAccount} <br></br>
-        <button onClick={this.checkEvents} style={{ marginBottom: 20 }}> Check Current Account Status </button>
-        <h2 style={{ margin: 5 }}>{this.state.mode} MODE</h2>
-        <button onClick={this.changeMode} style={{ marginBottom: 30 }}>Switch modes</button>
+        <h1 style={{ marginBottom: 30 }}>Welcome to the BCAI Dapp</h1>
+        <button onClick={this.changeMode} style={{ fontsize: 40, height:60, width: 120, marginBottom: 20 }}>{this.state.mode} MODE</button>
 
         
 
@@ -753,7 +760,12 @@ class App extends Component {
         {this.showUploadModule()}
         {this.showValidationButtons()}
         {this.showUserDivider()}
-        <div style={{ marginTop: 20 }}>
+
+        <h2 style={{ marginTop: 20 }}>CURRENT ACCOUNT
+        <button onClick={this.checkEvents} style={{marginLeft : 20, marginBottom: 10 }}> Check Status </button></h2>
+        <div> {this.state.myAccount}  </div>
+
+        <div style={{ marginTop: 5 }}>
           <h2 style={{ margin: 1 }}>CURRENT STATE OF CONTRACT
           <button onClick={this.showPools} style={{marginLeft: 20}}>
             Refresh
