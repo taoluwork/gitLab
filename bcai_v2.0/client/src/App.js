@@ -83,6 +83,8 @@ class App extends Component {
     this.applyAsProvider = this.applyAsProvider.bind(this);
     this.submitValidationTrue = this.submitValidationTrue.bind(this);
     this.submitValidationFalse = this.submitValidationFalse.bind(this);
+    this.stopJob = this.stopJob.bind(this);
+    this.stopProviding = this.stopProviding.bind(this);
 
 
     this.notificationDOMRef = React.createRef();
@@ -305,6 +307,19 @@ class App extends Component {
     }
   }
 
+  stopJob(event) {
+    event.preventDefault();
+    this.state.myContract.stopRequest({from: this.state.myAccount})
+    .then(ret => {
+     // this.addNotification("Successfully removed job")
+      console.log("Job removed from pendingPool");
+    })
+    .catch(err => {
+      console.log(err)
+      //this.addNotification("Attempt to remove job failed")
+    })
+  }
+
   submitValidationTrue (event) {
     event.preventDefault();
     this.setState({ValidationResult: true})
@@ -358,6 +373,18 @@ class App extends Component {
       })
   }
 
+  stopProviding(event)  {
+    event.preventDefault();
+    this.state.myContract.stopProviding({from: this.state.myAccount})
+    .then(ret => {
+      //this.addNotification("Successfully stopped working")
+      console.log("Worker removed from providerPool");
+    })
+    .catch(err => {
+      console.log(err)
+      //this.addNotification("Attempt to stop working failed")
+    })
+  }
 
   changeMode(event) {
     event.preventDefault()
@@ -721,6 +748,24 @@ class App extends Component {
       )
   }
 
+  //stop providing/request buttons
+  showStopButtons(){
+    if(this.state.mode === 'WORKER'){
+      return(
+        <button onClick={this.stopProviding} style={{ margin: 10 }}>
+          Stop Working
+          </button>
+      )
+    }
+    if(this.state.mode === 'USER'){
+      return(
+        <button onClick={this.stopJob} style={{ margin: 10 }}>
+          Remove Job
+          </button>
+      )
+    }
+  }
+
   /////////////////////////////////////////////////////////////////////////////////
   //components of react: https://reactjs.org/docs/forms.html  
   render() {
@@ -758,8 +803,10 @@ class App extends Component {
           </p>
         </form>
         {this.showUploadModule()}
+        {this.showStopButtons()}
         {this.showValidationButtons()}
         {this.showUserDivider()}
+        
 
         <h2 style={{ marginTop: 20 }}>CURRENT ACCOUNT
         <button onClick={this.checkEvents} style={{marginLeft : 20, marginBottom: 10 }}> Check Status </button></h2>
