@@ -2,11 +2,13 @@
 // version: v2.0.2, align with bcai_2.0.2.sol
 
 
+// TODO: fix the async function dependency. e.g. Need returned dataID to send Tx                          [needed for provider]
+// TODO: use this.state.RequestStartTime to record block# and narrow down the searching range of events   [need test]
+// TODO: add notification of updating request             [need test]
+// TODO: add button for cancel request , stop providing   [need test]
+
 // TODO: update appearance -- material-ui
-// TODO: fix the async function dependency. e.g. Need returned dataID to send Tx
-// TODO: use this.state.RequestStartTime to record block# and narrow down the searching range of events
-// TODO: add notification of updating request
-// TODO: add button for cancel request , stop providing
+
 
 import React, { Component } from "react";
 import TaskContract from "./contracts/TaskContract.json";
