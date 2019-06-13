@@ -308,7 +308,7 @@ contract TaskContract {
             //release provider (not necessarily depend on provider) back into providerPool
             providerList[msg.sender].available = true;
             providerPool.push(msg.sender);
-            emit SystemInfo(reqAddr, 'Request Computation Completed');
+            emit IPFSInfo(reqAddr, 'Request Computation Completed',requestList[reqAddr].resultID);
             //start validation process
             return validateRequest(reqAddr);
         }
