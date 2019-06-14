@@ -392,7 +392,7 @@ class App extends Component {
     event.preventDefault()
     if (this.state.mode === "USER"){
       this.setState({ mode: "WORKER" })
-      this.setState({ count: 9, myAccount: this.state.accounts[9]})
+      this.setState({ count: 0, myAccount: this.state.accounts[0]})
     } 
     else if (this.state.mode === "WORKER"){
       this.setState({ mode: "USER" })
@@ -571,16 +571,16 @@ class App extends Component {
       // Request Assigned
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Assigned") {
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
-          this.addNotification("Provider Found", "Your task is being completed by address "
-            + this.state.events[i].args.provAddr, "success")
+          this.addNotification("Provider Found", "Your task is being completed", "success")
         }
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
-          this.addNotification("You Have Been Assigned A Task", "You have been chosen to complete the request from address", "info");
+          this.addLongNotification("You Have Been Assigned A Task", "You have been chosen to complete a request. The IPFS data ID is: " + this.state.events[i].args.extra , "info");
         }
       }
 
       // Request Computation Complete
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Computation Completed") {
+        this.state.resuldID = this.state.events[i].args.extra;
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "info")
         }
@@ -597,8 +597,8 @@ class App extends Component {
             + this.state.events[i].args.provAddr, "info")
         }
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
-          this.addNotification("You are a validator", "You need to validate the task as true or false."
-            + this.state.events[i].args.reqAddr, "info");
+          this.addLongNotification("You are a validator", "You need to validate the task as true or false. The IPFS id is:"
+            + this.state.resultID, "info");
         }
       }
 
@@ -640,7 +640,7 @@ class App extends Component {
       // Validation Complete
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Validation Complete") {
         if (this.state.myAccount === this.state.events[i].args.reqAddr) {
-          this.addNotification("Job Done", "Please download your resultant file from IPFS using the hash " + this.state.events[i].args.extra, "success")
+          this.addLongNotification("Job Done", "Please download your resultant file from IPFS using the hash " + this.state.events[i].args.extra, "success")
         }
         if (this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
@@ -672,6 +672,21 @@ class App extends Component {
       dismissable: { click: true }
     });
   }
+
+  addLongNotification(title, message, type) {
+    this.notificationDOMRef.current.addNotification({
+      title: title,
+      message: message,
+      type: type,
+      insert: "top",
+      container: "top-right",
+      animationIn: ["animated", "fadeIn"],
+      animationOut: ["animated", "fadeOut"],
+      dismiss: { duration: 20000 },
+      dismissable: { click: true }
+    });
+  }
+
   showApplyButton() {
     if (this.state.mode === 'WORKER') {
       return (
@@ -799,7 +814,7 @@ class App extends Component {
             Price : (in wei)
           <input type="number" value={this.state.Price} onChange={this.PriceChange} />
           </label></p>
-          <p>Use account: <input type="number" value={this.state.count} onChange={this.changeAccount}></input>
+          <p>Use account:          <div> {this.state.myAccount}  </div> 
             <br></br>
             {this.showSubmitButton()}
           </p>
@@ -812,7 +827,7 @@ class App extends Component {
 
         <h2 style={{ marginTop: 20 }}>CURRENT ACCOUNT
         <button onClick={this.checkEvents} style={{marginLeft : 20, marginBottom: 10 }}> Check Status </button></h2>
-        <div> {this.state.myAccount}  </div>
+        
 
         <div style={{ marginTop: 5 }}>
           <h2 style={{ margin: 1 }}>CURRENT STATE OF CONTRACT
