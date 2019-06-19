@@ -4,14 +4,15 @@
 /node_modules/*
 /bcai_v0.9/node_modules/*
 /bcai_v0.9/test/node_module/*
-/bcai_v0.9/build/contracts/*
+
 /bcai_v1.9/node_modules/*
 /bcai_v1.9/test/node_modules/*
-/bcai_v1.9/build/contracts/*
-/bcai_v2.0/node_modules/*
-/bcai_v2.0/client/src/contracts/*
-/bcai_v2.0/client/node_modules/*
-/.vscode/*
+
+
+./bcai_v2.0/node_modules/*
+./bcai_v2.0/client/node_modules/*
+
+./.vscode/*
 /quickTest/*
 
 
@@ -23,6 +24,3 @@
 
 # misc
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
