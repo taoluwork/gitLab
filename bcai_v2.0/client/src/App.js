@@ -2,7 +2,7 @@
 // version: v2.0.3, align with bcai_2.0.3.sol
 
 
-//updates --Pedro
+//v2.0.3 updates --Pedro
 //import socket.io to easily use http request and send data to the server.js (future -> will add a way for server.js to send data back for automation)
 //open a socket to listen at the hardcoded socket that server.js will listen to as well
 //add an event listener in componentWillMount to listen for the address to change (this works, but the page does not rerender when the value is changed)
