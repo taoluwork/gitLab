@@ -5,7 +5,7 @@ const path = require("path");
 //my secret for testing: pencil month wasp omit salad owner ride armor install erupt neglect chimney
 
 var HDWalletProvider = require("truffle-hdwallet-provider");
-var mnemonic = "pencil month wasp omit salad owner ride armor install erupt neglect chimney";
+var mnemonic = "wrestle base super deal hamster torch install bachelor have detail ball output";
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
@@ -22,7 +22,7 @@ module.exports = {
     },
     ropsten: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/v3/759cf07e10b84410975b28c5b6818041");
+        return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/v3/abf67fa0cd9644cbaf3630dd5395104f");
       },
       network_id: '3',
     }

@@ -148,7 +148,7 @@ function runEmits(){
 }
 
 if(provider){
-    //watch for there to be a change in downloads
+    //watch for there to be a change in the current file
     fs.watch('.', (event, fname)=>{
         if(f === 0){
           emit = genEmit();
