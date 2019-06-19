@@ -11,7 +11,7 @@
 
 ./bcai_v2.0/node_modules/*
 ./bcai_v2.0/client/node_modules
-
+./bcai_v2.0/client/build
 ./.vscode/*
 /quickTest/*
 ./pepe/*
