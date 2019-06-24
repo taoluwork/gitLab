@@ -307,8 +307,8 @@ contract TaskContract {
             ArrayPop(providingPool, reqAddr);
             validatingPool.push(reqAddr);
             //release provider (not necessarily depend on provider) back into providerPool
-            providerList[msg.sender].available = true;
-            providerPool.push(msg.sender);
+            //providerList[msg.sender].available = true;
+            //providerPool.push(msg.sender);
             emit IPFSInfo(reqAddr, 'Request Computation Completed',requestList[reqAddr].resultID);
             //start validation process
             return validateRequest(reqAddr);
@@ -316,6 +316,11 @@ contract TaskContract {
         else {
             return false;
         }
+    }
+
+    function releaseProvieder() public {
+        providerList[msg.sender].available = true;
+        providerPool.push(msg.sender);
     }
 
     // Called by completeRequest before finalizing stuff. NOTE: must have no validators right now

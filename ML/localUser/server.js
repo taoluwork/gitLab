@@ -18,8 +18,13 @@ var io = require('socket.io')(http);
 var fs = require('fs');
 var {exec} = require('child_process')
 
-io.on('connection', function(socket){
+if(process.argv[2] === undefined){
+  console.log("Invalid format, must include a valid IP address")
+  return;
+}
 
+io.on('connection', function(socket){
+  socket.emit("whoAmI", process.argv[2]); // this assumes that the person can put a valid ip (this can be checked by some how parsing ifconfig bash command for this input)
   socket.on('data', function(msg){
     console.log("Data recieved sending to be ran...");
     fs.writeFile("data.zip",msg[0].content, (err) => {
@@ -54,6 +59,7 @@ io.on('connection', function(socket){
 
     });
   });
+
 
 });
 
