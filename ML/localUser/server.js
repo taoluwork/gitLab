@@ -26,8 +26,9 @@ if(process.argv[2] === undefined){
 io.on('connection', function(socket){
   socket.emit("whoAmI", process.argv[2]); // this assumes that the person can put a valid ip (this can be checked by some how parsing ifconfig bash command for this input)
   socket.on('data', function(msg){
+    console.log(msg);
     console.log("Data recieved sending to be ran...");
-    fs.writeFile("data.zip",msg[0].content, (err) => {
+    fs.writeFile("data.zip",msg, (err) => {
       if(err){
         console.log(err);
       }
