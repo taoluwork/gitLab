@@ -24,6 +24,7 @@ import t from 'tcomb-form';
 import ReactNotification from "react-notifications-component";
 import "react-notifications-component/dist/theme.css";
 import io from 'socket.io-client';
+//import openSocket from 'socket.io-client';
 
 import "./App.css";
 import { async, longStackSupport } from "q";
@@ -210,7 +211,7 @@ class App extends Component {
     //var socket = await openSocket(loc);        //build a socket at the location that is stored in the string loc
     if(loc.indexOf('localhost') === -1){       //if you are trying to connect to another user to get the data or result
       //socket.emit("request", this.state.myIP);
-      socket = io('http://' + loc , {origins: '*:*'});
+      socket = io('http://' + loc);
       socket.on('transmitting' + this.state.myIP, (tag , dat)=>{
         console.log("Got:transmitting and tag:" + tag + " and data:" + dat + " was received.")
         if(dat !== undefined){                     
@@ -241,32 +242,11 @@ class App extends Component {
       });
     }
     else{
-      socket = io(loc ,  {origins: '*:*'});
+      socket = io(loc);
       socket.on('whoAmI', (msg) =>{
         console.log("whoAmI just fired : " + msg)
         console.log(typeof msg);
         this.setState({myIP : msg});
-      });
-      socket.on('request', (msg) =>{
-        console.log("Got:request and msg:" + msg);
-        var tag = "data";
-        if(this.state.mode === "WORKER"){
-          tag = "result";
-        }
-        if(this.state.buffer !== undefined){
-          socket.emit('transmitting' + msg, tag, this.state.buffer); 
-          console.log("emit:transmitting to:" + msg + " with tag:" + tag + " this.state.buffer:");
-        }
-        else{
-          console.log("NO FILE FOUND!!", "Please put the results within the field.", "warning");
-        }
-        socket.emit('fin'+ msg , tag);
-        console.log("emit:fin to:" + msg + " with tag:" + tag);
-      });
-      socket.on('recieved', (msg) => {
-        console.log("message was recieved");            
-        //released = true;
-        //process.exit();
       });
     }
     return socket;                             //return so that we can still interact with it later on
@@ -324,6 +304,10 @@ class App extends Component {
     else{
       this.setState({resultID : this.state.myIP});
     }
+    this.state.socket.emit("setupMode", this.state.mode);
+    this.state.socket.emit('setupBuffer', this.state.buffer);
+    console.log(this.state.buffer);
+    console.log(typeof this.state.buffer);
     return this.state.myIP;
     /*let returnHash = await this.IPFSupload()
       .then(result => {

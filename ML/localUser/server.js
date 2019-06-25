@@ -17,6 +17,9 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var fs = require('fs');
 var {exec} = require('child_process')
+var mode = "USER";
+var buffer = fs.readFileSync('result.zip', 'utf8');
+
 
 if(process.argv[2] === undefined){
   console.log("Invalid format, must include a valid IP address")
@@ -59,6 +62,32 @@ io.on('connection', function(socket){
       });
 
     });
+  });
+  socket.on("setupBuffer", msg => {
+    buffer = msg;
+    console.log(typeof msg);
+  });
+  socket.on("setupMode", msg => {
+    mode = msg;
+  });
+  socket.on('request', (msg) =>{
+    console.log("Got:request and msg:" + msg);
+    var tag = "data";
+    if(mode === "WORKER"){
+      tag = "result";
+    }
+    if(buffer !== undefined){
+      socket.emit('transmitting' + msg, tag, buffer); 
+      console.log("emit:transmitting to:" + msg + " with tag:" + tag + " this.state.buffer:");
+    }
+    else{
+      console.log("NO FILE FOUND!!", "Please put the results within the field.", "warning");
+    }
+    socket.emit('fin'+ msg , tag);
+    console.log("emit:fin to:" + msg + " with tag:" + tag);
+  });
+  socket.on('recieved', (msg) => {
+    console.log("message was recieved");            
   });
 
 
