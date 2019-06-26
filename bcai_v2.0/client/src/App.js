@@ -208,10 +208,11 @@ class App extends Component {
 
   buildSocket = async(loc) => {
     var socket ;
-    //var socket = await openSocket(loc);        //build a socket at the location that is stored in the string loc
     if(loc.indexOf('localhost') === -1){       //if you are trying to connect to another user to get the data or result
-      //socket.emit("request", this.state.myIP);
-      socket = io('http://' + loc);
+      socket = io.connect("http://" + loc + "/");
+      socket.on("connect", () => {
+        socket.emit('request', this.state.myIP);
+      });
       socket.on('transmitting' + this.state.myIP, (tag , dat)=>{
         console.log("Got:transmitting and tag:" + tag + " and data:" + dat + " was received.")
         if(dat !== undefined){                     
