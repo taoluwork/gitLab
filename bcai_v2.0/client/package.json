@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "debug": "^4.1.0",
-    "hex2ascii": "0.0.3",
+    "hex2ascii": "^0.0.3",
     "ipfs-api": "^26.1.2",
     "react": "^16.6.3",
     "react-dom": "^16.6.3",

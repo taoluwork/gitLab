@@ -289,6 +289,7 @@ class App extends Component {
     }
     var tempSocket = await this.buildSocket(tag);
     tempSocket.emit("request", this.state.myIP);
+    console.log(this.state);
     return tempSocket;
   }
 
@@ -702,20 +703,22 @@ class App extends Component {
     //console.log(this.state.events)
     // For pairing info events
     for (var i = 0; i < this.state.events.length; i++) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Added"){
+        this.setState({dataID : hex2ascii(this.state.events[i].args.extra)});
+      }
       // Request Assigned
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Assigned") {
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Provider Found", "Your task is being completed", "success")
         }
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
-          this.setState({dataID : hex2ascii(this.state.events[i].args.extra)});
-          this.addLongNotification("You Have Been Assigned A Task", "You have been chosen to complete a request. The IPFS data ID is: " + hex2ascii(this.state.events[i].args.extra) , "info");
+          this.addLongNotification("You Have Been Assigned A Task", "You have been chosen to complete a request. The IPFS data ID is: " + this.state.dataID , "info");
         }
       }
 
       // Request Computation Complete
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Computation Completed") {
-        this.state.resuldID = this.state.events[i].args.extra;
+        this.setState({resuldID : this.state.events[i].args.extra});
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "info")
         }

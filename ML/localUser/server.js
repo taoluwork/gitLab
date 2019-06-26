@@ -18,7 +18,7 @@ var io = require('socket.io')(http);
 var fs = require('fs');
 var {exec} = require('child_process')
 var mode = "USER";
-var buffer = fs.readFileSync('result.zip', 'utf8');
+var buffer; // = fs.readFileSync('result.zip', 'utf8');
 
 
 if(process.argv[2] === undefined){
