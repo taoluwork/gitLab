@@ -238,7 +238,7 @@ class App extends Component {
         }
         else{
             console.log("Finished and the socket will close now")
-            //socket.close();
+            socket.disconnect(true);
         }
       });
     }
@@ -248,6 +248,11 @@ class App extends Component {
         console.log("whoAmI just fired : " + msg)
         console.log(typeof msg);
         this.setState({myIP : msg});
+      });
+      socket.on('release'+this.state.myIP , () => {
+        if(this.state.mode === "WORKER"){
+        //  this.state.myContract.releaseProvider();
+        }
       });
     }
     return socket;                             //return so that we can still interact with it later on
@@ -873,7 +878,7 @@ class App extends Component {
       <div>
         <p>resultID is: {"" + this.state.resultID}</p>
         <form onSubmit={this.downloadEvent}  name="result">
-          <button>Download the data</button>  
+          <button>Download the result</button>  
         </form>
       </div>
       );
