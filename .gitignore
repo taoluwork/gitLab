@@ -9,7 +9,8 @@
 /bcai_v1.9/test/node_modules/*
 /bcai_v1.9/build/contracts/*
 /bcai_v2.0/node_modules/*
-/bcai_v2.0/client/src/contracts/*
+#/bcai_v2.0/client/src/contracts/*
+/ML/localUser/node_modules/*
 /bcai_v2.0/client/node_modules/*
 /.vscode/*
 /quickTest/*
