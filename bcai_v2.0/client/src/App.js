@@ -742,6 +742,8 @@ class App extends Component {
           this.addLongNotification("You are a validator", "You need to validate the task as true or false. The IPFS id is:"
             + hex2ascii(this.state.events[i].args.extra), "info");
             this.setState({resultID : hex2ascii(this.state.events[i].args.extra)});
+            console.log(hex2ascii(this.state.events[i].args.extra));
+            this.setState({dataID : undefined});
         }
       }
 
@@ -785,6 +787,8 @@ class App extends Component {
         if (this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addLongNotification("Job Done", "Please download your resultant file from IPFS using the hash " + hex2ascii(this.state.events[i].args.extra), "success")
           this.setState({resultID : hex2ascii(this.state.events[i].args.extra)});
+          this.setState({dataID : undefined});
+
         }
         if (this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
@@ -861,7 +865,7 @@ class App extends Component {
   }
 
   showIDs(){
-    if(this.state.dataID !== undefined){
+    if(this.state.dataID !== undefined && this.state.resultID === undefined){
       return(
       <div>
         <p>
@@ -873,7 +877,7 @@ class App extends Component {
       </div>
       );
     }
-    if(this.state.resultID !== undefined){
+    if(this.state.resultID !== undefined && this.state.dataID === undefined){
       return(
       <div>
         <p>resultID is: {"" + this.state.resultID}</p>
@@ -882,6 +886,22 @@ class App extends Component {
         </form>
       </div>
       );
+    }
+    if(this.state.dataID !== undefined && this.state.resultID !== undefined){
+      return(
+        <div>
+          <p>
+            DataID is: {"" + this.state.dataID}
+          </p>
+          <form onSubmit={this.downloadEvent}  name="data">
+            <button>Download the data</button>  
+          </form>
+          <p>resultID is: {"" + this.state.resultID}</p>
+          <form onSubmit={this.downloadEvent}  name="result">
+            <button>Download the result</button>  
+          </form>
+        </div>
+        );
     }
   }
 

@@ -83,6 +83,12 @@ io.on('connection', function(socket){
   });
   socket.on("setupMode", msg => {
     mode = msg;
+    /*user = true;
+    provider = false;
+    if(msg === "WORKER"){
+      user = false;
+      provider = true;
+    }*/
   });
   socket.on('request', (msg) =>{
     console.log("Got:request and msg:" + msg);

@@ -219,8 +219,9 @@ contract TaskContract {
         else {
             //search throught the requestPool
             for (uint64 i = 0; i < pendingPool.length; i++){  
-                address payable reqAddr = pendingPool[i];     //save the re-usable reqID , save gas by avoiding multiple read
-                if( requestList[reqAddr].time     <= providerList[provAddr].maxTime &&
+                addressr  payable reqAddr = pendingPool[i];     //save the re-usable reqID , save gas by avoiding multiple read
+                if( (reqAdd!= address(0) && requestList[reqAddr].status != '1') &&
+                    requestList[reqAddr].time     <= providerList[provAddr].maxTime &&
                     requestList[reqAddr].target   <= providerList[provAddr].maxTarget &&
                     requestList[reqAddr].price    >= providerList[provAddr].minPrice){
                         //meet the requirement, assign the task
@@ -281,7 +282,7 @@ contract TaskContract {
                         balanceList[reqAddr] += requestList[reqAddr].price; 
 
                         providingPool.push(reqAddr);
-                        emit PairingInfo(reqAddr, provAddr, "Request Assigned"); // Let provider listen for this event to see he was selected
+                        emit PairingInfoLong(reqAddr, provAddr, "Request Assigned", requestList[reqAddr].dataID); // Let provider listen for this event to see he was selected
                         return '0';
                     }
                 }
@@ -307,8 +308,8 @@ contract TaskContract {
             ArrayPop(providingPool, reqAddr);
             validatingPool.push(reqAddr);
             //release provider (not necessarily depend on provider) back into providerPool
-            //providerList[msg.sender].available = true;
-            //providerPool.push(msg.sender);
+            providerList[msg.sender].available = true;
+            providerPool.push(msg.sender);
             emit IPFSInfo(reqAddr, 'Request Computation Completed',requestList[reqAddr].resultID);
             //start validation process
             return validateRequest(reqAddr);
@@ -317,11 +318,13 @@ contract TaskContract {
             return false;
         }
     }
-
-    function releaseProvieder() public {
+    //this will be seperated in the futurte when timeing out is possilbe for connections and the provider must 
+    //stay available untill the data has been passed to all who are involved in this transaction
+    /*function releaseProvieder() public {
         providerList[msg.sender].available = true;
         providerPool.push(msg.sender);
     }
+    */
 
     // Called by completeRequest before finalizing stuff. NOTE: must have no validators right now
     // Try to find as many as possible qualified validators
