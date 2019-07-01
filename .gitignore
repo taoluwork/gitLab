@@ -1,28 +1,44 @@
+# version 1.0 stable
+# Taurus @2019
+# ignored the bulky node_modules folders
+# NOTE: keep the build folder in bcai_v2.0, which is used in npm scripts
+
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules/*
+
 /bcai_v0.9/node_modules/*
 /bcai_v0.9/test/node_module/*
-/bcai_v0.9/build/contracts/*
+/bcai_v0.9/build
+
 /bcai_v1.9/node_modules/*
 /bcai_v1.9/test/node_modules/*
-/bcai_v1.9/build/contracts/*
+/bcai_v1.9/build
+
 /bcai_v2.0/node_modules/*
-/ML/localUser/node_modules/*
 /bcai_v2.0/client/node_modules/*
+
+/ML/localUser/node_modules/*
+
 /.vscode/*
 /quickTest/*
+/pepe/*
+
+# Deprecated Examples
+/MarksWill_UnitTest/
+/MarksWill_webpack/
+/metaCoin/
+/payroll/
+/petShop/
+/reactLab/
+
+
 
 
 # testing
-
-
 # production
 /build
-
 # misc
-
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
