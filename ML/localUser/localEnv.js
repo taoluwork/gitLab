@@ -68,13 +68,24 @@ io.on('connection', function(socket){
         console.log(err);
       }
     });
-    exec('mv result.zip ~/Downloads' , (err,stdout,stderr)=>{
-      if(err){
-        console.log(err);
-        return;
-      } 
-      console.log(stdout);
-    });
+    if(user){
+      exec('mv result.zip ~/Downloads' , (err,stdout,stderr)=>{
+        if(err){
+          console.log(err);
+          return;
+        } 
+        console.log(stdout);
+      });
+    }
+    else{
+      exec('unzip data.zip' , (err,stdout,stderr)=>{
+        if(err){
+          console.log(err);
+          return;
+        }
+        console.log(stdout);
+      });
+    }
   });
   socket.on("setupBuffer", msg => {
     buffer = msg;

@@ -778,6 +778,7 @@ class App extends Component {
         }
         if (this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("You Have signed your validation", "You have validated the request from address", "info");
+          this.setState({resultID : undefined, events: undefined});
         }
       }
 
@@ -787,8 +788,7 @@ class App extends Component {
         if (this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addLongNotification("Job Done", "Please download your resultant file from IPFS using the hash " + hex2ascii(this.state.events[i].args.extra), "success")
           this.setState({resultID : hex2ascii(this.state.events[i].args.extra)});
-          this.setState({dataID : undefined});
-
+          this.setState({dataID : undefined, RequestStartTime: this.state.events[i].blockNumber, events : undefined });
         }
         if (this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
