@@ -48,33 +48,32 @@ io.on('connection', function(socket){
   socket.emit("whoAmI", ip); // this assumes that the person can put a valid ip (this can be checked by some how parsing ifconfig bash command for this input)
   socket.on('data', function(msg){
     console.log("Data recieved sending to be ran...");
-    fs.writeFile("data.zip",msg, (err) => {
+    fs.writeFileSync("data.zip",msg, (err) => {
       if(err){
         console.log(err);
       }
-      exec('unzip data.zip' , (err,stdout,stderr)=>{
-        if(err){
-          console.log(err);
-          return;
-        }
-        console.log(stdout);
-      });
+    });
+    exec('unzip data.zip' , (err,stdout,stderr)=>{
+      if(err){
+        console.log(err);
+        return;
+      }
+      console.log(stdout);
     });
   });
 
   socket.on('result', function(msg){
-    fs.writeFile("result.zip", msg, (err) => {
+    fs.writeFileSync("result.zip", msg, (err) => {
       if(err){
         console.log(err);
       }
-      exec('mv result.zip ~/Downloads' , (err,stdout,stderr)=>{
-        if(err){
-          console.log(err);
-          return;
-        } 
-        console.log(stdout);
-      });
-
+    });
+    exec('mv result.zip ~/Downloads' , (err,stdout,stderr)=>{
+      if(err){
+        console.log(err);
+        return;
+      } 
+      console.log(stdout);
     });
   });
   socket.on("setupBuffer", msg => {
