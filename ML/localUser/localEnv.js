@@ -77,15 +77,6 @@ io.on('connection', function(socket){
         console.log(stdout);
       });
     }
-    else{
-      exec('unzip data.zip' , (err,stdout,stderr)=>{
-        if(err){
-          console.log(err);
-          return;
-        }
-        console.log(stdout);
-      });
-    }
   });
   socket.on("setupBuffer", msg => {
     buffer = msg;
