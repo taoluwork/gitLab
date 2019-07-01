@@ -3,6 +3,9 @@ const util = require("util");
 const {exec} = require('child_process');
 const fs = require('fs');
 const EventEmitter = require('events');
+var app = require('express')();
+var http = require('http').createServer(app);
+var io = require('socket.io')(http);
 
 var version = '';//tensorflow version
 var name = '';//name of python file
@@ -14,13 +17,127 @@ var pyFlag  = 0;
 var remFlag = 0;
 var runFlag = 0;
 var provider;
+var mode;
+var buffer; 
+var ip ;
+var user;
+var transmitCount = 0;
+var conns = new Object();
+conns.count = 0;
+conns.startTime = [];
+conns.connID = [];
+conns.connType = [];
+conns.status = [];
+////////////////////////////////////////////////////// server section  ////////////////////////////////////////////////////////////////////////
+
+if(process.argv[3] === undefined){
+  console.log("Invalid format, must include a valid IP address")
+  return;
+}
+else{
+  ip = process.argv[3];
+}
+
+io.on('connection', function(socket){
+  conns.startTime[conns.count] = Date.now();
+  conns.connID[conns.count] = socket.id;
+  conns.status[conns.count] = false; //becomes true when there is a finish
+  conns.count++;
+  console.log("NEW CONNECTION at time:" + conns.startTime[conns.count-1] + " from socket.id:" + conns.connID[conns.count-1]);
+
+  socket.emit("whoAmI", ip); // this assumes that the person can put a valid ip (this can be checked by some how parsing ifconfig bash command for this input)
+  socket.on('data', function(msg){
+    console.log("Data recieved sending to be ran...");
+    fs.writeFile("data.zip",msg, (err) => {
+      if(err){
+        console.log(err);
+      }
+      exec('unzip data.zip' , (err,stdout,stderr)=>{
+        if(err){
+          console.log(err);
+          return;
+        }
+        console.log(stdout);
+      });
+    });
+  });
+
+  socket.on('result', function(msg){
+    fs.writeFile("result.zip", msg, (err) => {
+      if(err){
+        console.log(err);
+      }
+      exec('mv result.zip ~/Downloads' , (err,stdout,stderr)=>{
+        if(err){
+          console.log(err);
+          return;
+        } 
+        console.log(stdout);
+      });
+
+    });
+  });
+  socket.on("setupBuffer", msg => {
+    buffer = msg;
+    console.log(typeof msg);
+  });
+  socket.on("setupMode", msg => {
+    mode = msg;
+    /*user = true;
+    provider = false;
+    if(msg === "WORKER"){
+      user = false;
+      provider = true;
+    }*/
+  });
+  socket.on('request', (msg) =>{
+    console.log("Got:request and msg:" + msg);
+    var tag = "data";
+    var type = "WORKER";
+    if(mode === "WORKER"){
+      tag = "result";
+      type = "VALIDATOR";// or this can be a user gettign the last data maybe base it off of total connection count
+    }
+    if(buffer !== undefined){
+      socket.emit('transmitting' + msg, tag, buffer); 
+      console.log("emit:transmitting to:" + msg + " with tag:" + tag + " this.state.buffer:");
+    }
+    else{
+      console.log("NO FILE FOUND!!", "Please put the results within the field.", "warning");
+    }
+    socket.emit('fin'+ msg , tag);
+    console.log("emit:fin to:" + msg + " with tag:" + tag);
+  });
+  socket.on('recieved', (msg) => {
+    console.log("message was recieved");  
+    /*if(mode === 'WORKER'){
+      transmitCount +=1;
+      if(transmitCount >= 4){
+        //////////////remove stuff not sure if im done yet or not
+        buffer = undefined;
+        mode = undefined;
+        socket.emit("release" + ip);
+      }
+    }*/          
+  });
 
 
+});
+
+
+http.listen(3001 , function(){
+  console.log('listening on: ' + ip);
+});
+
+////////////////////////////////////////////////////// parsing section ////////////////////////////////////////////////////////////////////////
 if(process.argv[2] === "--provider"){
   provider = true;
 }
 else if(process.argv[2] === "--validator"){
   provider = false;
+}
+else if(process.argv[2] === "--user"){
+  user = true;
 }
 else{
   console.log("INVALID INPUT (--provider/--validator)");
@@ -39,7 +156,7 @@ function run(file, version){
 
 function genFiles(fname){
     if(provider){
-        exec('python3 train.py ' + fname , (err,stdout,stderr)=>{
+        exec('sudo docker run -i --rm -v $PWD:/tmp -w /tmp tensorflow/tensorflow:1.12.0 python train.py ' + fname , (err,stdout,stderr)=>{
         if(err){
             console.log(err);
             return;
@@ -60,7 +177,7 @@ function genFiles(fname){
 
 function comp(){
     if(!provider){
-        exec('python3 comp.py ' , (err,stdout,stderr)=>{
+        exec('sudo docker run -i --rm -v $PWD:/tmp -w /tmp tensorflow/tensorflow:1.12.0 python  comp.py ' , (err,stdout,stderr)=>{
             if(err){
               console.log(err);
               return;
@@ -146,9 +263,11 @@ function runEmits(){
     pyFlag = 0;
     runFlag = 0;
 }
-
-if(provider){
-    //watch for there to be a change in downloads
+if(user){
+  console.log("Welcome user!!!! Please wait for your results. Please wait for your results to appear in your downloads folder");
+}
+else if(provider){
+    //watch for there to be a change in the current file
     fs.watch('.', (event, fname)=>{
         if(f === 0){
           emit = genEmit();

@@ -1,11 +1,16 @@
 // this is the main entrance of Application
-// version: v2.0.2, align with bcai_2.0.2.sol
+// version: v2.0.3, align with bcai_2.0.3.sol
+
+
+////////////////////////////////////////
+//almost done with taking out ipfs, need to implement reliable data transfer before the prior holder is allowed to be released
+//then it will be testing-pedro
 
 
 // TODO: fix the async function dependency. e.g. Need returned dataID to send Tx                          [needed for provider]
 // TODO: use this.state.RequestStartTime to record block# and narrow down the searching range of events   [need test]
-// TODO: add notification of updating request             [need test]
-// TODO: add button for cancel request , stop providing   [need test]
+// TODO: add notification of updating request             [need test] //I did not find these, I have an update but not working fully so I did not add it to this update --Pedro
+// TODO: add button for cancel request , stop providing   [need test] //Tested no bugs found --Pedro
 
 // TODO: update appearance -- material-ui
 
@@ -18,8 +23,12 @@ import ipfs from './ipfs';
 import t from 'tcomb-form';
 import ReactNotification from "react-notifications-component";
 import "react-notifications-component/dist/theme.css";
+import io from 'socket.io-client';
+//import openSocket from 'socket.io-client';
 
 import "./App.css";
+import { async, longStackSupport } from "q";
+//import { AsyncResource } from "async_hooks";
 //import { Accounts } from "web3-eth-accounts/types";
 //import { userInfo } from "os";
 const hex2ascii = require('hex2ascii')
@@ -79,16 +88,18 @@ class App extends Component {
     this.submitJob = this.submitJob.bind(this);
     this.submitValidation = this.submitValidation.bind(this);
     this.IPFSSubmit = this.IPFSSubmit.bind(this);
+    this.IPFSDownload = this.IPFSDownload.bind(this);
     this.changeMode = this.changeMode.bind(this);
     this.changeAccount = this.changeAccount.bind(this);
+    this.showIDs = this.showIDs.bind(this);
     this.addNotification = this.addNotification.bind(this);
     this.applyAsProvider = this.applyAsProvider.bind(this);
     this.submitValidationTrue = this.submitValidationTrue.bind(this);
     this.submitValidationFalse = this.submitValidationFalse.bind(this);
     this.stopJob = this.stopJob.bind(this);
     this.stopProviding = this.stopProviding.bind(this);
-
-
+    this.buildSocket = this.buildSocket.bind(this);
+    this.DownloadInfo = this.DownloadInfo.bind(this);
     this.notificationDOMRef = React.createRef();
   }
 
@@ -103,14 +114,21 @@ class App extends Component {
       const Contract = truffleContract(TaskContract);
       Contract.setProvider(web3.currentProvider);
       const instance = await Contract.deployed();
+      const socket = await this.buildSocket('http://localhost:3001');
       console.log("here is the instance " + instance);
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, myContract: instance, myAccount: accounts[0], events: [] })
+      this.setState({ web3, accounts, myContract: instance, myAccount: accounts[0], events: [] , socket , data: undefined , result: undefined})
       this.setState({Time: 1, Price : 1, Target : 1, count : 0})
       this.setState({RequestStartTime: 0})
       console.log("contract set up!");
       this.showPools();
+      web3.currentProvider.on('accountsChanged', async (accounts) => {
+        const newAccount = await web3.eth.getAccounts(); 
+        this.setState({accounts: newAccount });
+        console.log(accounts);
+      });
+      
     }
     catch (error) {
       // Catch any errors for any of the above operations.
@@ -186,6 +204,60 @@ class App extends Component {
     })
   }
   */
+
+
+  buildSocket = async(loc) => {
+    var socket ;
+    if(loc.indexOf('localhost') === -1){       //if you are trying to connect to another user to get the data or result
+      socket = io.connect("http://" + loc + "/");
+      socket.on("connect", () => {
+        socket.emit('request', this.state.myIP);
+      });
+      socket.on('transmitting' + this.state.myIP, (tag , dat)=>{
+        console.log("Got:transmitting and tag:" + tag + " and data:" + dat + " was received.")
+        if(dat !== undefined){                     
+            socket.emit('recieved', this.state.myIP); 
+            console.log("emit:recieved msg:" + this.state.myIP);
+            if(tag =="data"){
+                this.setState({data: dat});
+            }
+            if(tag =="result"){
+                this.setState({result: dat});
+            }
+        }
+        else{ 
+            socket.emit('request', this.state.myIP);
+            console.log('emit:request msg:' + this.state.myIP); 
+        }
+      });
+      socket.on('fin', (msg) => {
+        console.log("Got:fin and msg:" + msg);
+        if((msg === "data" && this.state.data === undefined) || (msg === "result" && this.state.result === undefined)){ 
+          socket.emit('request', this.state.myIP); 
+          console.log('emit:request msg:' + this.state.myIP);
+        }
+        else{
+            console.log("Finished and the socket will close now")
+            socket.disconnect(true);
+        }
+      });
+    }
+    else{
+      socket = io(loc);
+      socket.on('whoAmI', (msg) =>{
+        console.log("whoAmI just fired : " + msg)
+        console.log(typeof msg);
+        this.setState({myIP : msg});
+      });
+      socket.on('release'+this.state.myIP , () => {
+        if(this.state.mode === "WORKER"){
+        //  this.state.myContract.releaseProvider();
+        }
+      });
+    }
+    return socket;                             //return so that we can still interact with it later on
+  }
+  
   //Wrap the IPFS api into a promise version, thus can be handled easily later.
   IPFSupload = async() => {
     return new Promise((resolve, reject) => {
@@ -195,6 +267,37 @@ class App extends Component {
       })                            //NOTE: resolve and rej is provided where IPFSupload is called.
     })
   }
+  
+  IPFSDownload = async(event) => {
+    var tag;
+    if(event.target.name === "data"){
+      tag = this.state.dataID;
+    }
+    if(event.target.name === "result"){
+      tag = this.state.resultID;
+    }
+    return new Promise((resolve, reject) => {
+      ipfs.files.get(tag, (err, result) => {
+        if (err) { reject(err) }    //if err, handle using reject function
+        else { resolve(result) }    //if no err, handle using resolve
+      })                            //NOTE: resolve and rej is provided where IPFSupload is called.
+    })
+  }
+
+  DownloadInfo = async(event) => {
+    var tag = undefined;
+    if(event.target.name === "data"){
+      tag = this.state.dataID;
+    }
+    if(event.target.name === "result"){
+      tag = this.state.resultID;
+    }
+    var tempSocket = await this.buildSocket(tag);
+    tempSocket.emit("request", this.state.myIP);
+    console.log(this.state);
+    return tempSocket;
+  }
+
   //submit the file in buffer to the IPFS api
   //NOTE: wrap the callback function file.add() into a promiss-pattern call, see details in below link.
   //https://medium.com/codebuddies/getting-to-know-asynchronous-javascript-callbacks-promises-and-async-await-17e0673281ee
@@ -202,7 +305,18 @@ class App extends Component {
     event.preventDefault();   //stop refreshing
     console.log("submiting...")
     this.addNotification("Uploading file...", "Awaiting response from IPFS", "info");
-    let returnHash = await this.IPFSupload()
+    if(this.state.mode === "USER"){
+      this.setState({dataID : this.state.myIP});
+    }
+    else{
+      this.setState({resultID : this.state.myIP});
+    }
+    this.state.socket.emit("setupMode", this.state.mode);
+    this.state.socket.emit('setupBuffer', this.state.buffer);
+    console.log(this.state.buffer);
+    console.log(typeof this.state.buffer);
+    return this.state.myIP;
+    /*let returnHash = await this.IPFSupload()
       .then(result => {
         return result[0].hash
       }).catch(err => {
@@ -211,16 +325,15 @@ class App extends Component {
       })
     if (returnHash !== undefined){
       console.log("ipfsHash returned", returnHash)
-      this.addNotification("Upload Complete", "File was succesfully added to IPFS! URL/DataID: " + returnHash, "success")
+      this.addLongNotification("Upload Complete", "File was succesfully added to IPFS! URL/DataID: " + returnHash, "success")
       this.setState({ dataID: returnHash })
       return returnHash
     }
     else {
       this.addNotification("Error", "Your file could not be uploaded. Please choose a file and try again.", "warning");
       return undefined
-    }
+    }*/
   }
-
 
 
   //seach for all events related to current(provider) addr, return the reqAddrs
@@ -252,14 +365,18 @@ class App extends Component {
   submitRequest = async (event) => {
     event.preventDefault();
     //Combine the startRequest with the IPFS, so user do not need click additional button
-    let returnHash = await this.IPFSSubmit(event)
+    //////////////////////////////////////////need to add notifications in the future since ipfssubmit wil no longer be used ////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    let returnHash = await this.IPFSSubmit(event);
+    //let returnHash = this.state.myIP; //this is the new one and will be commented until time for testing
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     if (returnHash !== undefined){
       this.state.myContract.startRequest(this.state.Time, this.state.Target,
-        this.state.Price, this.state.web3.utils.asciiToHex(this.state.dataID),
+        this.state.Price, this.state.web3.utils.asciiToHex(this.state.myIP),
         { from: this.state.myAccount, value: this.state.Price })
         .then(ret => {
           console.log(ret);
-          this.addNotification("Request Submission Succeed", "Request submitted to contract", "success")
+          this.addLongNotification("Request Submission Succeed", "Request submitted to contract.", "success")
           var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
           this.setState({RequestStartTime : StartTime})
           console.log("Event Tracking start at #", this.state.RequestStartTime)
@@ -406,6 +523,29 @@ class App extends Component {
     this.setState({ myAccount: this.state.accounts[event.target.value] ,
     count: event.target.value})
   }
+
+  downloadEvent =  async (event) => {
+    event.preventDefault();
+    var tag = event.target.name
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    let returnVal = await this.DownloadInfo(event) //this is the update and will be commented out until I am ready to test
+    //let returnVal = await this.IPFSDownload(event)
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      .then(result => {
+        return result;
+      }).catch(err => {
+        console.log("IPFS Error!", err);
+        return undefined
+      })
+    //this.state.socket.emit(tag, returnVal);
+    if(tag === "data"){
+      this.state.socket.emit(tag, this.state.data);
+    }
+    if(tag === "result"){
+      this.state.socket.emit(tag, this.state.result);
+    }
+  }
+
   ////// Supporting functions for display //////////////////////////////////////////////////////////////////
   showPools() {		//optional [--list] 
     this.state.myContract.getProviderPool.call().then(provPool => {
@@ -568,19 +708,22 @@ class App extends Component {
     //console.log(this.state.events)
     // For pairing info events
     for (var i = 0; i < this.state.events.length; i++) {
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Added"){
+        this.setState({dataID : hex2ascii(this.state.events[i].args.extra)});
+      }
       // Request Assigned
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Assigned") {
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Provider Found", "Your task is being completed", "success")
         }
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
-          this.addLongNotification("You Have Been Assigned A Task", "You have been chosen to complete a request. The IPFS data ID is: " + this.state.events[i].args.extra , "info");
+          this.addLongNotification("You Have Been Assigned A Task", "You have been chosen to complete a request. The IPFS data ID is: " + this.state.dataID , "info");
         }
       }
 
       // Request Computation Complete
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Computation Completed") {
-        this.state.resuldID = this.state.events[i].args.extra;
+        this.setState({resuldID : this.state.events[i].args.extra});
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "info")
         }
@@ -593,12 +736,14 @@ class App extends Component {
       // Validation Assigned to Provider
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Validation Assigned to Provider") {
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
-          this.addNotification("Validator Found", "A validator was found for your task but more are still needed"
-            + this.state.events[i].args.provAddr, "info")
+          this.addNotification("Validator Found", "A validator was found for your task but more are still needed", "info")
         }
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addLongNotification("You are a validator", "You need to validate the task as true or false. The IPFS id is:"
-            + this.state.resultID, "info");
+            + hex2ascii(this.state.events[i].args.extra), "info");
+            this.setState({resultID : hex2ascii(this.state.events[i].args.extra)});
+            console.log(hex2ascii(this.state.events[i].args.extra));
+            this.setState({dataID : undefined});
         }
       }
 
@@ -640,7 +785,10 @@ class App extends Component {
       // Validation Complete
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Validation Complete") {
         if (this.state.myAccount === this.state.events[i].args.reqAddr) {
-          this.addLongNotification("Job Done", "Please download your resultant file from IPFS using the hash " + this.state.events[i].args.extra, "success")
+          this.addLongNotification("Job Done", "Please download your resultant file from IPFS using the hash " + hex2ascii(this.state.events[i].args.extra), "success")
+          this.setState({resultID : hex2ascii(this.state.events[i].args.extra)});
+          this.setState({dataID : undefined});
+
         }
         if (this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
@@ -713,6 +861,47 @@ class App extends Component {
           Current Validation Result: {'' + this.state.ValidationResult}
         </div>
       );
+    }
+  }
+
+  showIDs(){
+    if(this.state.dataID !== undefined && this.state.resultID === undefined){
+      return(
+      <div>
+        <p>
+          DataID is: {"" + this.state.dataID}
+        </p>
+        <form onSubmit={this.downloadEvent}  name="data">
+          <button>Download the data</button>  
+        </form>
+      </div>
+      );
+    }
+    if(this.state.resultID !== undefined && this.state.dataID === undefined){
+      return(
+      <div>
+        <p>resultID is: {"" + this.state.resultID}</p>
+        <form onSubmit={this.downloadEvent}  name="result">
+          <button>Download the result</button>  
+        </form>
+      </div>
+      );
+    }
+    if(this.state.dataID !== undefined && this.state.resultID !== undefined){
+      return(
+        <div>
+          <p>
+            DataID is: {"" + this.state.dataID}
+          </p>
+          <form onSubmit={this.downloadEvent}  name="data">
+            <button>Download the data</button>  
+          </form>
+          <p>resultID is: {"" + this.state.resultID}</p>
+          <form onSubmit={this.downloadEvent}  name="result">
+            <button>Download the result</button>  
+          </form>
+        </div>
+        );
     }
   }
 
@@ -816,6 +1005,7 @@ class App extends Component {
           </label></p>
           <p>Use account:          <div> {this.state.myAccount}  </div> 
             <br></br>
+            {this.showIDs()}
             {this.showSubmitButton()}
           </p>
         </form>

@@ -69,6 +69,7 @@ contract TaskContract {
     event IPFSInfo          (address payable reqAddr, bytes info, bytes extra);
     event SystemInfo        (address payable reqAddr, bytes info);
     event PairingInfo       (address payable reqAddr, address payable provAddr, bytes info);
+    event PairingInfoLong   (address payable reqAddr, address payable provAddr, bytes info, bytes extra);
 
 
     //Pools stores the address of req or prov, thus indicate the stages.
@@ -162,7 +163,7 @@ contract TaskContract {
             requestList[msg.sender].numValidations = 3;//fixed 3 for testing reasons
             requestList[msg.sender].status = '0' ;     //pending = 0x30, is in ascii not number 0
             pendingPool.push(msg.sender);
-            emit SystemInfo (msg.sender, "Request Added");
+            emit IPFSInfo (msg.sender, "Request Added", dataID);
             
             requestCount++;     
             assignRequest(msg.sender);                  //try an instant assignment
@@ -218,8 +219,9 @@ contract TaskContract {
         else {
             //search throught the requestPool
             for (uint64 i = 0; i < pendingPool.length; i++){  
-                address payable reqAddr = pendingPool[i];     //save the re-usable reqID , save gas by avoiding multiple read
-                if( requestList[reqAddr].time     <= providerList[provAddr].maxTime &&
+                addressr  payable reqAddr = pendingPool[i];     //save the re-usable reqID , save gas by avoiding multiple read
+                if( (reqAdd!= address(0) && requestList[reqAddr].status != '1') &&
+                    requestList[reqAddr].time     <= providerList[provAddr].maxTime &&
                     requestList[reqAddr].target   <= providerList[provAddr].maxTarget &&
                     requestList[reqAddr].price    >= providerList[provAddr].minPrice){
                         //meet the requirement, assign the task
@@ -237,7 +239,7 @@ contract TaskContract {
 
                         providingPool.push(reqAddr);                       
                         //status move from pending to providing
-                        emit PairingInfo(reqAddr, provAddr, "Request Assigned");
+                        emit PairingInfoLong(reqAddr, provAddr, "Request Assigned", requestList[reqAddr].dataID);
                         return '0';                   
                 }                
             }
@@ -280,7 +282,7 @@ contract TaskContract {
                         balanceList[reqAddr] += requestList[reqAddr].price; 
 
                         providingPool.push(reqAddr);
-                        emit PairingInfo(reqAddr, provAddr, "Request Assigned"); // Let provider listen for this event to see he was selected
+                        emit PairingInfoLong(reqAddr, provAddr, "Request Assigned", requestList[reqAddr].dataID); // Let provider listen for this event to see he was selected
                         return '0';
                     }
                 }
@@ -316,6 +318,13 @@ contract TaskContract {
             return false;
         }
     }
+    //this will be seperated in the futurte when timeing out is possilbe for connections and the provider must 
+    //stay available untill the data has been passed to all who are involved in this transaction
+    /*function releaseProvieder() public {
+        providerList[msg.sender].available = true;
+        providerPool.push(msg.sender);
+    }
+    */
 
     // Called by completeRequest before finalizing stuff. NOTE: must have no validators right now
     // Try to find as many as possible qualified validators
@@ -329,7 +338,7 @@ contract TaskContract {
             address payable provID = providerPool[i - 1]; //get provider ID
             //TODO: check whether selected validator capable with parameters (time, accuracy,....)
             if(provID != requestList[reqAddr].provider){   //validator and computer cannot be same
-                emit PairingInfo(reqAddr, provID, 'Validation Assigned to Provider');
+                emit PairingInfoLong(reqAddr, provID, 'Validation Assigned to Provider', requestList[reqAddr].resultID);
                 validatorsFound++;
                 //remove the providers availablity and pop from pool
                 requestList[reqAddr].validators.push(provID);
@@ -435,7 +444,7 @@ contract TaskContract {
             if(requestList[reqAddr].numValidations > requestList[reqAddr].validators.length){ //check to see if the task has enough validators
                 //since the provAddr is a new provider, we don't need to check if he is already a validator, should be impossible unless bug exists
                 if(provAddr != requestList[reqAddr].provider){ //check to make sure he is not the computer
-                    emit PairingInfo(reqAddr, provAddr, 'Validation Assigned to Provider');
+                    emit PairingInfoLong(reqAddr, provAddr, 'Validation Assigned to Provider',requestList[reqAddr].resultID);
                     requestList[reqAddr].validators.push(provAddr);
                     requestList[reqAddr].signatures.push(false);    //extend length to match length of validator list
                     providerList[provAddr].available = false;
@@ -504,16 +513,16 @@ contract TaskContract {
         return requestCount;
     }
 
-    function getProviderPool() public view returns (address payable [] memory){
+    function getProviderPool() public view returns (address payable[] memory){
         return providerPool;
     }
-    function getPendingPool() public view returns (address payable [] memory){
+    function getPendingPool() public view returns (address payable[] memory){
         return pendingPool;
     }
-    function getValidatingPool() public view returns (address payable [] memory){
+    function getValidatingPool() public view returns (address payable[] memory){
         return validatingPool;
     }
-    function getProvidingPool() public view returns (address payable [] memory){
+    function getProvidingPool() public view returns (address payable[] memory){
         return providingPool;
     }
 
