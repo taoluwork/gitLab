@@ -219,8 +219,8 @@ contract TaskContract {
         else {
             //search throught the requestPool
             for (uint64 i = 0; i < pendingPool.length; i++){  
-                addressr  payable reqAddr = pendingPool[i];     //save the re-usable reqID , save gas by avoiding multiple read
-                if( (reqAdd!= address(0) && requestList[reqAddr].status != '1') &&
+                address  payable reqAddr = pendingPool[i];     //save the re-usable reqID , save gas by avoiding multiple read
+                if( (reqAddr!= address(0) && requestList[reqAddr].status != '1') &&
                     requestList[reqAddr].time     <= providerList[provAddr].maxTime &&
                     requestList[reqAddr].target   <= providerList[provAddr].maxTarget &&
                     requestList[reqAddr].price    >= providerList[provAddr].minPrice){
