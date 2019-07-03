@@ -44,12 +44,19 @@ else{
 //    conns.status[conns.count] = false; //becomes true when there is a finish
 //    conns.count++;
 //    console.log("NEW CONNECTION at time:" + conns.startTime[conns.count-1] + " from socket.id:" + conns.connID[conns.count-1]);
+
+    function resendData(){
+      socket.emit('resendResult');
+    }
+    function resendResult(){
+      socket.emit('resendResult');
+    }
   
     socket.emit("whoAmI", ip); // this assumes that the person can put a valid ip (this can be checked by some how parsing ifconfig bash command for this input)
     socket.on('data', function(msg){
       if(msg === undefined){
         /////////////////resend structure (needs to be added to app.js aswell)
-        socket.emit('resendData');
+        resendData();
       }
       else{
         console.log("Data recieved sending to be ran...");
@@ -63,7 +70,7 @@ else{
     });
     socket.on('result', function(msg){
       if(msg === undefined){
-        socket.emit('resendResult');
+        resendResult();
       }
       else{
         fs.writeFileSync("result.zip", msg, (err) => {
@@ -132,10 +139,10 @@ async function unzipF(file){
             //console.log(err);
             //return;
             if(mode === 0 ){
-              socket.emit('resendData');
+              resendData();
             }
             if(mode === 1 || mode === 2 ){
-              socket.emit('resendResult');
+              resendResult();
             }
         }
         console.log(stdout);

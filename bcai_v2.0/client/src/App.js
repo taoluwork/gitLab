@@ -386,6 +386,7 @@ class App extends Component {
           var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
           this.setState({RequestStartTime : StartTime})
           console.log("Event Tracking start at #", this.state.RequestStartTime)
+          this.setState({resultID :undefined, result: undefined});
         })
         .catch(err => {
           console.log(err);
@@ -706,16 +707,30 @@ class App extends Component {
     console.log("Event range: ", this.state.RequestStartTime)
     console.log("All events:", pastEvents)
 
-    this.setState({
+    for(var i = 0 ; i < pastEvents.length; i++){
+      if((pastEvents[i].args && hex2ascii(pastEvents[i].args.info) === "Validator Signed" && this.state.myAccount === pastEvents[i].args.provAddr) || 
+        (pastEvents[i].args && hex2ascii(pastEvents[i].args.info) === "Validation Complete" && this.state.myAccount === pastEvents[i].args.provAddr) ){
+        pastEvents.splice(0,i+1);
+        this.setState({dataID: undefined, resultID : undefined, events:pastEvents});
+      }
+      else if(pastEvents[i].args && hex2ascii(pastEvents[i].args.info) === "Validation Complete" && this.state.myAccount === pastEvents[i].args.reqAddr){
+        pastEvents.splice(0,i);
+        this.setState({dataID: undefined, events:pastEvents});
+      }
+    }
+
+    /*this.setState({
         events: pastEvents
-    });
+    });*/
+
     //this.setState({ events: this.state.events.push(pastEvents)})
     //console.log('here are th events')
     //console.log(this.state.events)
     // For pairing info events
     for (var i = 0; i < this.state.events.length; i++) {
-      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Added"){
-        this.setState({dataID : hex2ascii(this.state.events[i].args.extra)});
+      if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Added" && this.state.myAccount === this.state.events[i].args.reqAddr) {
+        pastEvents.slice(0,1);
+        this.setState({events : pastEvents});
       }
       // Request Assigned
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Assigned") {
@@ -724,12 +739,12 @@ class App extends Component {
         }
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
           this.addLongNotification("You Have Been Assigned A Task", "You have been chosen to complete a request. The IPFS data ID is: " + this.state.dataID , "info");
+          this.setState({dataID : hex2ascii(this.state.events[i].args.extra), resultID : undefined});
         }
       }
 
       // Request Computation Complete
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Computation Completed") {
-        this.setState({resuldID : this.state.events[i].args.extra});
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.reqAddr) {
           this.addNotification("Awaiting validation", "Your task is finished and waiting to be validated", "info")
         }
@@ -798,10 +813,10 @@ class App extends Component {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
         }
         console.log(this.state.events[i].blockNumber);
-        this.setState({dataID: undefined,  RequestStartTime: this.state.events[i].blockNumber});
+        this.setState({dataID: undefined, RequestStartTime: this.state.events[i].blockNumber+1});
+        
       }
     }
-
     /*   contractEvent.watch(function (error, result) {
         if (!error) {
           console.log('event was emited')
