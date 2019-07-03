@@ -47,20 +47,31 @@ else{
   
     socket.emit("whoAmI", ip); // this assumes that the person can put a valid ip (this can be checked by some how parsing ifconfig bash command for this input)
     socket.on('data', function(msg){
-      console.log("Data recieved sending to be ran...");
-      console.log(msg);
-      fs.writeFile("data.zip",msg, (err) => {
-        if(err){
-          console.log(err);
-        }
-      });
+      if(msg === undefined){
+        /////////////////resend structure (needs to be added to app.js aswell)
+        socket.emit('requestData');
+      }
+      else{
+        console.log("Data recieved sending to be ran...");
+        console.log(msg);
+        fs.writeFile("data.zip",msg, (err) => {
+          if(err){
+            console.log(err);
+          }
+        });
+      }
     });
     socket.on('result', function(msg){
-      fs.writeFileSync("result.zip", msg, (err) => {
-        if(err){
-          //console.log(err);
-        }
-      });
+      if(msg === undefined){
+        socket.emit('resendResult');
+      }
+      else{
+        fs.writeFileSync("result.zip", msg, (err) => {
+          if(err){
+            //console.log(err);
+          }
+        });
+      }
     });
     socket.on("setupBuffer", msg => {
       buffer = msg;

@@ -254,6 +254,12 @@ class App extends Component {
         //  this.state.myContract.releaseProvider();
         }
       });
+      socket.on('resendData', () => {
+        socket.emit('data', this.state.data);
+      });
+      socket.on('resendResult', () => {
+        socket.emit('result', this.state.result);
+      });
     }
     return socket;                             //return so that we can still interact with it later on
   }
