@@ -131,6 +131,12 @@ async function unzipF(file){
         if(err){
             //console.log(err);
             //return;
+            if(mode === 0 ){
+              socket.emit('resendData');
+            }
+            if(mode === 1 || mode === 2 ){
+              socket.emit('resendResult');
+            }
         }
         console.log(stdout);
     });

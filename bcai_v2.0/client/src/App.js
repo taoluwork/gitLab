@@ -798,7 +798,7 @@ class App extends Component {
           this.addNotification("Work Validated!", "Your work was validated and you should receive payment soon", "info");
         }
         console.log(this.state.events[i].blockNumber);
-        this.setState({resultID : undefined, dataID: undefined,  RequestStartTime: this.state.events[i].blockNumber+1});
+        this.setState({dataID: undefined,  RequestStartTime: this.state.events[i].blockNumber});
       }
     }
 
