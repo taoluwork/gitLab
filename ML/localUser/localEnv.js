@@ -49,7 +49,7 @@ else{
     socket.on('data', function(msg){
       if(msg === undefined){
         /////////////////resend structure (needs to be added to app.js aswell)
-        socket.emit('requestData');
+        socket.emit('resendData');
       }
       else{
         console.log("Data recieved sending to be ran...");
