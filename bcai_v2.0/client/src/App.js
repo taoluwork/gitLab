@@ -719,9 +719,9 @@ class App extends Component {
       }
     }
 
-    /*this.setState({
+    this.setState({
         events: pastEvents
-    });*/
+    });
 
     //this.setState({ events: this.state.events.push(pastEvents)})
     //console.log('here are th events')

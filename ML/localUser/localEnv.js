@@ -11,6 +11,8 @@ var name = '';
 var mode = ''; 
 var ip;
 var training = false;
+var s;
+var ver = false;
 //////////////////////////////////////////////////////////////////////input section////////////////////////////////////////////////////////////////////////////////
 //modes
 //0-provider
@@ -45,18 +47,13 @@ else{
 //    conns.count++;
 //    console.log("NEW CONNECTION at time:" + conns.startTime[conns.count-1] + " from socket.id:" + conns.connID[conns.count-1]);
 
-    function resendData(){
-      socket.emit('resendResult');
-    }
-    function resendResult(){
-      socket.emit('resendResult');
-    }
+    s = socket;
   
     socket.emit("whoAmI", ip); // this assumes that the person can put a valid ip (this can be checked by some how parsing ifconfig bash command for this input)
     socket.on('data', function(msg){
       if(msg === undefined){
         /////////////////resend structure (needs to be added to app.js aswell)
-        resendData();
+        socket.emit('resendData');
       }
       else{
         console.log("Data recieved sending to be ran...");
@@ -70,7 +67,7 @@ else{
     });
     socket.on('result', function(msg){
       if(msg === undefined){
-        resendResult();
+        socket.emit('resendResult');
       }
       else{
         fs.writeFileSync("result.zip", msg, (err) => {
@@ -122,16 +119,24 @@ http.listen(3001 , function(){
     console.log('listening on: ' + ip);
 });
 ///////////////////////////////////////////////////////////////execution functions/////////////////////////////////////////////////////////////////////////////////////
-async function run(file, version){
-    await exec('sudo docker run -i --rm -v $PWD:/tmp -w /tmp tensorflow/tensorflow:'+version+' python ./'+ file, (err,stdout,stderr)=>{ 
-      if(err){
-        return;
-      }
-      console.log(stdout);
-      if(mode === 0){
-        rem(name);
-      }
-    });
+async function run(file, versionA){
+  console.log("executing: " + file)
+  if(versionA === ""){
+    console.log('error!!!');
+  }
+  await exec('sudo docker run -i --rm -v $PWD:/tmp -w /tmp tensorflow/tensorflow:'+versionA+' python ./'+ file, (err,stdout,stderr)=>{ 
+    if(err){
+      //return;
+      console.log(err);
+    }
+    console.log(stdout);
+    if(mode === 0){
+      rem(name);
+    }
+    else if(!err){
+      ver = true;
+    }
+  });
 }
 async function unzipF(file){
     await exec('unzip ' + file , (err,stdout,stderr)=>{
@@ -139,10 +144,10 @@ async function unzipF(file){
             //console.log(err);
             //return;
             if(mode === 0 ){
-              resendData();
+              s.emit('resendData');
             }
             if(mode === 1 || mode === 2 ){
-              resendResult();
+              s.emit('resendResult');
             }
         }
         console.log(stdout);
@@ -195,6 +200,7 @@ async function rem(file){
                 if(err){
                   return;
                 }
+                ver = false;
                 console.log(stdout);
             });
     }
@@ -202,6 +208,10 @@ async function rem(file){
 async function getVer(file){
     var obj = await JSON.parse(fs.readFileSync(file , 'utf8'));
     version = obj.ver;
+    console.log(version);
+    if(mode === 1){
+      run("eval.py", version);
+    }
 }
 /////////////////////////////////////////////////////////////////////////////file management section//////////////////////////////////////////////////////////////////////
 fs.watch('.', (event, file)=>{
@@ -219,8 +229,9 @@ fs.watch('.', (event, file)=>{
     else if(event === 'change' && file === 'result.zip' && mode === 1){
         unzipF(file);
     }
-    else if(event === 'change' && file === 'version.json' && mode === 1){
-        getVer(file).then(run('eval.py',version));
+    else if(event === 'change' && file === 'version.json' && mode === 1 && ver === false){
+      ver = true;
+      getVer(file);
     }
     else if(event === 'change' && file === 'eval.txt' && mode == 1){
         comp();
