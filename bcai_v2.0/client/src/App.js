@@ -1,14 +1,9 @@
 // this is the main entrance of Application
-// version: v2.0.3, align with bcai_2.0.3.sol
-
-
-////////////////////////////////////////
-//almost done with taking out ipfs, need to implement reliable data transfer before the prior holder is allowed to be released
-//then it will be testing-pedro
+// version: v2.1.0, align with bcai_2.1.0.sol
 
 
 // TODO: fix the async function dependency. e.g. Need returned dataID to send Tx                          [needed for provider]
-// TODO: use this.state.RequestStartTime to record block# and narrow down the searching range of events   [need test]
+// TODO: use this.state.RequestStartTime to record block# and narrow down the searching range of events   [need test] I made some edits to narrow down watching list more --Pedro
 // TODO: add notification of updating request             [need test] //I did not find these, I have an update but not working fully so I did not add it to this update --Pedro
 // TODO: add button for cancel request , stop providing   [need test] //Tested no bugs found --Pedro
 
@@ -19,7 +14,6 @@ import React, { Component } from "react";
 import TaskContract from "./contracts/TaskContract.json";
 import getWeb3 from "./utils/getWeb3";
 import truffleContract from "truffle-contract";
-import ipfs from './ipfs';
 import t from 'tcomb-form';
 import ReactNotification from "react-notifications-component";
 import "react-notifications-component/dist/theme.css";
@@ -79,16 +73,13 @@ class App extends Component {
     //If missed bind may result in error : "cannot access property of undefined"
     this.captureFile = this.captureFile.bind(this);
     this.showPools = this.showPools.bind(this);
-    this.ListoutPool = this.ListoutPool.bind(this);
-    this.DisplayNonZeroInList = this.DisplayNonZeroInList.bind(this);
     this.TimeChange = this.TimeChange.bind(this);
     this.TargetChange = this.TargetChange.bind(this);
     this.PriceChange = this.PriceChange.bind(this);
     this.submitRequest = this.submitRequest.bind(this);
     this.submitJob = this.submitJob.bind(this);
     this.submitValidation = this.submitValidation.bind(this);
-    this.IPFSSubmit = this.IPFSSubmit.bind(this);
-    this.IPFSDownload = this.IPFSDownload.bind(this);
+    this.serverSubmit = this.serverSubmit.bind(this);
     this.changeMode = this.changeMode.bind(this);
     this.changeAccount = this.changeAccount.bind(this);
     this.showIDs = this.showIDs.bind(this);
@@ -139,12 +130,7 @@ class App extends Component {
     }
   };
 
-  //DidMount handel the task after page loaded, omitted here
-  /*   componentDidMount = async () => {
-      if (this.state.myContract) {
-  
-      }
-    } */
+ 
   
   /////// Supporting functions for app ////////////////////////////////////////////////////////////////////
   //NOTE:[important] using => is very important,this pass the context without changing the this ref.
@@ -187,23 +173,7 @@ class App extends Component {
       console.log("buffer", this.state.buffer);
     }
   }
-/*  //call-back style code only for reference [deprecated]
-  IPFS = async () =>{
-    ipfs.files.add(this.state.buffer, (err, result) => {
-      if (err) {
-        console.log("IPFS Error!", err);
-        this.addNotification("Error", "Your file could not be uploaded. Please choose a file and try again.", "warning");
-        return null
-      }
-      else {
-        console.log("ipfsHash returned", result[0].hash)
-        this.addNotification("Upload Complete", "File was succesfully added to IPFS! URL/DataID: " + result[0].hash, "success")
-        this.setState({ dataID: result[0].hash })
-        return result[0].hash
-      }
-    })
-  }
-  */
+
 
 
   buildSocket = async(loc) => {
@@ -251,7 +221,6 @@ class App extends Component {
       });
       socket.on('release'+this.state.myIP , () => {
         if(this.state.mode === "WORKER"){
-        //  this.state.myContract.releaseProvider();
         }
       });
       socket.on('resendData', () => {
@@ -262,32 +231,6 @@ class App extends Component {
       });
     }
     return socket;                             //return so that we can still interact with it later on
-  }
-  
-  //Wrap the IPFS api into a promise version, thus can be handled easily later.
-  IPFSupload = async() => {
-    return new Promise((resolve, reject) => {
-      ipfs.files.add(this.state.buffer, (err, result) => {
-        if (err) { reject(err) }    //if err, handle using reject function
-        else { resolve(result) }    //if no err, handle using resolve
-      })                            //NOTE: resolve and rej is provided where IPFSupload is called.
-    })
-  }
-  
-  IPFSDownload = async(event) => {
-    var tag;
-    if(event.target.name === "data"){
-      tag = this.state.dataID;
-    }
-    if(event.target.name === "result"){
-      tag = this.state.resultID;
-    }
-    return new Promise((resolve, reject) => {
-      ipfs.files.get(tag, (err, result) => {
-        if (err) { reject(err) }    //if err, handle using reject function
-        else { resolve(result) }    //if no err, handle using resolve
-      })                            //NOTE: resolve and rej is provided where IPFSupload is called.
-    })
   }
 
   DownloadInfo = async(event) => {
@@ -304,13 +247,13 @@ class App extends Component {
     return tempSocket;
   }
 
-  //submit the file in buffer to the IPFS api
+  //submit the file in buffer to the local server
   //NOTE: wrap the callback function file.add() into a promiss-pattern call, see details in below link.
   //https://medium.com/codebuddies/getting-to-know-asynchronous-javascript-callbacks-promises-and-async-await-17e0673281ee
-  IPFSSubmit =  async (event) => {  //declare this as async and it will return a promise, even not explicitly
+  serverSubmit =  async (event) => {  //declare this as async and it will return a promise, even not explicitly
     event.preventDefault();   //stop refreshing
     console.log("submiting...")
-    this.addNotification("Uploading file...", "Awaiting response from IPFS", "info");
+    this.addNotification("Uploading file...", "Awaiting response from server", "info");
     if(this.state.mode === "USER"){
       this.setState({dataID : this.state.myIP});
     }
@@ -322,23 +265,6 @@ class App extends Component {
     console.log(this.state.buffer);
     console.log(typeof this.state.buffer);
     return this.state.myIP;
-    /*let returnHash = await this.IPFSupload()
-      .then(result => {
-        return result[0].hash
-      }).catch(err => {
-        console.log("IPFS Error!", err);
-        return undefined
-      })
-    if (returnHash !== undefined){
-      console.log("ipfsHash returned", returnHash)
-      this.addLongNotification("Upload Complete", "File was succesfully added to IPFS! URL/DataID: " + returnHash, "success")
-      this.setState({ dataID: returnHash })
-      return returnHash
-    }
-    else {
-      this.addNotification("Error", "Your file could not be uploaded. Please choose a file and try again.", "warning");
-      return undefined
-    }*/
   }
 
 
@@ -367,15 +293,11 @@ class App extends Component {
       return reqAddr
   }
 
-  //upload the file to IPFS and send the TX at the same time. No addtional button is needed
+  //upload the file to localserver and send the TX at the same time. No addtional button is needed
   submitRequest = async (event) => {
     event.preventDefault();
-    //Combine the startRequest with the IPFS, so user do not need click additional button
-    //////////////////////////////////////////need to add notifications in the future since ipfssubmit wil no longer be used ////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    let returnHash = await this.IPFSSubmit(event);
-    //let returnHash = this.state.myIP; //this is the new one and will be commented until time for testing
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Combine the startRequest with the local server, so user do not need click additional button
+    let returnHash = await this.serverSubmit(event);
     if (returnHash !== undefined){
       this.state.myContract.startRequest(this.state.Time, this.state.Target,
         this.state.Price, this.state.web3.utils.asciiToHex(this.state.myIP),
@@ -394,7 +316,7 @@ class App extends Component {
         })
     }
     else {
-      console.log("IPFS return Hash undefined")
+      console.log("IP Address undefined")
     }
 //    this.addNotification("Sending Request to Ethereum Blockchain", "You will be notified when the tx is finished", "info");
     
@@ -418,7 +340,7 @@ class App extends Component {
       this.addNotification("Result Submission Failed", "You are not assigned a task", "warning")
     }
     else {
-      let resultHash = await this.IPFSSubmit(event)
+      let resultHash = await this.serverSubmit(event)
       if (resultHash !== undefined){
         console.log("ResultHash = ", resultHash)
         this.state.myContract.completeRequest(reqAddr, this.state.web3.utils.asciiToHex(resultHash),
@@ -429,7 +351,7 @@ class App extends Component {
             this.addNotification("Result Submission Succeed", "Work submitted to contract", "success")
           })
       }
-      else { console.log("Failed to submit to IPFS")}
+      else { console.log("Failed to submit to local server")}
     }
   }
 
@@ -437,12 +359,10 @@ class App extends Component {
     event.preventDefault();
     this.state.myContract.stopRequest({from: this.state.myAccount})
     .then(ret => {
-     // this.addNotification("Successfully removed job")
       console.log("Job removed from pendingPool");
     })
     .catch(err => {
       console.log(err)
-      //this.addNotification("Attempt to remove job failed")
     })
   }
 
@@ -470,8 +390,6 @@ class App extends Component {
       this.state.myContract.submitValidation(req, this.state.ValidationResult,
         { from: this.state.myAccount, gas: 200000 })
         .then(ret => {
-          //var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
-          //this.setState({RequestStartTime : StartTime})
           console.log(ret);
           this.addNotification("Validation Submission Succeeded", "Validation submitted to contract", "success")
         })
@@ -503,12 +421,11 @@ class App extends Component {
     event.preventDefault();
     this.state.myContract.stopProviding({from: this.state.myAccount})
     .then(ret => {
-      //this.addNotification("Successfully stopped working")
       console.log("Worker removed from providerPool");
     })
     .catch(err => {
       console.log(err)
-      //this.addNotification("Attempt to stop working failed")
+
     })
   }
 
@@ -534,17 +451,13 @@ class App extends Component {
   downloadEvent =  async (event) => {
     event.preventDefault();
     var tag = event.target.name
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    let returnVal = await this.DownloadInfo(event) //this is the update and will be commented out until I am ready to test
-    //let returnVal = await this.IPFSDownload(event)
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    let returnVal = await this.DownloadInfo(event)
       .then(result => {
         return result;
       }).catch(err => {
-        console.log("IPFS Error!", err);
+        console.log("Download Error!", err);
         return undefined
       })
-    //this.state.socket.emit(tag, returnVal);
     if(tag === "data"){
       this.state.socket.emit(tag, this.state.data);
     }
@@ -561,20 +474,13 @@ class App extends Component {
       console.log(provPool);
       this.setState({ providerCount: provPool.length })
       this.setState({ providerList: provPool })
-//      return provPool;
-//    }).then(provPool => {
-//      if (provPool.length > 0) return this.ListoutPool(provPool, 'provider');
     })
-
 
     this.state.myContract.getPendingPool.call().then(reqPool => {
       console.log("=======================================================")
       console.log("Pending pool:  Total = ", reqPool.length);
       console.log(reqPool);
       this.setState({ pendingCount: reqPool.length })
-      //return reqPool;
-    //}).then(reqPool => {
-      //if (reqPool.length > 0) return this.ListoutPool(reqPool, 'request');
     })
 
     this.state.myContract.getProvidingPool.call().then(providingPool => {
@@ -582,77 +488,15 @@ class App extends Component {
       console.log("Providing pool:  Total = ", providingPool.length);
       console.log(providingPool);
       this.setState({ providingCount: providingPool.length })
-      //return providingPool;
-//    }).then(providingPool => {
-      //if (providingPool.length > 0) return this.ListoutPool(providingPool, 'request');
-    })//.then(function(){
+    })
 
     this.state.myContract.getValidatingPool.call().then(valiPool => {
       console.log("=======================================================")
       console.log("Validating pool:  Total = ", valiPool.length);
       console.log(valiPool);
       this.setState({ validatingCount: valiPool.length })
-//      return valiPool;
-      //})
-//    }).then(valiPool => {
-      //if (valiPool.length > 0) return this.ListoutPool(valiPool, 'request');
     })
   }
-
-  ListoutPool(Pool, type) {		//--list [--debug]
-    //console.log("List out Pool")
-    if (type === 'provider') {
-      return this.state.myContract.listProviders.call(Pool)
-        .then(proList => {
-          console.log("-----------------------------------------------------")
-          this.DisplayNonZeroInList(proList, 'provider');
-        })
-    }
-    else if (type === 'request') {
-      return this.state.myContract.listRequests.call(Pool)
-        .then(pendList => {
-          console.log("-----------------------------------------------------")
-          this.DisplayNonZeroInList(pendList, 'request');
-        })
-    }
-    else throw new Text("Not supported type!")
-  }
-
-  DisplayNonZeroInList(List, type) {
-    if (type === 'request')
-      for (var i = 0; i < List.length; i++) {
-        if (List[i]['addr'] !== 0) {
-          if (this.state.debug) {
-            console.log(List[i]);
-            console.log("-----------------------------------------------------")
-          } else {
-            //simple print:
-            console.log("reqID = ", List[i]['reqID']);
-            console.log("addr = ", List[i]['addr']);
-            console.log("provider = ", List[i]['provider']);
-            console.log("status = ", List[i]['status']);
-            console.log("-----------------------------------------------------")
-          }
-        }
-      }
-    else if (type === 'provider')
-      for (var j = 0; j < List.length; j++) {
-        if (List[j]['addr'] !== 0) {
-          if (this.state.debug) {
-            console.log(List[j]);
-            console.log("-----------------------------------------------------")
-          } else {
-            console.log("provD = ", List[j]['provID']);
-            console.log("addr = ", List[j]['addr']);
-            console.log("available = ", List[j]['available']);
-            console.log("-----------------------------------------------------")
-          }
-        }
-      }
-    else throw new Text('Not supported type for display')
-  }
-
-
 
 
   // Workflow:
@@ -677,18 +521,18 @@ class App extends Component {
   //USER
   // Ensure User mode is active
   // choose job file 
-  // uploads file to ipfs
+  // uploads file to local server
   // [OPTIONAL] fill out time target price and account
   // submit task to contract
-  // eventually check status will print the dataID to fetch from IPFS
+  // eventually check status will print the dataID to fetch from the server at the location of dataID
 
   //PROVIDER
   // Ensure Worker mode is active
-  // look for notification with dataID/IPFS Hash
-  // Fetch the data from ipfs
+  // look for notification with dataID
+  // Fetch the data from the other server
   // do the computational work to get result data 
   // choose result data file
-  // upload result file to ipfs
+  // upload result file to the local server for others to pull from
   // Submit result to contract
 
   //NEW APPLICANT
@@ -701,8 +545,6 @@ class App extends Component {
 
   // Checking status of account. 
   checkEvents = async () => {
-//    console.log(this.state.myContract);
-    //let contractEvent = this.state.myContract.PairingInfo();
     let pastEvents = await this.state.myContract.getPastEvents("allEvents", {fromBlock:  this.state.RequestStartTime, toBlock: 'latest'});
     console.log("Event range: ", this.state.RequestStartTime)
     console.log("All events:", pastEvents)
@@ -723,9 +565,6 @@ class App extends Component {
         events: pastEvents
     });
 
-    //this.setState({ events: this.state.events.push(pastEvents)})
-    //console.log('here are th events')
-    //console.log(this.state.events)
     // For pairing info events
     for (var i = 0; i < this.state.events.length; i++) {
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Request Added" && this.state.myAccount === this.state.events[i].args.reqAddr) {
@@ -738,7 +577,7 @@ class App extends Component {
           this.addNotification("Provider Found", "Your task is being completed", "success")
         }
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
-          this.addLongNotification("You Have Been Assigned A Task", "You have been chosen to complete a request. The IPFS data ID is: " + this.state.dataID , "info");
+          this.addLongNotification("You Have Been Assigned A Task", "You have been chosen to complete a request. The server data ID is: " + this.state.dataID , "info");
           this.setState({dataID : hex2ascii(this.state.events[i].args.extra), resultID : undefined});
         }
       }
@@ -760,7 +599,7 @@ class App extends Component {
           this.addNotification("Validator Found", "A validator was found for your task but more are still needed", "info")
         }
         if (this.state.events[i] && this.state.myAccount === this.state.events[i].args.provAddr) {
-          this.addLongNotification("You are a validator", "You need to validate the task as true or false. The IPFS id is:"
+          this.addLongNotification("You are a validator", "You need to validate the task as true or false. The server id is:"
             + hex2ascii(this.state.events[i].args.extra), "info");
             this.setState({resultID : hex2ascii(this.state.events[i].args.extra)});
             console.log(hex2ascii(this.state.events[i].args.extra));
@@ -806,7 +645,7 @@ class App extends Component {
       // Validation Complete
       if (this.state.events[i].args && hex2ascii(this.state.events[i].args.info) === "Validation Complete") {
         if (this.state.myAccount === this.state.events[i].args.reqAddr) {
-          this.addLongNotification("Job Done", "Please download your resultant file from IPFS using the hash " + hex2ascii(this.state.events[i].args.extra), "success")
+          this.addLongNotification("Job Done", "Please download your resultant file from server using the hash " + hex2ascii(this.state.events[i].args.extra), "success")
           this.setState({resultID : hex2ascii(this.state.events[i].args.extra)});
         }
         if (this.state.myAccount === this.state.events[i].args.provAddr) {
@@ -817,15 +656,7 @@ class App extends Component {
         
       }
     }
-    /*   contractEvent.watch(function (error, result) {
-        if (!error) {
-          console.log('event was emited')
-          console.log(result);
-        }
-        else {
-          console.log(error);
-        }
-      }); */
+
   }
 
   addNotification(title, message, type) {
@@ -944,21 +775,21 @@ class App extends Component {
     if (this.state.mode === "USER"){
       return (
         <div><h2>{"UPLOAD TASK SCRIPT" }</h2>
-        <form onSubmit={this.IPFSSubmit}>
+        <form onSubmit={this.serverSubmit}>
           <input type='file' onChange={this.captureFile}></input>
           <button onClick={this.submitRequest} style={{ margin: 10 }}>
           Submit Task
           </button>
-          {/*<input type='submit' value="Upload to IPFS"></input>*/}
+          {/*<input type='submit' value="Upload to server"></input>*/}
         </form></div>
       )
     }
     if (this.state.mode === 'WORKER') {
       return (
         <div><h2>SUBMIT RESULT PACKAGE</h2>
-          <form onSubmit={this.IPFSSubmit}>
+          <form onSubmit={this.serverSubmit}>
           <input type='file' onChange={this.captureFile}></input>
-          {/*<input type='submit' value="Upload to IPFS"></input>*/}
+          {/*<input type='submit' value="Upload to server"></input>*/}
        
         <button onClick={this.submitJob} style={{ marginTop: 10, marginLeft: 15, marginBottom: 10 }}>
           Submit Result
