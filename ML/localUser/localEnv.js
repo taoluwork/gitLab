@@ -192,6 +192,12 @@ async function unzipF(file){
         if(err){
             //console.log(err);
             //return;
+            var s;
+            for(var i = 0 ; i < conns.length; i++){
+              if(conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
+                s = conns[i].socket;
+              }
+            }
             if(mode === 0 ){
               s.emit('resendData');
             }
@@ -269,6 +275,12 @@ async function uploadVal(){
     if(fs.readFileSync('fin.txt' , 'utf8').search('True') >= 0){
       f = true;
     }
+    var s;
+    for(var i = 0 ; i < conns.length; i++){
+      if(conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
+        s = conns[i].socket;
+      }
+    }
     s.emit('uploadVal', f);
     exec('rm fin.txt' , (err,stdout,stderr)=>{});
   }
@@ -280,8 +292,14 @@ async function uploadResult(){
       //console.log(data);
       //console.log(typeof data);
       //fs.writeFile('../result.zip', data, (err)=>{if(err){console.log(err)}});
-      if(err !== undefined){
+      if(err !== undefined){ ////////////////////////////////////////////////////////////////possible logic error to check for///////////////////////////////////////////////////
         console.log('uploading result');
+        var s;
+        for(var i = 0 ; i < conns.length; i++){
+          if(conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
+            s = conns[i].socket;
+          }
+        }
         s.emit('uploadResult', data);
       }
     });

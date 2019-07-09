@@ -259,20 +259,22 @@ class App extends Component {
 
   DownloadInfo = async(event) => {
     var tag = undefined;
+    var m = undefined;
     if(event.target.name === "data"){
       tag = this.state.dataID;
-      tempSocket.emit("setupMode", "WORKER");
+      m = "WORKER";
     }
     if(event.target.name === "result"){
       tag = this.state.resultID;
       if(this.state.mode === "USER"){
-        tempSocket.emit("setupMode", this.state.mode);
+        m = "USER";
       }
       else{
-        tempSocket.emit("setupMode", "VALIDATOR");
-      }
+        m = "VALIDATOR";
+            }
     }
     var tempSocket = await this.buildSocket(tag);
+    this.state.socket.emit("setupMode", m);
     tempSocket.emit("request", this.state.myIP);
     console.log(this.state);
     return tempSocket;
@@ -291,7 +293,7 @@ class App extends Component {
     else{
       this.setState({resultID : this.state.myIP});
     }
-    this.state.socket.emit("setupMode", this.state.mode);
+    //this.state.socket.emit("setupMode", this.state.mode);
     this.state.socket.emit('setupBuffer', this.state.buffer);
     console.log(this.state.buffer);
     console.log(typeof this.state.buffer);
