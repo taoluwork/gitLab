@@ -292,7 +292,7 @@ async function uploadResult(){
       //console.log(data);
       //console.log(typeof data);
       //fs.writeFile('../result.zip', data, (err)=>{if(err){console.log(err)}});
-      if(err !== undefined){ ////////////////////////////////////////////////////////////////possible logic error to check for///////////////////////////////////////////////////
+      if(err === undefined){ 
         console.log('uploading result');
         var s;
         for(var i = 0 ; i < conns.length; i++){
@@ -301,6 +301,10 @@ async function uploadResult(){
           }
         }
         s.emit('uploadResult', data);
+      }
+      else {
+        flag = true;
+        uploadResult();
       }
     });
   }
