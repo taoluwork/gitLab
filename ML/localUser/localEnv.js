@@ -8,18 +8,26 @@ var io = require('socket.io')(http);
 var buffer;
 var version = '';
 var name = '';
-var mode = ''; 
+var mode = 1; 
 var ip;
 var training = false;
-var s;
 var ver = false;
-//////////////////////////////////////////////////////////////////////input section////////////////////////////////////////////////////////////////////////////////
-//modes
+var flag = true; // this flag will be shared between the provider and the validator
+var conns = [];
+//structure of a conn
+//ip        -> (string)  the ip address of the connection
+//startTime -> (integer) the time when the connection has been started
+//endTime   -> (integer) the time when the connection should time out /***/This will not be implemented yet/***/
+//socket    -> (object)  the given socket (need a way to reconnect)
+//status    -> (boolean) shows if the connections is live (true) or needs to be closed (false)
+
+//structure of modes that will be used throughout the entire file
 //0-provider
 //1-validator
 //2-user
-//soon will be replaced in automation update for emits from the socket
-if(process.argv[2] === "--provider"){
+
+//////////////////////////////////////////////////////////////////////input section////////////////////////////////////////////////////////////////////////////////
+/*if(process.argv[2] === "--provider"){
     mode = 0;
 }
 else if(process.argv[2] === "--validator"){
@@ -31,66 +39,100 @@ else if(process.argv[2] === "--user"){
 else{
     console.log("INVALID INPUT (--provider/--validator)");
     return;
-}
-if(process.argv[3] === undefined){
+}*/
+if(process.argv[2] === undefined){
     console.log("Invalid format, must include a valid IP address")
     return;
 }
 else{
-    ip = process.argv[3];
+    ip = process.argv[2];
 }
 //////////////////////////////////////////////////////////////////////server section/////////////////////////////////////////////////////////////////////////////
-  io.on('connection', function(socket){
-//    conns.startTime[conns.count] = Date.now();
-//    conns.connID[conns.count] = socket.id;
-//    conns.status[conns.count] = false; //becomes true when there is a finish
-//    conns.count++;
-//    console.log("NEW CONNECTION at time:" + conns.startTime[conns.count-1] + " from socket.id:" + conns.connID[conns.count-1]);
+function closeSocket(pos){
+  conns[i].socket.disconnect(true);
+  conns.splice(i,1);
+}
 
-    s = socket;
-  
-    socket.emit("whoAmI", ip); // this assumes that the person can put a valid ip (this can be checked by some how parsing ifconfig bash command for this input)
-    socket.on('data', function(msg){
-      if(msg === undefined){
-        /////////////////resend structure (needs to be added to app.js aswell)
-        socket.emit('resendData');
+  io.on('connection', function(socket){
+    console.log(socket.handshake.address);
+    //s[s.length] = socket;
+
+    if(socket.handshake.address.search('127.0.0.1') >= 0) {
+      console.log("Hello User")
+      socket.emit("whoAmI", ip); 
+      mode = 2
+    }
+
+    socket.on("setUp", function(msg){
+      //this will check with the browser to make sure that this connection is the one that we want
+      //might have to adjust the contract so that the dataID and resultID also have connectorIDs for both sections]
+      //making this strucuture will allow for the the time out function to be implemented with a event listener for the time to fit specific sections (timeout update)
+      console.log(msg);
+      var exists = false;
+      for(var i = 0 ; i < conns.length ; i++){
+        if(conns[i].ip && conns[i].ip === msg){
+          exists = true;
+          conns[i].socket = socket;
+          console.log("Connection updating")
+        }
       }
-      else{
-        console.log("Data recieved sending to be ran...");
-        console.log(msg);
-        fs.writeFile("data.zip",msg, (err) => {
-          if(err){
-            console.log(err);
-          }
+      if(exists === false){
+        conns.push({
+        ip        : msg,
+        startTime : Date.now(),
+        ///end time to be implemented in timeout update
+        socket    : socket
         });
+        console.log("New Connection");
+        console.log('The handshake is: ' + socket.handshake);
+      }
+    });
+    socket.on("goodBye", function(msg){
+      for(var i = 0; i < conns.length; i ++){
+        if(conns[i].socket.id === socket.id && conns[i].ip === msg){
+          closeSocket(i);
+        }
+      }
+    });
+    socket.on('data', function(msg){
+      if(socket.handshake.address.search('127.0.0.1') >= 0){ 
+        if(msg === undefined){
+          socket.emit('resendData');
+        }
+        else{
+          console.log("Data recieved sending to be ran...");
+          console.log(msg);
+          fs.writeFile("data.zip",msg, (err) => {
+            if(err){
+              console.log(err);
+            }
+          });
+        }
       }
     });
     socket.on('result', function(msg){
-      if(msg === undefined){
-        socket.emit('resendResult');
-      }
-      else{
-        fs.writeFileSync("result.zip", msg, (err) => {
-          if(err){
-            //console.log(err);
-          }
-        });
+      if(socket.handshake.address.search('127.0.0.1') >= 0){
+        if(msg === undefined){
+          socket.emit('resendResult');
+        }
+        else{
+          fs.writeFileSync("result.zip", msg, (err) => {
+            if(err){
+              //console.log(err);
+            }
+          });
+        }
       }
     });
     socket.on("setupBuffer", msg => {
-      buffer = msg;
+      if(socket.handshake.address.search('127.0.0.1') >= 0){
+        buffer = msg;
+      }
     });
-    socket.on("setupMode", msg => { //partial complete future function
-      console.log('setupmode');  
-      /*if(process.argv[2] === "WORKER"){
-            mode = 0;
-        }
-        else if(process.argv[2] === "WORKER"){
-            mode = 1;
-        }
-        else if(process.argv[2] === "USER"){
-            mode = 2;
-        }*/
+    socket.on("setupMode", msg => { 
+      if(socket.handshake.address.search('127.0.0.1') >= 0 && msg === "WORKER"){
+        mode = 0;
+      }
     });
     socket.on('request', (msg) =>{
       console.log("Got:request and msg:" + msg);
@@ -213,6 +255,31 @@ async function getVer(file){
       run("eval.py", version);
     }
 }
+async function uploadVal(){
+  if(flag){
+    flag = false;
+    var f = false; 
+    if(fs.readFileSync('fin.txt' , 'utf8').search('True') >= 0){
+      f = true;
+    }
+    s.emit('uploadVal', f);
+    exec('rm fin.txt' , (err,stdout,stderr)=>{});
+  }
+}
+async function uploadResult(){
+  if(flag){
+    flag = false;
+    fs.readFile('result.zip', (err,data)=>{
+      //console.log(data);
+      //console.log(typeof data);
+      //fs.writeFile('../result.zip', data, (err)=>{if(err){console.log(err)}});
+      if(err !== undefined){
+        console.log('uploading result');
+        s.emit('uploadResult', data);
+      }
+    });
+  }
+}
 /////////////////////////////////////////////////////////////////////////////file management section//////////////////////////////////////////////////////////////////////
 fs.watch('.', (event, file)=>{
     //user mode case
@@ -228,6 +295,7 @@ fs.watch('.', (event, file)=>{
     //validator mode cases
     else if(event === 'change' && file === 'result.zip' && mode === 1){
         unzipF(file);
+        flag = true;
     }
     else if(event === 'change' && file === 'version.json' && mode === 1 && ver === false){
       ver = true;
@@ -237,11 +305,13 @@ fs.watch('.', (event, file)=>{
         comp();
     }
     else if(event === 'change' && file === 'fin.txt' && mode === 1){
-        rem('')
+        rem('');
+        uploadVal();
     }
     //provider mode cases
     else if(event === 'change' && file === 'data.zip' && mode === 0){
         unzipF(file);
+        flag = true;
     }
     else if(event === 'change' && file.search('.py') >= 0 && file != 'execute.py' && file != 'eval.py' &&  mode === 0){
         genFiles(file); 
@@ -256,4 +326,8 @@ fs.watch('.', (event, file)=>{
             run(file, version);
         }
     }
+    else if(event === 'change' && file === 'result.zip' && mode === 0){
+      uploadResult();
+    }
+    //once the files have been run and excess has been deleted send back to the browser for submission
 });

@@ -181,6 +181,7 @@ class App extends Component {
     if(loc.indexOf('localhost') === -1){       //if you are trying to connect to another user to get the data or result
       socket = io.connect("http://" + loc + "/");
       socket.on("connect", () => {
+        socket.emit('setUp', this.state.myIP);
         socket.emit('request', this.state.myIP);
       });
       socket.on('transmitting' + this.state.myIP, (tag , dat)=>{
@@ -209,6 +210,7 @@ class App extends Component {
         else{
             console.log("Finished and the socket will close now")
             socket.disconnect(true);
+            socket.emit('goodbye', this.state.myIP);
         }
       });
     }
@@ -218,9 +220,9 @@ class App extends Component {
         console.log("whoAmI just fired : " + msg)
         console.log(typeof msg);
         this.setState({myIP : msg});
-      });
-      socket.on('release'+this.state.myIP , () => {
-        if(this.state.mode === "WORKER"){
+        if(this.state.buffer !== undefined){
+          socket.emit('setupMode', this.state.mode);
+          socket.emit("setupBuffer", this.state.buffer);
         }
       });
       socket.on('resendData', () => {
@@ -229,6 +231,28 @@ class App extends Component {
       socket.on('resendResult', () => {
         socket.emit('result', this.state.result);
       });
+      socket.on('uploadVal', (val) => {
+        if(this.state.mode === 'WORKER'){
+          if(val){
+            document.getElementById("trueButton").click();
+          }
+          else{
+            document.getElementById('falseButton').click();
+          }
+        }
+      });
+      socket.on('uploadResult', (data) => {
+        console.log('recieved uploadResult')
+        this.setState({buffer : data});
+        console.log(this.state.buffer);
+        if(this.state.mode === 'WORKER'){  
+          document.getElementById('submitButton').click();
+        }
+        if(this.state.mode === 'USER'){
+          document.getElementById('modeButton').click();
+          document.getElementById('submitButton').click();
+        }
+      })
     }
     return socket;                             //return so that we can still interact with it later on
   }
@@ -703,10 +727,10 @@ class App extends Component {
         <div>
           <h2> VALIDATIONS </h2>
           <p>
-          <button onClick={this.submitValidationTrue} style={{ marginBottom: 5 , marginRight : 10}} >
+          <button id={'trueButton'} onClick={this.submitValidationTrue} style={{ marginBottom: 5 , marginRight : 10}} >
             TRUE
           </button>
-          <button onClick={this.submitValidationFalse} style={{ marginBottom: 5 , marginLeft: 10}}>
+          <button id={'falseButton'} onClick={this.submitValidationFalse} style={{ marginBottom: 5 , marginLeft: 10}}>
             FALSE
           </button>
           </p>
@@ -784,14 +808,22 @@ class App extends Component {
         </form></div>
       )
     }
-    if (this.state.mode === 'WORKER') {
+    if (this.state.mode === 'WORKER' && this.state.buffer === undefined) {
+      return(
+        <div>
+          <h2>SUBMIT RESULT PACKAGE</h2>
+          <p>Please wait a submit button will appear once the script has been executed</p>
+        </div>
+      );
+    }
+    if (this.state.mode === 'WORKER' && this.state.buffer !== undefined) {
       return (
         <div><h2>SUBMIT RESULT PACKAGE</h2>
           <form onSubmit={this.serverSubmit}>
-          <input type='file' onChange={this.captureFile}></input>
+          
           {/*<input type='submit' value="Upload to server"></input>*/}
        
-        <button onClick={this.submitJob} style={{ marginTop: 10, marginLeft: 15, marginBottom: 10 }}>
+        <button id={'submitButton'} onClick={this.submitJob} style={{ marginTop: 10, marginLeft: 15, marginBottom: 10 }}>
           Submit Result
         </button>
         </form></div>
@@ -837,7 +869,7 @@ class App extends Component {
       <div className="App">
         <ReactNotification ref={this.notificationDOMRef} />
         <h1 style={{ marginBottom: 30 }}>Welcome to the BCAI Dapp</h1>
-        <button onClick={this.changeMode} style={{ fontsize: 40, height:60, width: 120, marginBottom: 20 }}>{this.state.mode} MODE</button>
+        <button id={'modeButton'} onClick={this.changeMode} style={{ fontsize: 40, height:60, width: 120, marginBottom: 20 }}>{this.state.mode} MODE</button>
 
         
 
