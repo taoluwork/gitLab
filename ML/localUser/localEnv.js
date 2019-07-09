@@ -60,6 +60,12 @@ function closeSocket(pos){
     if(socket.handshake.address.search('127.0.0.1') >= 0) {
       console.log("Hello User")
       socket.emit("whoAmI", ip); 
+      conns.push({
+        ip        : ip,
+        startTime : Date.now(),
+        ///end time to be implemented in timeout update
+        socket    : socket
+        });
     }
 
     socket.on("setUp", function(msg){
@@ -196,13 +202,13 @@ async function unzipF(file){
             for(var i = 0 ; i < conns.length; i++){
               if(conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
                 s = conns[i].socket;
+                if(mode === 0 ){
+                  s.emit('resendData');
+                }
+                if(mode === 1 || mode === 2 ){
+                  s.emit('resendResult');
+                }
               }
-            }
-            if(mode === 0 ){
-              s.emit('resendData');
-            }
-            if(mode === 1 || mode === 2 ){
-              s.emit('resendResult');
             }
         }
         console.log(stdout);
@@ -292,18 +298,20 @@ async function uploadResult(){
       //console.log(data);
       //console.log(typeof data);
       //fs.writeFile('../result.zip', data, (err)=>{if(err){console.log(err)}});
-      if(err === undefined){ 
+      if(data !== undefined){ 
         console.log('uploading result');
         var s;
         for(var i = 0 ; i < conns.length; i++){
           if(conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
             s = conns[i].socket;
+            s.emit('uploadResult', data);
+            console.log('uplaoding...');
           }
         }
-        s.emit('uploadResult', data);
       }
       else {
         flag = true;
+        console.log("Uplaod failed... Trying again now")
         uploadResult();
       }
     });
