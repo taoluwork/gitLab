@@ -261,9 +261,16 @@ class App extends Component {
     var tag = undefined;
     if(event.target.name === "data"){
       tag = this.state.dataID;
+      tempSocket.emit("setupMode", "WORKER");
     }
     if(event.target.name === "result"){
       tag = this.state.resultID;
+      if(this.state.mode === "USER"){
+        tempSocket.emit("setupMode", this.state.mode);
+      }
+      else{
+        tempSocket.emit("setupMode", "VALIDATOR");
+      }
     }
     var tempSocket = await this.buildSocket(tag);
     tempSocket.emit("request", this.state.myIP);

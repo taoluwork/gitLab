@@ -8,7 +8,7 @@ var io = require('socket.io')(http);
 var buffer;
 var version = '';
 var name = '';
-var mode = 1; 
+var mode; 
 var ip;
 var training = false;
 var ver = false;
@@ -60,7 +60,6 @@ function closeSocket(pos){
     if(socket.handshake.address.search('127.0.0.1') >= 0) {
       console.log("Hello User")
       socket.emit("whoAmI", ip); 
-      mode = 2
     }
 
     socket.on("setUp", function(msg){
@@ -133,6 +132,14 @@ function closeSocket(pos){
       if(socket.handshake.address.search('127.0.0.1') >= 0 && msg === "WORKER"){
         mode = 0;
       }
+      else if(socket.handshake.address.search('127.0.0.1') >= 0 && msg === "VALIDATOR"){
+        mode = 1;
+      }
+      else if(socket.handshake.address.search('127.0.0.1') >= 0 && msg === "USER"){
+        mode = 2;
+      }
+
+      console.log("Your Mode is now: " + mode);
     });
     socket.on('request', (msg) =>{
       console.log("Got:request and msg:" + msg);
