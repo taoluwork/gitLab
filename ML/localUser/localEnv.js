@@ -14,6 +14,7 @@ var training = false;
 var ver = false;
 var flag = true; // this flag will be shared between the provider and the validator
 var conns = [];
+var goodFiles = '"node_modules" | "comp.py" | "localEnv.js" | "package-lock.json" | "train.py"' //string of files that should not be deleted ever
 //structure of a conn
 //ip        -> (string)  the ip address of the connection
 //startTime -> (integer) the time when the connection has been started
@@ -37,7 +38,7 @@ else{
 //////////////////////////////////////////////////////////////////////server section/////////////////////////////////////////////////////////////////////////////
 function closeSocket(pos){
   console.log('connection has been closed');
-  conns[i].socket.disconnect(true);
+  conns[pos].socket.disconnect(true);
   conns.splice(i,1);
 }
 
@@ -94,6 +95,7 @@ function closeSocket(pos){
         else{
           console.log("Data recieved sending to be ran...");
           console.log(msg);
+          exec('rm  -v !(' + goodFiles + ')' , (err,stdout,stderr)=>{});
           fs.writeFile("data.zip",msg, (err) => {
             if(err){
               console.log(err);
@@ -108,6 +110,7 @@ function closeSocket(pos){
           socket.emit('resendResult');
         }
         else{
+          exec('rm  -v !(' + goodFiles + ')' , (err,stdout,stderr)=>{});
           fs.writeFileSync("result.zip", msg, (err) => {
             if(err){
               //console.log(err);
@@ -191,9 +194,11 @@ async function unzipF(file){
                 s = conns[i].socket;
                 if(mode === 0 ){
                   s.emit('resendData');
+                  training = false;
                 }
                 if(mode === 1 || mode === 2 ){
                   s.emit('resendResult');
+                  training = false;
                 }
               }
             }
