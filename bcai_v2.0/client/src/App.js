@@ -92,6 +92,7 @@ class App extends Component {
     this.buildSocket = this.buildSocket.bind(this);
     this.DownloadInfo = this.DownloadInfo.bind(this);
     this.notificationDOMRef = React.createRef();
+    this.severEvent = this.severEvent.bind(this);
   }
 
   //initiate the page
@@ -209,9 +210,7 @@ class App extends Component {
         }
         else{
             console.log("Finished and the socket will close now")
-            socket.disconnect(true);
-            socket.emit('goodbye', this.state.myIP);
-        }
+            socket.disconnect(true);        }
       });
     }
     else{
@@ -277,6 +276,7 @@ class App extends Component {
     this.state.socket.emit("setupMode", m);
     tempSocket.emit("request", this.state.myIP);
     console.log(this.state);
+    this.setState({tempSocket : tempSocket});
     return tempSocket;
   }
 
@@ -496,6 +496,15 @@ class App extends Component {
     }
     if(tag === "result"){
       this.state.socket.emit(tag, this.state.result);
+    }
+  }
+
+  severEvent = async (event) => {
+    event.preventDefault();
+    if(this.state.tempSocket !== undefined){
+      console.log("goodbye message sent");
+      this.state.tempSocket.emit("goodBye", this.state.myIP);
+      this.state.tempSocket.disconnect(true);
     }
   }
 
@@ -759,6 +768,9 @@ class App extends Component {
         <form onSubmit={this.downloadEvent}  name="data">
           <button>Download the data</button>  
         </form>
+        <form onSubmit={this.severEvent}  name="data">
+          <button>Sever the data link</button>  
+        </form>
       </div>
       );
     }
@@ -768,6 +780,9 @@ class App extends Component {
         <p>resultID is: {"" + this.state.resultID}</p>
         <form onSubmit={this.downloadEvent}  name="result">
           <button>Download the result</button>  
+        </form>
+        <form onSubmit={this.severEvent}  name="result">
+          <button>Sever the result link</button>  
         </form>
       </div>
       );
@@ -781,9 +796,15 @@ class App extends Component {
           <form onSubmit={this.downloadEvent}  name="data">
             <button>Download the data</button>  
           </form>
+          <form onSubmit={this.severEvent}  name="data">
+            <button>Sever the data link</button>  
+          </form>
           <p>resultID is: {"" + this.state.resultID}</p>
           <form onSubmit={this.downloadEvent}  name="result">
             <button>Download the result</button>  
+          </form>
+          <form onSubmit={this.severEvent}  name="result">
+            <button>Sever the result link</button>  
           </form>
         </div>
         );

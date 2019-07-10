@@ -43506,12 +43506,12 @@
     "3": {
       "events": {},
       "links": {},
-      "address": "0xa187a4Fa5804Bae88684AB1c1A56654BE45812fA",
-      "transactionHash": "0x6c53b034400d403ab3131c5ffaba77135abccd89401571dd700a09c25c8b0ee5"
+      "address": "0xBfC7be927D38f67a6901DEEA98730A93D993b969",
+      "transactionHash": "0xa32efdc28f4864d0a68081b6303fb0c22f5d870205799a8f0e86cf2d0a2d12d9"
     }
   },
   "schemaVersion": "3.0.10",
-  "updatedAt": "2019-07-09T19:09:36.752Z",
+  "updatedAt": "2019-07-10T17:40:28.280Z",
   "devdoc": {
     "methods": {}
   },

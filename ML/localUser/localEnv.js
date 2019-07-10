@@ -27,19 +27,6 @@ var conns = [];
 //2-user
 
 //////////////////////////////////////////////////////////////////////input section////////////////////////////////////////////////////////////////////////////////
-/*if(process.argv[2] === "--provider"){
-    mode = 0;
-}
-else if(process.argv[2] === "--validator"){
-    mode = 1;
-  }
-else if(process.argv[2] === "--user"){
-    mode = 2;
-  }
-else{
-    console.log("INVALID INPUT (--provider/--validator)");
-    return;
-}*/
 if(process.argv[2] === undefined){
     console.log("Invalid format, must include a valid IP address")
     return;
@@ -49,6 +36,7 @@ else{
 }
 //////////////////////////////////////////////////////////////////////server section/////////////////////////////////////////////////////////////////////////////
 function closeSocket(pos){
+  console.log('connection has been closed');
   conns[i].socket.disconnect(true);
   conns.splice(i,1);
 }
@@ -89,7 +77,6 @@ function closeSocket(pos){
         socket    : socket
         });
         console.log("New Connection");
-        console.log('The handshake is: ' + socket.handshake);
       }
     });
     socket.on("goodBye", function(msg){
