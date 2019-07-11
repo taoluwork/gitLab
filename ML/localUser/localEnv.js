@@ -114,11 +114,12 @@ function closeSocket(pos){
           socket.emit('resendResult');
         }
         else{
-          exec('rm result.zip' , (err,stdout,stderr)=>{});
-          fs.writeFileSync("result.zip", msg, (err) => {
-            if(err){
-              //console.log(err);
-            }
+          exec('rm result.zip' , (err,stdout,stderr)=>{
+            fs.writeFileSync("result.zip", msg, (err) => {
+              if(err){
+                //console.log(err);
+              }
+            });
           });
         }
       }
