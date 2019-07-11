@@ -37,9 +37,9 @@ else{
 }
 //////////////////////////////////////////////////////////////////////server section/////////////////////////////////////////////////////////////////////////////
 function closeSocket(pos){
-  console.log('connection has been closed');
+  console.log('connection has been closed, there are:' + conns.length + ' left');
   conns[pos].socket.disconnect(true);
-  conns.splice(i,1);
+  conns.splice(pos,1);
 }
 
   io.on('connection', function(socket){
@@ -283,6 +283,7 @@ async function uploadVal(){
     exec('rm fin.txt' , (err,stdout,stderr)=>{});
   }
 }
+//need a resend function
 async function uploadResult(){
   if(flag){
     flag = false;

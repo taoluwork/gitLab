@@ -92,7 +92,6 @@ class App extends Component {
     this.buildSocket = this.buildSocket.bind(this);
     this.DownloadInfo = this.DownloadInfo.bind(this);
     this.notificationDOMRef = React.createRef();
-    this.severEvent = this.severEvent.bind(this);
   }
 
   //initiate the page
@@ -382,6 +381,11 @@ class App extends Component {
             var StartTime = ret.receipt.blockNumber;  //record the block# when submitted, all following events will be tracked from now on
             this.setState({RequestStartTime : StartTime})
             this.addNotification("Result Submission Succeed", "Work submitted to contract", "success")
+
+            //disconnect the socket
+            this.state.tempSocket.emit("goodBye", this.state.myIP);
+            this.state.tempSocket.disconnect(true);
+            this.setState({data : undefined , dataID : undefined , tempSocket: undefined});
           })
       }
       else { console.log("Failed to submit to local server")}
@@ -425,6 +429,11 @@ class App extends Component {
         .then(ret => {
           console.log(ret);
           this.addNotification("Validation Submission Succeeded", "Validation submitted to contract", "success")
+
+          //disconnect the temp socket
+          this.state.tempSocket.emit("goodBye", this.state.myIP);
+          this.state.tempSocket.disconnect(true);
+          this.setState({result : undefined , resultID : undefined , tempSocket: undefined});
         })
         .catch(err => { //most common err here is out-of-gas VM error
           console.log(err);
@@ -496,15 +505,6 @@ class App extends Component {
     }
     if(tag === "result"){
       this.state.socket.emit(tag, this.state.result);
-    }
-  }
-
-  severEvent = async (event) => {
-    event.preventDefault();
-    if(this.state.tempSocket !== undefined){
-      console.log("goodbye message sent");
-      this.state.tempSocket.emit("goodBye", this.state.myIP);
-      this.state.tempSocket.disconnect(true);
     }
   }
 
@@ -768,9 +768,6 @@ class App extends Component {
         <form onSubmit={this.downloadEvent}  name="data">
           <button>Download the data</button>  
         </form>
-        <form onSubmit={this.severEvent}  name="data">
-          <button>Sever the data link</button>  
-        </form>
       </div>
       );
     }
@@ -780,9 +777,6 @@ class App extends Component {
         <p>resultID is: {"" + this.state.resultID}</p>
         <form onSubmit={this.downloadEvent}  name="result">
           <button>Download the result</button>  
-        </form>
-        <form onSubmit={this.severEvent}  name="result">
-          <button>Sever the result link</button>  
         </form>
       </div>
       );
@@ -796,15 +790,9 @@ class App extends Component {
           <form onSubmit={this.downloadEvent}  name="data">
             <button>Download the data</button>  
           </form>
-          <form onSubmit={this.severEvent}  name="data">
-            <button>Sever the data link</button>  
-          </form>
           <p>resultID is: {"" + this.state.resultID}</p>
           <form onSubmit={this.downloadEvent}  name="result">
             <button>Download the result</button>  
-          </form>
-          <form onSubmit={this.severEvent}  name="result">
-            <button>Sever the result link</button>  
           </form>
         </div>
         );
@@ -847,6 +835,7 @@ class App extends Component {
       );
     }
     if (this.state.mode === 'WORKER' && this.state.buffer !== undefined) {
+      //there needs to be a resend function if the data is null(reupload button)
       return (
         <div><h2>SUBMIT RESULT PACKAGE</h2>
           <form onSubmit={this.serverSubmit}>
