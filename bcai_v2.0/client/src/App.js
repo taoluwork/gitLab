@@ -394,13 +394,21 @@ class App extends Component {
 
   stopJob(event) {
     event.preventDefault();
-    this.state.myContract.stopRequest({from: this.state.myAccount})
-    .then(ret => {
-      console.log("Job removed from pendingPool");
-    })
-    .catch(err => {
-      console.log(err)
-    })
+    if(this.state.resultID === undefined){
+      this.state.myContract.stopRequest({from: this.state.myAccount})
+      .then(ret => {
+        console.log("Job removed from pendingPool");
+      })
+      .catch(err => {
+        console.log(err)
+      })
+    }
+    //this case is when the job is done (it will serve as a manual way of ending a job untill a timeout or check can be made for when the file has been recieved)
+    else if(this.state.resultID !== undefined){
+      this.state.tempSocket.emit("goodBye", this.state.myIP);
+      this.state.tempSocket.disconnect(true);
+      this.setState({result : undefined , resultID : undefined , tempSocket: undefined});
+    }
   }
 
   submitValidationTrue (event) {

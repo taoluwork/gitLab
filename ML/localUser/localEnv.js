@@ -14,7 +14,6 @@ var training = false;
 var ver = false;
 var flag = true; // this flag will be shared between the provider and the validator
 var conns = [];
-var goodFiles = '"node_modules" | "comp.py" | "localEnv.js" | "package-lock.json" | "train.py"' //string of files that should not be deleted ever
 //structure of a conn
 //ip        -> (string)  the ip address of the connection
 //startTime -> (integer) the time when the connection has been started
@@ -37,9 +36,12 @@ else{
 }
 //////////////////////////////////////////////////////////////////////server section/////////////////////////////////////////////////////////////////////////////
 function closeSocket(pos){
-  console.log('connection has been closed, there are:' + conns.length + ' left');
   conns[pos].socket.disconnect(true);
   conns.splice(pos,1);
+  console.log('connection has been closed, there are:' + conns.length + ' left');
+  for(var i = 0 ; i < conns.length ; i++){
+    console.log(conns[i].ip);
+  }
 }
 
   io.on('connection', function(socket){
@@ -95,11 +97,13 @@ function closeSocket(pos){
         else{
           console.log("Data recieved sending to be ran...");
           console.log(msg);
-          exec('rm  -v !(' + goodFiles + ')' , (err,stdout,stderr)=>{});
-          fs.writeFile("data.zip",msg, (err) => {
-            if(err){
-              console.log(err);
-            }
+          exec('rm data.zip' , (err,stdout,stderr)=>{ 
+            console.log(stdout);
+            fs.writeFile("data.zip",msg, (err) => {
+              if(err){
+                console.log(err);
+              }
+            });
           });
         }
       }
@@ -110,7 +114,7 @@ function closeSocket(pos){
           socket.emit('resendResult');
         }
         else{
-          exec('rm  -v !(' + goodFiles + ')' , (err,stdout,stderr)=>{});
+          exec('rm result.zip' , (err,stdout,stderr)=>{});
           fs.writeFileSync("result.zip", msg, (err) => {
             if(err){
               //console.log(err);
@@ -147,7 +151,7 @@ function closeSocket(pos){
       }
       if(buffer !== undefined){
         socket.emit('transmitting' + msg, tag, buffer); 
-        console.log("emit:transmitting to:" + msg + " with tag:" + tag + " this.state.buffer:");
+        console.log("emit:transmitting to:" + msg + " with tag:" + tag );
       }
       else{
         console.log("NO FILE FOUND!!", "Please put the results within the field.", "warning");
@@ -298,13 +302,13 @@ async function uploadResult(){
           if(conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
             s = conns[i].socket;
             s.emit('uploadResult', data);
-            console.log('uplaoding...');
+            console.log('uploading...');
           }
         }
       }
       else {
         flag = true;
-        console.log("Uplaod failed... Trying again now")
+        console.log("upload failed... Trying again now")
         uploadResult();
       }
     });
