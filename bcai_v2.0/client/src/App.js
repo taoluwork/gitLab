@@ -14,14 +14,14 @@ import React, { Component } from "react";
 import TaskContract from "./contracts/TaskContract.json";
 import getWeb3 from "./utils/getWeb3";
 import truffleContract from "truffle-contract";
-import t from 'tcomb-form';
+//import t from 'tcomb-form';
 import ReactNotification from "react-notifications-component";
 import "react-notifications-component/dist/theme.css";
 import io from 'socket.io-client';
 //import openSocket from 'socket.io-client';
 
 import "./App.css";
-import { async, longStackSupport } from "q";
+//import { async, longStackSupport } from "q";
 //import { AsyncResource } from "async_hooks";
 //import { Accounts } from "web3-eth-accounts/types";
 //import { userInfo } from "os";
@@ -189,10 +189,10 @@ class App extends Component {
         if(dat !== undefined){                     
             socket.emit('recieved', this.state.myIP); 
             console.log("emit:recieved msg:" + this.state.myIP);
-            if(tag =="data"){
+            if(tag === "data"){
                 this.setState({data: dat});
             }
-            if(tag =="result"){
+            if(tag === "result"){
                 this.setState({result: dat});
             }
         }
@@ -215,12 +215,17 @@ class App extends Component {
     else{
       socket = io(loc);
       socket.on('whoAmI', (msg) =>{
-        console.log("whoAmI just fired : " + msg)
-        console.log(typeof msg);
-        this.setState({myIP : msg});
-        if(this.state.buffer !== undefined){
-          socket.emit('setupMode', this.state.mode);
-          socket.emit("setupBuffer", this.state.buffer);
+        if(this.state.ip === undefined){
+          console.log("whoAmI just fired : " + msg)
+          console.log(typeof msg);
+          this.setState({myIP : msg});
+          if(this.state.buffer !== undefined){
+            socket.emit('setupMode', this.state.mode);
+            socket.emit("setupBuffer", this.state.buffer);
+          }
+        }
+        else{
+          socket.emit("reset");
         }
       });
       socket.on('resendData', () => {
@@ -251,6 +256,21 @@ class App extends Component {
           document.getElementById('submitButton').click();
         }
       })
+      socket.on( "browserReconnect" , (newMode, newBuffer) => {
+        //the integer version of mode selection is defined in localEnv.js
+        //0-provider
+        //1-validator
+        //2-user
+        if( (newMode === 0 || newMode === 1) && this.state.mode !== "WORKER" ){
+          document.getElementById('modeButton').click();
+        }
+        if( (newBuffer !== undefined || newBuffer !== null) && this.state.buffer === undefined){
+          this.setState({buffer : newBuffer});
+          console.log(this.state.buffer)
+          //document.getElementById("fileInput").value = this.state.buffer;
+          //set the buffer variable here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        }
+      });
     }
     return socket;                             //return so that we can still interact with it later on
   }
@@ -394,10 +414,12 @@ class App extends Component {
 
   stopJob(event) {
     event.preventDefault();
+    console.log("stopJob: " + this.state.resultID)
     if(this.state.resultID === undefined){
       this.state.myContract.stopRequest({from: this.state.myAccount})
       .then(ret => {
         console.log("Job removed from pendingPool");
+        this.state.socket.emit("dumpBuffer");
       })
       .catch(err => {
         console.log(err)
@@ -413,14 +435,16 @@ class App extends Component {
 
   submitValidationTrue (event) {
     event.preventDefault();
-    this.setState({ValidationResult: true})
-    this.submitValidation(event)
+    this.setState({ValidationResult: true});
+    this.submitValidation(event);
+    this.state.socket.emit("dumpBuffer");
   }
 
   submitValidationFalse (event){
     event.preventDefault();
-    this.setState({ValidationResult: false})
-    this.submitValidation(event)
+    this.setState({ValidationResult: false});
+    this.submitValidation(event);
+    this.state.socket.emit("dumpBuffer");
   }
 
   submitValidation = async (event) => {
@@ -508,6 +532,7 @@ class App extends Component {
         console.log("Download Error!", err);
         return undefined
       })
+    console.log(returnVal);
     if(tag === "data"){
       this.state.socket.emit(tag, this.state.data);
     }
@@ -748,7 +773,7 @@ class App extends Component {
   }
 
   showValidationButtons() {
-    if (this.state.mode === 'WORKER') {
+    if (this.state.mode === 'WORKER' && this.state.resultID !== undefined && this.state.dataID === undefined) {
       return (
         <div>
           <h2> VALIDATIONS </h2>
@@ -822,11 +847,11 @@ class App extends Component {
   }
   // upload script or result
   showUploadModule() {
-    if (this.state.mode === "USER"){
+    if (this.state.mode === "USER" ){
       return (
         <div><h2>{"UPLOAD TASK SCRIPT" }</h2>
         <form onSubmit={this.serverSubmit}>
-          <input type='file' onChange={this.captureFile}></input>
+          <input type='file' id='fileInput' onChange={this.captureFile}></input>
           <button onClick={this.submitRequest} style={{ margin: 10 }}>
           Submit Task
           </button>
@@ -834,7 +859,7 @@ class App extends Component {
         </form></div>
       )
     }
-    if (this.state.mode === 'WORKER' && this.state.buffer === undefined) {
+    if (this.state.mode === 'WORKER' && this.state.buffer === undefined && this.state.dataID !== undefined) {
       return(
         <div>
           <h2>SUBMIT RESULT PACKAGE</h2>
@@ -842,7 +867,7 @@ class App extends Component {
         </div>
       );
     }
-    if (this.state.mode === 'WORKER' && this.state.buffer !== undefined) {
+    if (this.state.mode === 'WORKER' && this.state.buffer !== undefined && this.state.resultID !== undefined) {
       //there needs to be a resend function if the data is null(reupload button)
       return (
         <div><h2>SUBMIT RESULT PACKAGE</h2>

@@ -14,6 +14,9 @@ var training = false;
 var ver = false;
 var flag = true; // this flag will be shared between the provider and the validator
 var conns = [];
+var connsI = [];
+var reconfigFlag = false;
+
 //structure of a conn
 //ip        -> (string)  the ip address of the connection
 //startTime -> (integer) the time when the connection has been started
@@ -26,7 +29,20 @@ var conns = [];
 //1-validator
 //2-user
 
-//////////////////////////////////////////////////////////////////////input section////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////setup/closing section////////////////////////////////////////////////////////////////////////
+process.on('SIGINT', function() {
+  console.log();
+  update();
+  console.log("goodbye");
+  process.exit();
+});
+
+fs.readdirSync('.').forEach(file => {
+  if(file === "curState.json"){
+    reconfig();
+  }
+});
+
 if(process.argv[2] === undefined){
     console.log("Invalid format, must include a valid IP address")
     return;
@@ -34,135 +50,217 @@ if(process.argv[2] === undefined){
 else{
     ip = process.argv[2];
 }
-//////////////////////////////////////////////////////////////////////server section/////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////server function section//////////////////////////////////////////////////////////////////////
 function closeSocket(pos){
   conns[pos].socket.disconnect(true);
   conns.splice(pos,1);
   console.log('connection has been closed, there are:' + conns.length + ' left');
+  update();
   for(var i = 0 ; i < conns.length ; i++){
     console.log(conns[i].ip);
   }
 }
 
-  io.on('connection', function(socket){
-    console.log(socket.handshake.address);
-    //s[s.length] = socket;
+function browserReconect(socketInst){
+  //current mode
+  //files if any
+  socketInst.emit("browserReconnect", mode, buffer);
+}
 
-    if(socket.handshake.address.search('127.0.0.1') >= 0) {
-      console.log("Hello User")
-      socket.emit("whoAmI", ip); 
+function reconfig(){
+  //variables
+  if(reconfigFlag === false){
+    reconfigFlag = true;
+    console.log('reconfiguring files');
+    let data = fs.readFileSync("curState.json" );
+    let curState = JSON.parse(data);
+    buffer  = curState.curBuffer;
+    version = curState.curVersion;
+    name    = curState.curName;
+    mode    = curState.curMode;
+    ip      = curState.curIp;
+    conns   = curState.curConns;
+    connsI  = curState.curConns;
+  }
+}
+
+function update(){
+  reconfigFlag = true;
+  let curState = {
+    curBuffer  : buffer,
+    curVersion : version,
+    curName    : name,
+    curMode    : mode, 
+    curIp      : ip,
+    curConns   : connsI
+  };
+  let data = JSON.stringify(curState);
+  fs.writeFileSync("curState.json" , data);
+  console.log("updating data");
+}
+
+//////////////////////////////////////////////////////////////////////server section//////////////////////////////////////////////////////////////////////////////
+io.on('connection', function(socket){
+  console.log(socket.handshake.address);
+
+
+
+  if(socket.handshake.address.search('127.0.0.1') >= 0) {
+    console.log("Hello User")
+    socket.emit("whoAmI", ip); 
+    var exists = false;
+    for(var i = 0 ; i < conns.length ; i++){
+      if(conns[i].ip && conns[i].ip === ip){
+        exists = true;
+        //send stored data up to browser
+        browserReconect(socket);
+      }
+    }
+    if(exists === false){
       conns.push({
         ip        : ip,
         startTime : Date.now(),
         ///end time to be implemented in timeout update
         socket    : socket
-        });
+      });
+      connsI.push({
+        ip        : ip,
+      startTime : Date.now(),
+      ///end time to be implemented in timeout update
+      });
+      update();
     }
+  }
 
-    socket.on("setUp", function(msg){
-      //this will check with the browser to make sure that this connection is the one that we want
-      //might have to adjust the contract so that the dataID and resultID also have connectorIDs for both sections]
-      //making this strucuture will allow for the the time out function to be implemented with a event listener for the time to fit specific sections (timeout update)
-      console.log(msg);
-      var exists = false;
-      for(var i = 0 ; i < conns.length ; i++){
-        if(conns[i].ip && conns[i].ip === msg){
-          exists = true;
-          conns[i].socket = socket;
-          console.log("Connection updating")
-        }
+  socket.on('reset', function(){
+    if(socket.handshake.address.search('127.0.0.1') >= 0) {
+      reconfig();
+    }
+  });
+
+  socket.on("dumpBuffer", function() {
+    if(socket.handshake.address.search('127.0.0.1') >= 0) {
+      buffer = undefined;
+      update();
+    }
+  });
+
+  socket.on("setUp", function(msg){
+    console.log(msg);
+    var exists = false;
+    for(var i = 0 ; i < conns.length ; i++){
+      if(conns[i].ip && conns[i].ip === msg){
+        exists = true;
+        conns[i].socket = socket;
+        console.log("Connection updating")
       }
-      if(exists === false){
-        conns.push({
+    }
+    if(exists === false){
+      conns.push({
+      ip        : msg,
+      startTime : Date.now(),
+      ///end time to be implemented in timeout update
+      socket    : socket
+      });
+      connsI.push({
         ip        : msg,
-        startTime : Date.now(),
-        ///end time to be implemented in timeout update
-        socket    : socket
-        });
-        console.log("New Connection");
+      startTime : Date.now(),
+      ///end time to be implemented in timeout update
+      });
+      console.log("New Connection");
+      update();
+    }
+  });
+  socket.on("goodBye", function(msg){
+    for(var i = 0; i < conns.length; i ++){
+      if(conns[i].socket.id === socket.id && conns[i].ip === msg){
+        closeSocket(i);
       }
-    });
-    socket.on("goodBye", function(msg){
-      for(var i = 0; i < conns.length; i ++){
-        if(conns[i].socket.id === socket.id && conns[i].ip === msg){
-          closeSocket(i);
-        }
-      }
-    });
-    socket.on('data', function(msg){
-      if(socket.handshake.address.search('127.0.0.1') >= 0){ 
-        if(msg === undefined){
-          socket.emit('resendData');
-        }
-        else{
-          console.log("Data recieved sending to be ran...");
-          console.log(msg);
-          exec('rm data.zip' , (err,stdout,stderr)=>{ 
-            console.log(stdout);
-            fs.writeFile("data.zip",msg, (err) => {
-              if(err){
-                console.log(err);
-              }
-            });
-          });
-        }
-      }
-    });
-    socket.on('result', function(msg){
-      if(socket.handshake.address.search('127.0.0.1') >= 0){
-        if(msg === undefined){
-          socket.emit('resendResult');
-        }
-        else{
-          exec('rm result.zip' , (err,stdout,stderr)=>{
-            fs.writeFileSync("result.zip", msg, (err) => {
-              if(err){
-                //console.log(err);
-              }
-            });
-          });
-        }
-      }
-    });
-    socket.on("setupBuffer", msg => {
-      if(socket.handshake.address.search('127.0.0.1') >= 0){
-        buffer = msg;
-      }
-    });
-    socket.on("setupMode", msg => { 
-      if(socket.handshake.address.search('127.0.0.1') >= 0 && msg === "WORKER"){
-        mode = 0;
-      }
-      else if(socket.handshake.address.search('127.0.0.1') >= 0 && msg === "VALIDATOR"){
-        mode = 1;
-      }
-      else if(socket.handshake.address.search('127.0.0.1') >= 0 && msg === "USER"){
-        mode = 2;
-      }
-
-      console.log("Your Mode is now: " + mode);
-    });
-    socket.on('request', (msg) =>{
-      console.log("Got:request and msg:" + msg);
-      var tag = "data";
-      var type = "WORKER";
-      if(mode === 0){
-        tag = "result";
-        type = "VALIDATOR";
-      }
-      if(buffer !== undefined){
-        socket.emit('transmitting' + msg, tag, buffer); 
-        console.log("emit:transmitting to:" + msg + " with tag:" + tag );
+    }
+  });
+  socket.on('data', function(msg){
+    if(socket.handshake.address.search('127.0.0.1') >= 0){ 
+      if(msg === undefined){
+        socket.emit('resendData');
       }
       else{
-        console.log("NO FILE FOUND!!", "Please put the results within the field.", "warning");
+        console.log("Data recieved sending to be ran...");
+        console.log(msg);
+        exec('rm data.zip' , (err,stdout,stderr)=>{ 
+          console.log(stdout);
+          fs.writeFile("data.zip",msg, (err) => {
+            if(err){
+              console.log(err);
+            }
+            else{
+              update();
+            }
+          });
+        });
       }
-      socket.emit('fin'+ msg , tag);
-      console.log("emit:fin to:" + msg + " with tag:" + tag);
-    });
-    socket.on('recieved', (msg) => {
-      console.log("message was recieved");          
-    });
+    }
+  });
+  socket.on('result', function(msg){
+    if(socket.handshake.address.search('127.0.0.1') >= 0){
+      if(msg === undefined){
+        socket.emit('resendResult');
+      }
+      else{
+        exec('rm result.zip' , (err,stdout,stderr)=>{
+          fs.writeFileSync("result.zip", msg, (err) => {
+            if(err){
+              //console.log(err);
+            }
+            else{
+              update();
+            }
+          });
+        });
+      }
+    }
+  });
+  socket.on("setupBuffer", msg => {
+    if(socket.handshake.address.search('127.0.0.1') >= 0){
+      buffer = msg;
+      update();
+    }
+  });
+  socket.on("setupMode", msg => { 
+    if(socket.handshake.address.search('127.0.0.1') >= 0 && msg === "WORKER"){
+      mode = 0;
+    }
+    else if(socket.handshake.address.search('127.0.0.1') >= 0 && msg === "VALIDATOR"){
+      mode = 1;
+    }
+    else if(socket.handshake.address.search('127.0.0.1') >= 0 && msg === "USER"){
+      mode = 2;
+    }
+
+    console.log("Your Mode is now: " + mode);
+    update();
+  });
+  socket.on('request', (msg) =>{
+    //check for valid connection
+    console.log("Got:request and msg:" + msg);
+    var tag = "data";
+    var type = "WORKER";
+    if(mode === 0){
+      tag = "result";
+      type = "VALIDATOR";
+    }
+    if(buffer !== undefined){
+      socket.emit('transmitting' + msg, tag, buffer); 
+      console.log("emit:transmitting to:" + msg + " with tag:" + tag );
+    }
+    else{
+      console.log("NO FILE FOUND!!", "Please put the results within the field.", "warning");
+    }
+    socket.emit('fin'+ msg , tag);
+    console.log("emit:fin to:" + msg + " with tag:" + tag);
+  });
+  socket.on('recieved', (msg) => {
+    console.log("message was recieved");          
+  });
 });
 
 http.listen(3001 , function(){
