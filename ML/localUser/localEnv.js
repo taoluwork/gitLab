@@ -212,6 +212,7 @@ io.on('connection', function(socket){
               //console.log(err);
             }
             else{
+              buffer = msg;
               update();
             }
           });
@@ -293,7 +294,7 @@ async function unzipF(file){
             //return;
             var s;
             for(var i = 0 ; i < conns.length; i++){
-              if(conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
+              if(conns[i].socket.handshake && conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
                 s = conns[i].socket;
                 if(mode === 0 ){
                   s.emit('resendData');
@@ -378,7 +379,7 @@ async function uploadVal(){
     }
     var s;
     for(var i = 0 ; i < conns.length; i++){
-      if(conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
+      if(conns[i].socket.handshake && conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
         s = conns[i].socket;
       }
     }
@@ -398,7 +399,7 @@ async function uploadResult(){
         console.log('uploading result');
         var s;
         for(var i = 0 ; i < conns.length; i++){
-          if(conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
+          if(conns[i].socket.handshake && conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
             s = conns[i].socket;
             s.emit('uploadResult', data);
             console.log('uploading...');

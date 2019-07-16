@@ -867,7 +867,7 @@ class App extends Component {
         </div>
       );
     }
-    if (this.state.mode === 'WORKER' && this.state.buffer !== undefined && this.state.resultID !== undefined) {
+    if (this.state.mode === 'WORKER' && this.state.buffer !== undefined ) {
       //there needs to be a resend function if the data is null(reupload button)
       return (
         <div><h2>SUBMIT RESULT PACKAGE</h2>
