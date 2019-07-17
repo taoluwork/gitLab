@@ -4,18 +4,23 @@ const fs = require('fs');
 var app = require('express')();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
+var publicIp = require("public-ip")
+const prompts = require('prompts');
 
 var buffer;
 var version = '';
 var name = '';
 var mode; 
 var ip;
+var ip4;
+var ip6;
 var training = false;
 var ver = false;
 var flag = true; // this flag will be shared between the provider and the validator
 var conns = [];
 var connsI = [];
 var reconfigFlag = false;
+var website = "130.39.223.54:3000"
 
 //structure of a conn
 //ip        -> (string)  the ip address of the connection
@@ -28,32 +33,17 @@ var reconfigFlag = false;
 //0-provider
 //1-validator
 //2-user
-
-//////////////////////////////////////////////////////////////////////setup/closing section////////////////////////////////////////////////////////////////////////
-process.on('SIGINT', function() {
-  console.log();
-  update();
-  console.log("goodbye");
-  process.exit();
-});
-
-fs.readdirSync('.').forEach(file => {
-  if(file === "curState.json"){
-    reconfig();
+///////////////////////////////////////////////////////////////////////////open the webpage////////////////////////////////////////////////////////////////////////
+exec('firefox ' + website , (err,stdout,stderr)=>{
+  if(err){
+    console.log(err);
   }
-});
-
-if(process.argv[2] === undefined){
-    console.log("Invalid format, must include a valid IP address")
-    return;
-}
-else{
-    ip = process.argv[2];
-}
+}); 
 //////////////////////////////////////////////////////////////////////server function section//////////////////////////////////////////////////////////////////////
 function closeSocket(pos){
   conns[pos].socket.disconnect(true);
   conns.splice(pos,1);
+  connsI.splice(pos, 1);
   console.log('connection has been closed, there are:' + conns.length + ' left');
   update();
   for(var i = 0 ; i < conns.length ; i++){
@@ -98,6 +88,45 @@ function update(){
   fs.writeFileSync("curState.json" , data);
   console.log("updating data");
 }
+
+//////////////////////////////////////////////////////////////////////setup/closing section////////////////////////////////////////////////////////////////////////
+
+console.log("To exit the program please type: Cntrl + C")
+
+process.on('SIGINT', async () => {
+  const response = await prompts({
+    type: 'text',
+    name: 'val',
+    message: 'Would you like to save the state?'
+  });
+ 
+  if(response.val.toLowerCase() === "yes"){
+    update();
+    process.exit();
+  }
+  if(response.val.toLowerCase() === "no"){
+    exec('rm curState.json' , (err,stdout,stderr)=>{}).then(process.exit());
+  }
+  });
+
+fs.readdirSync('.').forEach(file => {
+  if(file === "curState.json"){
+    reconfig();
+  }
+});
+
+var getIp = (async() => {
+  await publicIp.v4().then(val => {ip4 = val});
+  await publicIp.v6().then(val => {ip6 = val});
+})
+getIp().then(() => {
+  //allow for manual choice (defaults to IPv4)
+  if(process.argv[2] === undefined || process.argv[2] === "-4"){
+    ip = ip4 + ":3001";
+  }
+  else if(process.argv[2] === "-6"){
+    ip = "[" + ip6 + "]:3001";
+  }
 
 //////////////////////////////////////////////////////////////////////server section//////////////////////////////////////////////////////////////////////////////
 io.on('connection', function(socket){
@@ -266,6 +295,7 @@ io.on('connection', function(socket){
 http.listen(3001 , function(){
     console.log('listening on: ' + ip);
 });
+});
 ///////////////////////////////////////////////////////////////execution functions/////////////////////////////////////////////////////////////////////////////////////
 async function run(file, versionA){
   console.log("executing: " + file)
@@ -380,9 +410,9 @@ async function uploadVal(){
     for(var i = 0 ; i < conns.length; i++){
       if(conns[i].socket && conns[i].socket.handshake.address.search('127.0.0.1') >= 0){
         s = conns[i].socket;
+        s.emit('uploadVal', f);
       }
     }
-    s.emit('uploadVal', f);
     exec('rm fin.txt' , (err,stdout,stderr)=>{});
   }
 }
