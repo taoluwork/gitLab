@@ -3,12 +3,13 @@
 
 
 // TODO: fix the async function dependency. e.g. Need returned dataID to send Tx                          [needed for provider]
-// TODO: use this.state.RequestStartTime to record block# and narrow down the searching range of events   [need test] I made some edits to narrow down watching list more --Pedro
-// TODO: add notification of updating request             [need test] //I did not find these, I have an update but not working fully so I did not add it to this update --Pedro
-// TODO: add button for cancel request , stop providing   [need test] //Tested no bugs found --Pedro
+// TODO: add notification of updating request             [need test] //I did not find these --Pedro
 
 // TODO: update appearance -- material-ui
 
+// TODO: currently the stop job button will delete the result ID after a user has finished recieving their data. this needs to be replaced with an automatic method
+// TODO: add timeouts to the socket emits that ask for data to be resent (right now these are called multiple times since it takes longer for the data to be moved
+//       than for the resend message to be called)
 
 import React, { Component } from "react";
 import TaskContract from "./contracts/TaskContract.json";
@@ -175,15 +176,22 @@ class App extends Component {
   }
 
 
-
+  //this function will build the client sockets necessay for socket.io
   buildSocket = async(loc) => {
     var socket ;
-    if(loc.indexOf('localhost') === -1){       //if you are trying to connect to another user to get the data or result
+    //this is entered if the location that the server is not within the current computer
+    if(loc.indexOf('localhost') === -1){
+      
+      //create the connection
       socket = io.connect("http://" + loc + "/");
+      
+      //once the connection is created call to setup the connection correctly and ask for the data
       socket.on("connect", () => {
         socket.emit('setUp', this.state.myIP);
         socket.emit('request', this.state.myIP);
       });
+
+      //this is called when a server send data in responce to this current computer's request
       socket.on('transmitting' + this.state.myIP, (tag , dat)=>{
         console.log("Got:transmitting and tag:" + tag + " and data:" + dat + " was received.")
         if(dat !== undefined){                     
@@ -196,11 +204,16 @@ class App extends Component {
                 this.setState({result: dat});
             }
         }
+        //if the data is not recieved it will be asked for again
         else{ 
             socket.emit('request', this.state.myIP);
             console.log('emit:request msg:' + this.state.myIP); 
         }
       });
+
+      //this is recieved after the server has send the data
+      //if the data is not received that it will request for the data agian
+      //if the data is recieved then it will close the connection
       socket.on('fin', (msg) => {
         console.log("Got:fin and msg:" + msg);
         if((msg === "data" && this.state.data === undefined) || (msg === "result" && this.state.result === undefined)){ 
@@ -212,8 +225,15 @@ class App extends Component {
             socket.disconnect(true);        }
       });
     }
+
+    //if you are attmepting to connect to a server that is on the current computer
+    //this is necessary for the browser to send the data to other computers and to
+    //ececute the code
     else{
       socket = io(loc);
+
+      //this is sent so that the browser is able to learn what its public ip is
+      //this is not easily gotten so the local server deals with it
       socket.on('whoAmI', (msg) =>{
         if(this.state.ip === undefined){
           console.log("whoAmI just fired : " + msg)
@@ -228,12 +248,19 @@ class App extends Component {
           socket.emit("reset");
         }
       });
+
+      //this is triggered when the local server does not correctly receive data
       socket.on('resendData', () => {
         socket.emit('data', this.state.data);
       });
+
+      //this is triggered when the local server does not correctly receive data
       socket.on('resendResult', () => {
         socket.emit('result', this.state.result);
       });
+
+      //this is triggered when the current mode is validator and the result has
+      //been found by the local server
       socket.on('uploadVal', (val) => {
         if(this.state.mode === 'WORKER'){
           if(val){
@@ -244,6 +271,9 @@ class App extends Component {
           }
         }
       });
+
+      //this is triggered when the current mode is proider and the code has been trained
+      //and needs to be uploaded
       socket.on('uploadResult', (data) => {
         console.log('recieved uploadResult')
         this.setState({buffer : data});
@@ -256,8 +286,12 @@ class App extends Component {
           document.getElementById('submitButton').click();
         }
       })
+
+      //if the browser has been disconnected this will trigger to make sure that the 
+      //browser has the state data
       socket.on( "browserReconnect" , (newMode, newBuffer) => {
-        //the integer version of mode selection is defined in localEnv.js
+        //the integer version of mode selection is defined in localEnv.js 
+        //(copied here for ease of understanding)
         //0-provider
         //1-validator
         //2-user
@@ -267,14 +301,14 @@ class App extends Component {
         if( (newBuffer !== undefined || newBuffer !== null) && this.state.buffer === undefined){
           this.setState({buffer : newBuffer});
           console.log(this.state.buffer)
-          //document.getElementById("fileInput").value = this.state.buffer;
-          //set the buffer variable here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         }
       });
     }
-    return socket;                             //return so that we can still interact with it later on
+    return socket;//return so that we can still interact with it later on
   }
 
+  //It will create a socket and depending on the current mode it will send it with that
+  //specific tag
   DownloadInfo = async(event) => {
     var tag = undefined;
     var m = undefined;
@@ -425,7 +459,10 @@ class App extends Component {
         console.log(err)
       })
     }
-    //this case is when the job is done (it will serve as a manual way of ending a job untill a timeout or check can be made for when the file has been recieved)
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //NOTE!!!!!! this is curently done in order to delete the resultID once a job has been finished
+    //this needs to be automated some how
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     else if(this.state.resultID !== undefined){
       this.state.tempSocket.emit("goodBye", this.state.myIP);
       this.state.tempSocket.disconnect(true);
@@ -619,6 +656,8 @@ class App extends Component {
 
 
   // Checking status of account. 
+  //note: CheckEvents has been edited to keep track of only the current transaction's information and
+  //      is used to identify the resultID and dataID if necessary for that person's specific role
   checkEvents = async () => {
     let pastEvents = await this.state.myContract.getPastEvents("allEvents", {fromBlock:  this.state.RequestStartTime, toBlock: 'latest'});
     console.log("Event range: ", this.state.RequestStartTime)
@@ -926,7 +965,7 @@ class App extends Component {
         
 
         <form onSubmit={this.startRequestSubmit}>
-        <h2>{this.state.mode === 'USER' ? "SUBMIT YOUR TASK" : "APPLY TO BE PROVIDER"}</h2>
+        <h2>{this.state.mode === 'USER' ? "SUBMIT YOUR TASK (in a zip file name data.zip)" : "APPLY TO BE PROVIDER"}</h2>
           <p><label>
             Time : (in seconds)
           <input type="number" value={this.state.Time} onChange={this.TimeChange} />

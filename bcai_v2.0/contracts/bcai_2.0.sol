@@ -471,6 +471,14 @@ contract TaskContract {
         ArrayPop(validatingPool, reqAddr);
         //delete related record
         requestList[reqAddr].blockNumber = 0;
+
+//these lines are used in attempt to empty the validators and signatures arrays for a given request
+//there is some buggy behavior regarding this section so it will be commented out for now
+//TODO: find a safe way for the validators and signatures to be cleared out
+/*        for(uint64 i = 2 ; i >= 0 ; i--){
+          delete requestList[reqAddr].validators[i];
+          requestList[reqAddr].signatures[i] = false;  
+        }*/
     }
 /////////////////////////////////////////////////////////////////////
     // Used to dynamically remove elements from array of open provider spaces. 
