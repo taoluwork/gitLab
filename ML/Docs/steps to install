@@ -10,10 +10,7 @@ go to nodejs.org to download and install the most recent version
 
 :::::NPM packets:::::
 
-user$ sudo npm install util 
-user$ sudo npm install child_process 
-user$ sudo npm install fs 
-user$ sudo npm install events
+user$ sudo npm install
 
 :::::Docker:::::
 

@@ -10,138 +10,110 @@
 // update:
 //   this is the first version 
 //////////////////////////////////////////////////////////////////////////
-Setup <assuming linux environment>:
-
-nvidiaGPU driver (version must be >= 384.x)
-  .runfile can be found at: https://www.nvidia.com/Download/index.aspx?lang=en-us
-
-Docker to create and run docker images
-  official guide found at: https://docs.docker.com/install/linux/docker-ce/ubuntu/
-
-NodeJs to run .js files
-  to install npm (node package manager): $ sudo apt-get install npm
-  to install node: $ npm install node
-//////////////////////////////////////////////////////////////////////////
 How to use:
-  start node script: $ node localEnv.js --(provider or validator)
+  start node script: $ node localEnv.js 
   end node script:   cltr+c
 
 //////////////////////////////////////////////////////////////////////////
 Design explanation
 
-<Script Functions>
-run a tensorflow docker image with the the docker tag, python file, and number of gpus
-
-TODO:make sure that the python file does not incude harmful libraries
-TODO:reformat to be more automated
-
-
-<Event Functions>
-watch for changes within the current folder
-create a new emitter if there currently is not one or a new one is needed
-  due to a duplication feature within fs, all the events will execute once 
-wait for a python file to be recieved
-if a provider 
-  then wait for a python file
-  pass the python file to train.py
-  read the generated json file
-  run the generated python file
-  zip the results and generated files 
-  delete the generated files
-if a validator
-  then wait for a zip file
-  unzip the data
-  run the evaluation script
-  send the results from training and evaluation to comp.py
-  zip model and the txt file from comp.py
-  delete the extra files generated and files from the zip folder
-reset the values and mark the emitter to be regenerated
+<open the webpage>
+	open the webpage
+<server functions>
+	These functions deal with closing socket, reconnecting the browse.
+	and interfacing with the curState.json file.
+<setup/closing>
+	These functions will look for a curState file when the server first
+	begins, deal with the state when the file is closed, and find the IP
+	addresses.
+<server>
+	This section deals with all the connections and messages that are
+	able to be sent or recieved
+<execution functions>
+	This section deals with running the code, generating necessary files,
+	and removing files that are nolonger necessary
+<file management>
+	This section listens to the current folder for changes and if
+	specific files are added then certain actions are executed
 
 //////////////////////////////////////////////////////////////////////////
-Script function:
+server functions:
+	close socket
+		when called it will remove the socket from the conns list
+		and close the socket
+	browser reconnect
+		when this is called it will send the current state to the
+		browser
+	reconfig
+		when this is called if the current state is read from the
+		curState.json file and loaded into the variables
+	update
+		when this is called the current state is saved in the
+		curState.json file
+setup/closing:
+	process.on("SIGINT")
+		this event is triggered when the program is being killed
+		it will ask if you would like to save the state or delete it
+	fs.readdirSync('.').forEach(file ....
+		this will look at all files in the current folder and
+		if it find curState.json then it will reconfigure the state
+		based on what is stored in there
+	getIP
+		this will get the public IPv4 address and IPv6 address
+	getIP call
+		when the function is called it will assing the current
+		ip address based on the option that the user choose
+		then the server section is defiend entirely in this call
+server:
+	(this will be expanded upon later, but this is a high level overview)
+	The connections are broken into two types, those from other computers
+	and those from the local browser. Based on the type of connection
+	it will send different initilaization data to these connections
+	Then the server will listen for the specified messages from different
+	connecitons and act accordingly.
+exection functions:
+	run
+		it will execute the specified file with the specified version
+		of tensorflow
+	unzipF
+		given a zip file it will unzip the data
+	genFiles
+		this send the python file that will be run to train.py that
+		will generate the needed files to be executed or sent to
+		validators
+	comp
+		this executes the testing python file and generate
+		fin.txt based on what is generated
+	rem
+		dependign on the mode it will remove the generated files
+		and the files that were recieved leaving only the final
+		file that will be transmitted or nothing at all
+	getVer
+		this will read the file that was sent as a parameter
+		and look for the tensorflow version that will be used 
+	uplaodVer
+		it will read the file fin.txt and search for the connection
+		that is to the browser. If fin.txt contains true then true
+		will be sent to the browser and vice versa.
+	uplaodResult
+		when called this will read the result.zip as a bit array
+		then it will search for the connection in conns that is to
+		the browser and send the data.
+file management:
+	fs.watch
+		depending on the current mode and the file that is added
+		it will call different functions to execute the steps to
+		complete the task for that given mode
 
-function run
-  exec execute a tensorflow docker image on the file
-    if error is not 0 then
-      log the error 
-      end the script
-    log the output
 
 
-function genFiles
-  if provider
-    execute train.py with the file to be run
-  else //assume this means it is a validator
-    unzip the zip file 
 
 
-function comp
-  if you are a validator
-    run comp.py to generate the comparison text file
-
-function rem
-  if provider
-    zip reslut.h5 result.txt eval.py version.json into result.zip
-    remove reslut.h5 result.txt eval.py version.json execute.py and the python file
-  if validator
-    zip result.h5 fin.txt into fin.zip
-    remove result.h5 fin.txt eval.txt version.json eval.py  and the zip file
-//////////////////////////////////////////////////////////////////////////
-Event functions:
-
-function genEmit
-  emitter <- new instance of an eventEmitter
-  emitter.on the first event call 'getFile' execute
-    name <- fname 
-  emitter.on the first event call 'getJson' execute
-    obj <- JSON.parse(contents of the 'ver.json' at the given path)
-    version <- obj.ver
-    gpuCount <- obj.gpuCount
-  emitter.on any call to the event 'runProg' execute
-    call run
-  emitter.on any call to the event 'resetVal' execute
-    version <- ''
-    name <- ''
-    f <- 0
-  return emitter
 
 
-function runEmits
-  call emit on the emitter with the event runProg and pass version and name
-  call emit on the emitter with the event resetVal
-  f <- 0
 
 
-if provider
-  fs.watch the current folder
-    if f is 0
-      emit<-genEmit
-      f <- 1
-    if the event is change and the name of the file ends in .py and file is not execute.py and the file is not  eval.py
-      call genFiles(the file)
-    if  the name of the file is execute.py and the name is '' 
-      call emit on the emitter with the event getFile and pass the path to the file
-    if  the name of the file is ver.json and the version is '' 
-      call emit on the emitter with the event getJson and pass the path to the file
-    if the event is change and the name is result.txt 
-      call rem()
-    if the version is not '' and the name is not ''
-      call setTimeout and pass the function runEmits and the number 1000 (this is one second)
-if validator
-  fs.watch the current folder
-    if f is 0
-      emit<-genEmit
-      f <- 1
-    if the event is change and the name of the file is result.zip
-      call genFiles(the file)
-    if  the name of the file is eval.py and the name is '' 
-      call emit on the emitter with the event getFile and pass the path to the file
-    if  the name of the file is version.json and the version is '' 
-      call emit on the emitter with the event getJson and pass the path to the file
-    if the event is change and the name is eval.txt
-      call comp()
-    if the event is change and the name is fin.txt 
-      call rem()
-    if the version is not '' and the name is not ''
-      call setTimeout and pass the function runEmits and the number 1000 (this is one second)
-//////////////////////////////////////////////////////////////////////////
+
+
+
+

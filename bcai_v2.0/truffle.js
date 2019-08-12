@@ -17,7 +17,8 @@ module.exports = {
       network_id: "*", // Match any network id
       //before_timeout: 200000,          //  <=== NEW
       //test_timeout: 300000             //  <=== NEW
-      websockets: true
+      websockets: true,
+      gas: 100000000
       //added by Taurus see link: https://github.com/trufflesuite/truffle/issues/1254
     },
     ropsten: {

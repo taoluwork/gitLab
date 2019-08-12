@@ -1,35 +1,9 @@
-//navigate to the folder that localEnv.js is located at
-//if provider
-  user$ node localEnv.js --provider
-  //now the localEnv.js will be waiting
-  //from here the rest can be done in either the file explorer gui or another comand line window
-  //if using the document explorer gui
-    //go to where the python file is stored (make sure that is not the same place as localEnv.js)
-    //copy the python file
-    //return to the folder where localEnv.js is stored
-    //paste the python file there
-    //return to the command line window that localEnv.js is running on
-    //some messages will pop up, and when it get to running the file, it may ask for your password  
-      //this is because docker needs to be run with the sudo command
-  //if using the command prompt
-    client$ cp {path to the python file} .
-    //make sure that the . is there
-  //after this a zip file is generated with all the files needed to be sent to the validator
-
-//if validator
-  user$ node localEnv.js --validator
-  //now the localEnv.js will be waiting
-  //if using the document explorer gui
-    //go to where the zip file is stored (make sure that is not the same place as localEnv.js)
-    //copy the zip file
-    //return to the folder where localEnv.js is stored
-    //paste the zip file there
-    //return to the command line window that localEnv.js is running on
-    //some messages will pop up, and when it get to running the file, it may ask for your password  
-      //this is because docker needs to be run with the sudo command
-  //if using the command prompt
-    client$ cp {path to the zip file} .
-    //make sure that the . is there
-  //after this a zip file is generated with the model stored as well as a text file to show loss and accuracy
+step 1: navigate to the folder that localEnv.js is located at
+step 2: execute(exclude the $  and sign): $ node localEnv.js [ip option]
+  options: the options for this file are based on the version of IP your public IP address is 
+           (replace [ip option] with an option below)
+    Default: IPv4 (nothing typed after node localEnv.js)
+    IPv4: $ node localEnv.js -4
+    IPv6: $ node localEnv.js -6
 
 
