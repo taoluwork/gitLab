@@ -63,6 +63,8 @@ class App extends Component {
     validatingCount: 0,
     providingCount: 0,
     providerList: null,
+
+    tempSocket: null, //added by TL 0812, missing declaration in state.
     
   };
 

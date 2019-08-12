@@ -46,7 +46,7 @@ contract TaskContract {
         bytes   dataID;                     //dataID used to fetch the off-chain data, interact with ipfs
         bytes   resultID;                   //dataID to fetch the off-chain result, via ipfs
         uint64  numValidations;             //user defined the number of validation, TODO: fix this as 3 
-        address payable []  validators;     //validators' addr, update when assigned the task to validators
+        address payable[] validators;       //validators' addr, update when assigned the task to validators
         bool[]  signatures;                 //true or false array, update only when validator submit result
         bool    isValid;                    //the final flag
         byte    status;                     //one byte indicating the status: 0: 'pending', 1:'providing', 2: 'validating', 3: 'complete'
@@ -160,7 +160,7 @@ contract TaskContract {
             requestList[msg.sender].target        = target;
             requestList[msg.sender].price         = price;
             requestList[msg.sender].dataID        = dataID;
-            requestList[msg.sender].numValidations = 3;//fixed 3 for testing reasons
+            requestList[msg.sender].numValidations = 1;//fixed 3 for testing reasons >> TL: changed this to demo settings
             requestList[msg.sender].status = '0' ;     //pending = 0x30, is in ascii not number 0
             pendingPool.push(msg.sender);
             emit IPFSInfo (msg.sender, "Request Added", dataID);

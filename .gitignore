@@ -18,7 +18,8 @@
 /bcai_v2.0/node_modules/*
 /bcai_v2.0/client/node_modules/*
 
-/ML/localUser/node_modules/*
+ML/localUser/node_modules/*
+ML/localUser/node_modules/
 
 /.vscode/*
 /quickTest/*
@@ -42,3 +43,4 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
