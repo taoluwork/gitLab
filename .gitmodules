@@ -1,0 +1,3 @@
+[submodule "bcai_v3.0"]
+	path = bcai_v3.0
+	url = https://github.com/taoluwork/BCAI.git
