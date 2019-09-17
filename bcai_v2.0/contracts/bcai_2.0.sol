@@ -404,18 +404,18 @@ contract TaskContract {
         // Add up successful validations
         bool flag = false;
         uint64 successCount = 0;
-        for (uint64 i=0; i<requestList[reqAddr].signatures.length; i++) {
+        for (uint64 i = 0; i<requestList[reqAddr].signatures.length; i++) {
            if (requestList[reqAddr].signatures[i] == true) successCount += 1;
         }
         // if 2/3 of validation attempts were successful
         // TODO: determine the fraction
-        
-        if (successCount  >= requestList[reqAddr].numValidations) { 
+
+        if (successCount >= requestList[reqAddr].numValidations) {
             // if 2/3 of validations were valid then provider gets remainder of money
-            //requestList[reqID].provider.transfer(payment); 
+            //requestList[reqID].provider.transfer(payment);
             //balanceList[requestList[reqID].addr] -= payment;
             //TODO: [important] leave out the payment part for now.
-            requestList[reqAddr].isValid = true; // Task was successfully completed! 
+            requestList[reqAddr].isValid = true; // Task was successfully completed!
             emit IPFSInfo(reqAddr, 'Validation Complete', requestList[reqAddr].resultID);
             //flag = ArrayPop(validatingPool, reqAddr);
             finalizeRequest(reqAddr);
@@ -484,7 +484,7 @@ contract TaskContract {
     // Used to dynamically remove elements from array of open provider spaces. 
     // Using a swap and delete method, search for the desired addr throughout the whole array
     // delete the desired and swap the hole with last element
-    function ArrayPop(address payable [] storage array, address payable target) private returns (bool) {
+    function ArrayPop(address payable[] storage array, address payable target) private returns (bool) {
         for(uint64 i = 0; i < array.length; i++){
             if (array[i] == target) {
                 //swap last element with hole
