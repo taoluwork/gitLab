@@ -6,6 +6,12 @@ copyright tlu4@lsu.edu
 Use this folder:
 
 bcai_v* are design folders for project BCAI.
+v0.9 provide the skeleton using truffle (old version)
+v1.0 provide the CLI using latest truffle >v5.0
+v2.0 provide the Web interface via metamask and CLI 
+v3.0 Seperate as submodule and focus on interaction between nodes, off-chain transfer using socket.io
+
+
 
 metaCoin, petShop are original example from Truffle suite.
 
