@@ -250,7 +250,7 @@ getIp().then(() => {
     //if the file is not recieved it will call for it agian 
     socket.on('data', function(msg){
       if(socket.handshake.address.search('127.0.0.1') >= 0){ 
-        if(msg === undefined){
+        if(msg === undefined || msg == null){
           socket.emit('resendData');
         }
         else{
@@ -276,7 +276,7 @@ getIp().then(() => {
     //if the file is not recieved it will call for it agian 
     socket.on('result', function(msg){
       if(socket.handshake.address.search('127.0.0.1') >= 0){
-        if(msg === undefined){
+        if(msg === undefined || msg == null) {
           socket.emit('resendResult');
         }
         else{

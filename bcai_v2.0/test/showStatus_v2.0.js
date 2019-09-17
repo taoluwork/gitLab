@@ -6,6 +6,8 @@
 /////////////////////////////////////////////////////////////////
 var version = "bcai_client v2.0.1"
 var networkID = 512;
+
+
 //get arguments from console
 var argv = require('minimist')(process.argv.slice(2));
 //argument example:
@@ -18,6 +20,7 @@ if(argv['help']) {
 	console.log(" --debug : show all debug details, including object details");
 	console.log(" --list  : list minimum object Request and Provider");
 	console.log(" --all   : most powerful history tracing option / use with caution");
+	console.log(" --ropsten: select ropsten testnet, networkID = 3")
     //console.log(" --stop :  stop the current provider")
 	process.exit();
 }
@@ -31,47 +34,68 @@ var myAccounts;
 
 function init() {
 	Web3 = require('web3');
-	web3 = new Web3('ws://localhost:8545');
+	if (networkID == 512)
+		web3 = new Web3('ws://localhost:8545');
+	else if (networkID == 3){
+		//web3 = new Web3('ws://localhost:8546');
+		/*var ws = new Web3.providers.WebsocketProvider('ws://localhost:8546', {
+			headers: {Origin: "123"}
+		})*/
+		var ws = new Web3.providers.WebsocketProvider('wss://ropsten.infura.io/ws/v3/abf67fa0cd9644cbaf3630dd5395104f')
+		//console.log(ws);
+		web3 = new Web3(ws);
+	}
 	MyContract = require('../client/src/contracts/TaskContract.json');
 	myContract = new web3.eth.Contract(MyContract.abi, MyContract.networks[networkID].address);
+	//console.log(MyContract.abi)
+	console.log(MyContract.networks[networkID].address)
+	//console.log (myContract)
 }
 
 ///////////////////////////////////////////////main
+if (argv['ropsten'])
+	networkID = 3;
 init();
-web3.eth.getAccounts()
-.then(function(myAccounts){		//resolve
-	showCurrentStatus(myAccounts);
-	}
-, function(err){				//reject
-	console.log("Error: getting accounts, check your testnet",err);
-})	
-.then(function(){
-	//  event moniotring [important]
-	myContract.events.SystemInfo({
-		fromBLock: 0,
-		toBlock: 'latest'
-	}, function(err, event){
-		if(err) console.log(err);
-	}).on('data', function(event){
-		PrintEvent(event);
-	})
+if (networkID == 512){
+	web3.eth.getAccounts()
+	.then(function(myAccounts){		//resolve
+		showCurrentStatus(myAccounts);
+		}
+	, function(err){				//reject
+		console.log("Error: getting accounts, check your testnet",err);
+	})	
+	.then(function(){
+		//  event moniotring [important]
+		myContract.events.SystemInfo({
+			fromBLock: 0,
+			toBlock: 'latest'
+		}, function(err, event){
+			if(err) console.log(err);
+		}).on('data', function(event){
+			PrintEvent(event);
+		})
 
-	myContract.events.PairingInfo({
-		fromBLock: 0,
-		toBlock: 'latest'
-	}, function(err, event){
-		if(err) console.log(err);
-	}).on('data', function(event){
-		PrintEvent(event);
-	})
+		myContract.events.PairingInfo({
+			fromBLock: 0,
+			toBlock: 'latest'
+		}, function(err, event){
+			if(err) console.log(err);
+		}).on('data', function(event){
+			PrintEvent(event);
+		})
 
-	//display current status every new block
-	web3.eth.subscribe('newBlockHeaders', function(err, result){
-		if(err) console.log("ERRRR", err, result);
-		console.log("================================================   <- updated! #", result.number);
-		showCurrentStatus();
-   })
-})
+		//display current status every new block
+		web3.eth.subscribe('newBlockHeaders', function(err, result){
+			if(err) console.log("ERRRR", err, result);
+			console.log("================================================   <- updated! #", result.number);
+			showCurrentStatus();
+	})
+	})
+}
+else if (networkID == 3){
+	console.log("Connecting to Ropsten via ws");
+	showCurrentStatus();
+}
 ////////////////////////////////////////////////
 function showCurrentStatus(myAccounts){
 	if (myAccounts != undefined)

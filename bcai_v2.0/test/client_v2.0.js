@@ -9,7 +9,8 @@
 //use: $ node client.js --help --version
 /////////////////////////////////////////////////////////////////
 const version = "bcai_client v2.0.1"
-const NetworkID = 512;
+var NetworkID = 512;
+NetworkID = 3;
 //const NetworkID = 1544726768855;
 //NOTE: combine user and worker client together switch using --user, --worker
 //Avoid using version earlier than 0.9.2
@@ -27,6 +28,7 @@ var myAccount;              // default set below
 ////////////////////////////////////////////////////////////////////
 //get arguments from console , handle mode and parameter
 var argv = require('minimist')(process.argv.slice(2));
+var inquirer = require('inquirer')
 //argument example:
 //node worker.js -u 2 -b 3    ==>   { _: [], u: 2, b: 3 }
 if(argv['help']) {
@@ -79,87 +81,201 @@ else if(mode == 'worker'){
 //create web3 instance
 var Web3 = require('web3');
 //use websocket provider here, NOTE: http is deprecated.
-var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
+if (NetworkID == 512)
+    var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'));
+else if (NetworkID == 3){
+    var ws = new Web3.providers.WebsocketProvider('wss://ropsten.infura.io/ws/v3/abf67fa0cd9644cbaf3630dd5395104f')
+    web3 = new Web3(ws);
+}
 
 //get contract instance
 var TaskContract = require('../client/src/contracts/TaskContract.json');
 var abi = TaskContract.abi;
 var addr = TaskContract.networks[NetworkID].address;        //align to const ID defination on top
 const myContract = new web3.eth.Contract(abi, addr);
+
+
 //////////////////////////////////////////////////////////////////////////
 //start your ganache testnet or connect to real blockcahin.
 //NOTE: networkID must be given and set to const NetworkID.
 // use: $ ganache-cli -i or --networkId 512
 // start your ganache-cli now!
 /////////////////////////////////////////////////////////////////////////
-web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
-    if (argv['a'] > 9){                 //list all accounts
-        console.log(accounts);
+if (NetworkID == 3){
+    setupLocalAccount();
+}
+if (NetworkID == 512){
+    web3.eth.getAccounts().then(function(accounts){     //get and use accoutns
+        if (argv['a'] > 9){                 //list all accounts
+            console.log(accounts);
+            process.exit();
+        }
+        else if(argv['a'] == undefined) {
+            if(mode == 'user'){
+                myAccount = accounts[0];
+                console.log("=================================================================")
+                console.log('Using default account: [0]', myAccount);
+                console.log('You can infer specific account by passing -a #');
+            }
+            else if (mode == 'worker'){
+                myAccount = accounts[9];
+                console.log("=================================================================")
+                console.log('Using default account: [9]', myAccount);
+                console.log('You can infer specific account by passing -a #');
+            }
+        }    
+        else {      //-a is given
+            myAccount = accounts[argv['a']];
+            if (myAccount == undefined) throw 'setting account error!';
+            console.log("=================================================================")
+            console.log('Using account: [',argv['a'], '] ', myAccount);
+        }
+        //Important: display current mode
+        console.log("Client Mode: ", mode);
+        return accounts;
+    })
+    .then(function(accounts){           //success: accounts got
+        if (argv['all']){               //display all info
+            console.log(accounts);
+            if      (mode == 'user')    AllRequests();
+            else if(mode == 'worker')   AllProviders();
+        }
+        else if (argv['my']){           //display my info
+            if(mode == 'user')  RequestOnlyMy(myAccount);
+            else if(mode == 'worker') ProviderOnlyMy(myAccount);
+        }
+        else if (argv['view']){
+            console.log(accounts);      //only view, no change
+            if (mode == 'user') PoolRequests();
+            if (mode == 'worker') PoolProviders();
+        }
+        else {                          //real state change
+            if (mode == 'user') userFireMessage();
+            else if (mode =='worker') workerFireMessage();
+        }
+    })
+    .then(function(){                   //subcribe and monitor the events  
+        myContract.events.SystemInfo({
+            fromBlock: 'latest',
+            //toBlock: 'latest'
+        },function(err, eve){
+            if(err!= undefined) console.log(err);           
+        })
+        .on('data', function(eve){
+            PrintEvent(eve);
+            //my event or others
+            DisplayAfterEvent(eve);     
+        })
+    })
+    .catch(function(err){               //failure: no accounts
+        console.log(err);
+        console.log("Getting accounts failed!");
+        console.log("Check your depolyment! ");
         process.exit();
-    }
-    else if(argv['a'] == undefined) {
-        if(mode == 'user'){
-            myAccount = accounts[0];
-            console.log("=================================================================")
-            console.log('Using default account: [0]', myAccount);
-            console.log('You can infer specific account by passing -a #');
-        }
-        else if (mode == 'worker'){
-            myAccount = accounts[9];
-            console.log("=================================================================")
-            console.log('Using default account: [9]', myAccount);
-            console.log('You can infer specific account by passing -a #');
-        }
-    }    
-    else {      //-a is given
-        myAccount = accounts[argv['a']];
-        if (myAccount == undefined) throw 'setting account error!';
-        console.log("=================================================================")
-        console.log('Using account: [',argv['a'], '] ', myAccount);
-    }
-    //Important: display current mode
-    console.log("Client Mode: ", mode);
-    return accounts;
-})
-.then(function(accounts){           //success: accounts got
-    if (argv['all']){               //display all info
-        console.log(accounts);
-        if      (mode == 'user')    AllRequests();
-        else if(mode == 'worker')   AllProviders();
-    }
-    else if (argv['my']){           //display my info
-        if(mode == 'user')  RequestOnlyMy(myAccount);
-        else if(mode == 'worker') ProviderOnlyMy(myAccount);
-    }
-    else if (argv['view']){
-        console.log(accounts);      //only view, no change
-        if (mode == 'user') PoolRequests();
-        if (mode == 'worker') PoolProviders();
-    }
-    else {                          //real state change
-        if (mode == 'user') userFireMessage();
-        else if (mode =='worker') workerFireMessage();
-    }
-})
-.then(function(){                   //subcribe and monitor the events  
-    myContract.events.SystemInfo({
-        fromBlock: 'latest',
-        //toBlock: 'latest'
-    },function(err, eve){
-        if(err!= undefined) console.log(err);           
     })
-    .on('data', function(eve){
-        PrintEvent(eve);
-        //my event or others
-        DisplayAfterEvent(eve);     
+}
+/////////////////////////////////////////////////////////////////////////////////////////
+// added for signing transaction locally
+
+
+
+function setupLocalAccount(){
+    var keystore;
+    //save keystore here
+    //keystore = {"address":"458c5617e4f549578e181f12da8f840889e3c0a8","crypto":{"cipher":"aes-128-ctr","ciphertext":"f3a3127774c6bcbb668d2a8befa204e28e04b4d44ed9ab09365f82f9d024f5c6","cipherparams":{"iv":"7ea08dab99d23800ce0a90fcaee96008"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"94a295f708a5e18b36ded72492c6c6fdf6c244629f98160c62b51f753bac4e23"},"mac":"53bd50a2148e446d9ca09837aa9fbb9ea21dcdf0cc5fffe4637964ae8cfe03ed"},"id":"a7dc70e7-f625-420f-afdf-9c8208c6735b","version":3}
+    //read keystore from fs:
+    var fs = require('fs')
+    filename = "UTC--2019-09-16T20-22-39.327891999Z--458c5617e4f549578e181f12da8f840889e3c0a8"
+    var contents = fs.readFileSync(filename, 'utf8')
+    console.log(contents)
+    keystore = contents;
+    
+    //const password = "localtest";     //save password explicitly is stupid
+
+    //get from user input
+    var password;   
+    //using inquirer is more fancy  https://www.npmjs.com/package/inquirer
+    /*(inquirer.prompt([
+        "type": "password",
+
+    ]).then( ans=>{
+        password = ans;
+    })*/
+
+    //using simple readline: https://www.npmjs.com/package/inquirer
+    /*var rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
     })
-})
-.catch(function(err){               //failure: no accounts
-    console.log(err);
-    console.log("Getting accounts failed!");
-    console.log("Check your depolyment! ");
-    process.exit();
-})
+    rl.question("Please input your password:", (ans)=>{
+        console.log(`Thank you for your valuable feedback: ${ans}`);
+        password = ans;
+        rl.close();
+    })*/
+    
+    
+
+    //using process
+    /*var input = process.stdin;
+    input.setEncoding('utf-8')
+    console.log("Please input password")
+    return input.on('data', inp=>{
+        password = inp;
+    })*/
+
+    //readline sync
+    var readlineSync = require('readline-sync')
+    password = readlineSync.question("Please input your password:", {
+        hideEchoBack: true      //hide with *
+    })
+    //console.log("Verify input: " + password);
+    const decryptedAccount = web3.eth.accounts.decrypt(keystore, password);
+    sendRopsten(decryptedAccount);
+
+}
+function sendRopsten(decryptedAccount){
+    console.log("Sending transaction to Roptsen via Infura")
+    //token transfer example
+    //get function abi
+    var ABIstartProviding;
+    /*  //reading from raw ABI
+    for (var i = 0; i<abi.length; i++){
+        if (abi[i]["name"] == "startProviding")
+            ABIstartProviding = abi[i];
+    }
+    */
+    
+    //prepare abi for a function call
+    ABIstartProviding = myContract.methods.startProviding(maxTime, maxTarget, minPrice).encodeABI();
+    //console.log(ABIstartProviding);
+    const rawTransaction = {
+        "from": "0x458C5617e4f549578E181F12dA8f840889E3C0A8",
+        "to": addr,
+        "value": 0, //web3.utils.toHex(web3.utils.toWei("0.001", "ether")),
+        "gas": 5000000,
+        "chainId": 3,
+        "data": ABIstartProviding
+    }
+
+    
+    /*
+    var Tx = {
+        "gas": 300000,
+        "to": addr,
+        "value": 0,
+        "data": functionAbi,
+        };
+        */
+    decryptedAccount.signTransaction(rawTransaction)
+    .then(signedTx => web3.eth.sendSignedTransaction(signedTx.rawTransaction))
+    .then(receipt => console.log("Transaction receipt: ", receipt))
+    .catch(err => console.error(err));
+    // Or sign using private key from decrypted keystore file
+    /*
+    web3.eth.accounts.signTransaction(rawTransaction, decryptedAccount.privateKey)
+    .then(console.log);
+    */
+}
 
 //////////////////////////main functions/////////////////////////////////////////////////////
 //supporting functions below.
