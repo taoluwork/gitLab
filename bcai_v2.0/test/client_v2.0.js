@@ -1,10 +1,12 @@
 ////////////////////////////////////////////////////////////////
 //client's js app, combined --user mode and --worker mode
-//version: v2.0.1 , aligned with contract v2.0.x
+//version: v2.0.2 , aligned with contract v2.0.x
 //author: taurus tlu4@lsu.edu
 //
 //description: this is the CLI client design
-//update: fixed the event incapatible from client v0.9
+
+//update v2.0.2: add support for ropsten via infura
+//update: 2.0: fixed the event incapatible from client v0.9
 //
 //use: $ node client.js --help --version
 /////////////////////////////////////////////////////////////////

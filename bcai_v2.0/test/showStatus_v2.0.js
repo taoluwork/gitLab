@@ -1,8 +1,12 @@
 ////////////////////////////////////////////////////////////////
-//user's js script
-//version: 2.0.1, compatable with sol v1.9.2+
+//This is a dev tool to monitoring the status of the current contract
+//version: 2.0.2, compatable with sol v1.9.2+
 //author: taurus tlu4@lsu.edu
 //use: $ node user.js --help
+
+// update 2.0.2: add support for ropsten (networkid = 3) via infura
+// NOTE: this file did not send transactions, so do not need keystore file
+
 /////////////////////////////////////////////////////////////////
 var version = "bcai_client v2.0.1"
 var networkID = 512;
@@ -48,7 +52,7 @@ function init() {
 	MyContract = require('../client/src/contracts/TaskContract.json');
 	myContract = new web3.eth.Contract(MyContract.abi, MyContract.networks[networkID].address);
 	//console.log(MyContract.abi)
-	console.log(MyContract.networks[networkID].address)
+	console.log("Current contract address: " + MyContract.networks[networkID].address)
 	//console.log (myContract)
 }
 
@@ -113,10 +117,10 @@ function showCurrentStatus(myAccounts){
 }
 function showStatics(){		//called yb showCurrentStatus
 	return myContract.methods.getRequestCount().call().then(function(totalCount){
-		console.log("Total Request since start: ", totalCount);
+		console.log("Total Request since start: ", totalCount.toString());		//totalCount is in BN format
 	}).then(function(){
 		return myContract.methods.getProviderCount().call().then(function(totalCount){
-			console.log("Total provider since start: ", totalCount);
+			console.log("Total provider since start: ", totalCount.toString());
 		})
 	}).catch(function(){
 		console.log("Error: Show status, check your deployment. ")
