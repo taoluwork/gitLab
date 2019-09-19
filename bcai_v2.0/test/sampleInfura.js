@@ -1,5 +1,8 @@
 // this is an example of using Infura.io to send transactions
+// version v1.0.2
 
+// update v1.0.2: provide more coding options as examples
+// add comments and handle async calls
 
 var NetworkID = 3;      //using infura
 
@@ -20,7 +23,7 @@ var TaskContract = require('../client/src/contracts/TaskContract.json');
 var abi = TaskContract.abi;
 var addr = TaskContract.networks[NetworkID].address;        //align to const ID defination on top
 const myContract = new web3.eth.Contract(abi, addr);
-
+console.log("contract addr: " + addr)
 setupLocalAccount();        // call the main function
 
 
@@ -51,15 +54,18 @@ function setupLocalAccount(){
     //get from user input
 
     //using inquirer is more fancy  https://www.npmjs.com/package/inquirer
-    /*(inquirer.prompt([
-        "type": "password",
-
+    /*var inquirer = require('inquirer')
+    inquirer.prompt([
+        {"type": "password"}
     ]).then( ans=>{
         password = ans;
+        console.log(password)
     })*/
 
+    // [option 3]
     //using simple readline: https://www.npmjs.com/package/inquirer
-    /*var rl = readline.createInterface({
+    var readline = require('readline')
+    var rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
     })
@@ -67,32 +73,39 @@ function setupLocalAccount(){
         console.log(`Thank you for your valuable feedback: ${ans}`);
         password = ans;
         rl.close();
-    })*/
+        const decryptedAccount = web3.eth.accounts.decrypt(keystore, password);
+        console.log("Your decrypted account: " + decryptedAccount.address)
+        sendRopsten(decryptedAccount);
+    })
     
-
+    //[option 4]
     //using process input from command line
     /*var input = process.stdin;
     input.setEncoding('utf-8')
     console.log("Please input password")
     return input.on('data', inp=>{
         password = inp;
+        const decryptedAccount = web3.eth.accounts.decrypt(keystore, password);
+        sendRopsten(decryptedAccount);
     })*/
 
-    //using readline sync (not async which will not block)
-    var readlineSync = require('readline-sync')
-    password = readlineSync.question("Please input your password:", {
-        hideEchoBack: true      //hide with *
-    })
-    //console.log("Verify input: " + password);
 
+    //[option 5]
+    //using readline sync (not async which will not block)
+    // var readlineSync = require('readline-sync')
+    // password = readlineSync.question("Please input your password:", {
+    //     hideEchoBack: true      //hide with *
+    // })
+    //console.log("Verify input: " + password);
     //decrypt account and call
-    const decryptedAccount = web3.eth.accounts.decrypt(keystore, password);
-    sendRopsten(decryptedAccount);
+    // const decryptedAccount = web3.eth.accounts.decrypt(keystore, password);
+    // sendRopsten(decryptedAccount);
 }
 
 
 function sendRopsten(decryptedAccount){
     console.log("Sending transaction to Roptsen via Infura")
+    
     //get function abi
     var ABIstartProviding; //prepare abi for a function call
     /*  //reading from raw ABI
@@ -111,7 +124,7 @@ function sendRopsten(decryptedAccount){
         "from": "0x458C5617e4f549578E181F12dA8f840889E3C0A8",
         "to": addr,
         "value": 0, //web3.utils.toHex(web3.utils.toWei("0.001", "ether")),
-        "gasPrice": web3.utils.toHex(web3.utils.toWei("30", "GWei")),
+        "gasPrice": web3.utils.toHex(web3.utils.toWei("40", "GWei")),
         "gas": 5000000,
         "chainId": 3,
         "data": ABIstartProviding
