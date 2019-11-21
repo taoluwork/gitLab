@@ -198,9 +198,10 @@ class App extends Component {
   //submit the file in buffer to the IPFS api
   //NOTE: wrap the callback function file.add() into a promiss-pattern call, see details in below link.
   //https://medium.com/codebuddies/getting-to-know-asynchronous-javascript-callbacks-promises-and-async-await-17e0673281ee
-  IPFSSubmit =  async (event) => {  //declare this as async and it will return a promise, even not explicitly
+  IPFSSubmit =  async (event, dataID) => {  //declare this as async and it will return a promise, even not explicitly
+    
     event.preventDefault();   //stop refreshing
-    console.log("submiting...")
+    console.log("submiting...", dataID)
     this.addNotification("Uploading file...", "Awaiting response from IPFS", "info");
     let returnHash = await this.IPFSupload()
       .then(result => {
